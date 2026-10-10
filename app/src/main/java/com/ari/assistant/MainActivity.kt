@@ -38,7 +38,7 @@ class MainActivity : Activity() {
     private lateinit var sendButton: Button
     private lateinit var selectButton: Button
 
-    private val background = Color.rgb(18, 18, 24)
+    private val backgroundColorValue = Color.rgb(18, 18, 24)
     private val green = Color.rgb(120, 220, 170)
     private val white = Color.WHITE
     private val muted = Color.LTGRAY
@@ -52,7 +52,7 @@ class MainActivity : Activity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24, 24, 24, 16)
-            setBackgroundColor(background)
+            setBackgroundColor(backgroundColorValue)
         }
 
         val title = TextView(this).apply {
