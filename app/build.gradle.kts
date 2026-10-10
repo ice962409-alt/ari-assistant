@@ -28,3 +28,7 @@ android {
         versionName = "0.1.0"
     }
 }
+
+dependencies {
+    implementation("com.google.ai.edge.litertlm:litertlm-android:latest.release")
+}
