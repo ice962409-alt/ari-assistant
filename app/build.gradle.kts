@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    kotlin("kapt")
 }
 
 android {
@@ -31,4 +32,9 @@ android {
 
 dependencies {
     implementation("com.google.ai.edge.litertlm:litertlm-android:latest.release")
+
+    // Room Database - Local conversation history persistence
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 }
