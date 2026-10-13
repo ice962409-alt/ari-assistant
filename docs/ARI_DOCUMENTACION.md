@@ -32,7 +32,7 @@ El botón **Ajustes** (arriba, junto a Memoria y Modelo) tiene:
 
 - **Tu nombre**: cómo te llama Ari.
 - **Tono de Ari**: "Franca, con alguna grosería", "Franca, sin groserías" o "Profesional". El cambio se nota desde tu próximo mensaje.
-- **Respaldo de la memoria**: el mismo de Memoria → Respaldo.
+- **Respaldo de la memoria**: el mismo de Memoria → Respaldo. Si hace una semana que no guardas uno, Ari te lo recuerda al abrir.
 
 Cada persona que instala Ari tiene la suya: su nombre, su tono, sus recuerdos. Solo en tu teléfono Ari sabe que tú la creaste y que es la CEO de tu empresa; en una instalación nueva es la asistente personal de quien la usa y empieza con el tono "Franca, sin groserías". El respaldo cifrado también guarda tu nombre y tu tono.
 
@@ -211,6 +211,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 ### Problemas conocidos
 
+- **Google Play Protect: "Se bloqueó la app para proteger tu dispositivo"**: Play Protect no conoce al desarrollador de Ari porque todavía no está publicada en Google Play. No es un virus. Toca **Más detalles** y luego **Instalar de todas formas**. Desaparecerá del todo cuando Ari esté en Google Play con su firma oficial. No conviene desactivar Play Protect, porque protege todo el teléfono.
 - **"No se instaló la app debido a un conflicto con un paquete"**: la app instalada está firmada con otra clave. Esto ya está resuelto con una clave de depuración fija. Si vuelve a pasar, desinstala Ari una vez e instala de nuevo; tendrás que volver a seleccionar el modelo.
 
 ## 4. Historial de cambios
@@ -252,6 +253,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Recordatorio de respaldo (0.4.1): si tienes recuerdos y hace una semana que no guardas un respaldo, Ari te lo dice al abrir. Guardar el respaldo en Drive ya funciona aunque Drive no acepte reescribir archivos, y "Ver mensajes anteriores" ya no te mueve de donde estabas leyendo.
 
 ## 5. Plan hacia el lanzamiento
 

@@ -132,6 +132,16 @@ Una **VPN** como Tailscale o WireGuard crea un **túnel cifrado** entre tus disp
 
 Android solo deja instalar una versión nueva **encima** de la anterior si las dos están firmadas con la misma clave. Por eso apareció el error "conflicto con un paquete": cada compilación usaba una clave distinta. Ahora Ari usa siempre la misma clave de depuración. Para publicarla en Google Play hará falta una clave oficial, guardada en secreto.
 
+### Google Play Protect y las apps fuera de la tienda
+
+**Play Protect** es el antivirus de Google que viene en Android. Revisa cada app que instalas. Cuando una app no viene de Google Play y su desarrollador es desconocido, a veces la bloquea con el aviso "Se bloqueó la app para proteger tu dispositivo".
+
+Ari aparece así porque la instalas directamente desde GitHub (a esto se le llama **instalar por fuera** o *sideloading*) y Google todavía no conoce su firma. No significa que tenga un virus: significa que Google no sabe quién la hizo.
+
+- Para instalarla: **Más detalles** → **Instalar de todas formas**.
+- No desactives Play Protect: te protege de apps que sí son peligrosas.
+- La solución definitiva es publicar Ari en Google Play con una cuenta de desarrollador y su firma oficial. Es uno de los requisitos del lanzamiento.
+
 ### Iconos adaptativos y pantallas "borde a borde"
 
 - Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es un anillo hielo sobre fondo oscuro.
@@ -241,4 +251,6 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Hilo**: una línea de trabajo dentro de una app; el principal dibuja la pantalla.
 - **Interfaz (en programación)**: la lista de lo que una pieza necesita de otra, sin decir cómo se hace.
 - **WAL**: un modo de la base de datos que permite leer y escribir a la vez sin estorbarse.
+- **Play Protect**: el revisor de seguridad de Google en Android.
+- **Instalar por fuera (sideloading)**: instalar una app sin pasar por Google Play.
 - **Widget**: un mini panel de una app en la pantalla de inicio.

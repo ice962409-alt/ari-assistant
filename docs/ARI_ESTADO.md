@@ -218,3 +218,10 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Primer uso: si ya había mensajes, recuerdos o modelo (instalación del creador), `creator = true` y tono FRANK_SWEARING (su elección); si no, tono FRANK. Diálogo "¿Cómo te llamas?".
 - Botón Ajustes: nombre, tono, respaldo. Cambiar el perfil pone `historyPending = true` para reenviar la personalidad.
 - El respaldo incluye `profile` (nombre, tono, creador). Pruebas en `ProfileTest`.
+
+## Revisión y recordatorio de respaldo (versión 0.4.1)
+
+- `BackupReminder.kt`: aviso al abrir si hay recuerdos y no hay respaldo en 7 días (máximo un aviso al día). `markDone` al exportar. Pruebas en `BackupReminderTest`.
+- Exportar: `openOutputStream(uri, "wt")` con respaldo a `"w"` (Drive no siempre acepta "wt").
+- `ChatView.prependHistory` ajusta el scroll con un `OnLayoutChangeListener` de una vez (antes `post`, que podía correr antes de medir).
+- Play Protect bloquea la instalación por "desarrollador desconocido" (APK de depuración por fuera de Play). Solución del usuario: Más detalles → Instalar de todas formas. Definitiva: publicar en Google Play.

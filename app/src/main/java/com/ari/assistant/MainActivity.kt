@@ -58,6 +58,7 @@ class MainActivity : Activity() {
     // Quién usa esta Ari: su nombre y el tono que eligió.
     private lateinit var profilePrefs: SharedPreferences
     private var profile = Profile()
+    private lateinit var backupPrefs: SharedPreferences
 
     // Ari dirige a sus agentes: cada mensaje pasa primero por el CEO, y solo
     // si ningún agente sabe atenderlo se envía a Gemma.
@@ -96,6 +97,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         database = AriDatabase(this)
         profilePrefs = getSharedPreferences(Profile.PREFS, MODE_PRIVATE)
+        backupPrefs = getSharedPreferences(BackupReminder.PREFS, MODE_PRIVATE)
         val firstRun = !Profile.isConfigured(profilePrefs)
         profile = if (firstRun) defaultProfile() else Profile.load(profilePrefs)
         ceo = AriCeo(database)
@@ -110,7 +112,13 @@ class MainActivity : Activity() {
         restoreHistory()
         loadSavedModel()
         recruitTeam()
-        if (firstRun) askUserName(firstTime = true)
+        if (firstRun) askUserName(firstTime = true) else remindBackup()
+    }
+
+    /** Regla 3-2-1: si hace una semana que no guardas un respaldo, Ari te lo recuerda. */
+    private fun remindBackup() {
+        val memories = database.memories().size
+        BackupReminder.message(backupPrefs, memories, System.currentTimeMillis())?.let { chat.addNote(it) }
     }
 
     /**
@@ -1218,9 +1226,12 @@ class MainActivity : Activity() {
         Thread {
             val message = try {
                 val (bytes, summary) = AriBackup.export(database, getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE), profilePrefs, password)
-                val output = contentResolver.openOutputStream(uri, "wt")
+                // "wt" vacía el archivo si ya existía; algunos servicios (como Drive) solo aceptan "w".
+                val output = runCatching { contentResolver.openOutputStream(uri, "wt") }.getOrNull()
+                    ?: contentResolver.openOutputStream(uri, "w")
                     ?: throw IllegalStateException("No se pudo abrir el archivo para escribir.")
                 output.use { it.write(bytes) }
+                BackupReminder.markDone(backupPrefs)
                 "Respaldo guardado: ${summary.memories} recuerdos, ${summary.messages} mensajes, " +
                     "${summary.teams} equipos y ${summary.networks} redes aprobadas."
             } catch (e: Throwable) {

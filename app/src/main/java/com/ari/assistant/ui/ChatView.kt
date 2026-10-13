@@ -178,7 +178,17 @@ class ChatView(context: Context) : ScrollView(context) {
                 column.addView(ariBody().apply { this.text = Markdown.render(text) }, index++, spaced(top = 6f))
             }
         }
-        column.post { scrollBy(0, column.height - heightBefore) }
+        // Cuando Android termine de medir los mensajes nuevos, se baja lo mismo que
+        // crecieron: así sigues viendo lo que estabas leyendo.
+        column.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
+            override fun onLayoutChange(
+                v: View, left: Int, top: Int, right: Int, bottom: Int,
+                oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int
+            ) {
+                column.removeOnLayoutChangeListener(this)
+                scrollBy(0, column.height - heightBefore)
+            }
+        })
     }
 
     /** Agrega texto al mensaje de Ari en curso (la respuesta que se va escribiendo). */
