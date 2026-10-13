@@ -6,7 +6,7 @@ Este documento lo mantiene Claude. Su fuente está en el repositorio, en docs/AR
 
 ## 1. Qué es Ari
 
-Ari es un asistente personal para Android que funciona con inteligencia artificial local: el modelo Gemma 4 E4B-it, mediante LiteRT-LM. Las conversaciones y los recuerdos no salen del teléfono y no se usan APIs de pago.
+Ari es una asistente personal para Android que funciona con inteligencia artificial local: el modelo Gemma 4 E4B-it, mediante LiteRT-LM. Las conversaciones y los recuerdos no salen del teléfono y no se usan APIs de pago.
 
 - Repositorio: https://github.com/javierhedzd-ops/ari-assistant
 - Teléfono de prueba: POCO X8 Pro Max (12 GB de RAM)
