@@ -65,11 +65,12 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un erro
 - Carga automática del modelo guardado.
 - Clave de depuración fija, para que las versiones nuevas se instalen encima de las anteriores.
 
-### PR #4 — Modo de voz (abierto, pendiente de fusionar)
+### PR #4 — Modo de voz y documentación (fusionado)
 
 - https://github.com/javierhedzd-ops/ari-assistant/pull/4
 - Botón Voz con conversación continua: escuchar, responder, leer en voz alta.
 - Reconocimiento y lectura de voz con los servicios de Android, sin APIs de pago.
+- Documentación para el usuario exportada a Google Drive y CLAUDE.md con las reglas para Claude.
 - Probado en el teléfono: funciona.
 
 ## 5. Ideas pendientes
