@@ -391,3 +391,10 @@ Propuesta de otra sesión (rama ccr-3d48bcea-ddppo3, commit bd7e6a2), adaptada a
 - `buildPrompt` ya no pega "[Contexto privado…]": devuelve el texto (con "[Habla X]" para invitados).
 - `historyPending`/`memoriesPending` ahora significan "hay que recrear la conversación": `askGemma` llama a `freshConversation` antes de enviar. La carga del modelo, `freshConversation` y la recuperación del respaldo usan `openConversation`. Todo pasa por el `executor` de un solo hilo.
 
+## Corrección "Status Code: 13" (versión 0.18.1)
+
+Reportado por el usuario (captura vista por otra sesión, en 0.17.0): después de una respuesta muy larga, "Error de respuesta: Status Code: 13" en cada mensaje, incluso tras recargar el modelo (GPU, con vista). `isContextFull` no reconocía el 13 (INTERNAL), así que no había recuperación.
+- `askGemma.onError`: cualquier error con la respuesta vacía → `freshConversation` y un reintento. Si el reintento también falla en la GPU → `offerCpu()` (diálogo para usar la CPU).
+- `startFastestEngine`: intenta `maxNumTokens = 8192` (LARGE_CONTEXT_TOKENS) fuera de la versión básica y, si el motor no lo acepta, el valor del modelo. `largeContext` decide el historial inicial (4000 o 2000 caracteres).
+- Causa exacta sin confirmar: probablemente la memoria de la plática (KV) llena en la GPU con un mensaje de error distinto.
+

@@ -233,6 +233,8 @@ Una conversación con un modelo tiene dos tipos de texto:
 - Las **instrucciones de sistema** (system prompt): quién es y cómo debe comportarse. Van al principio y el modelo las trata como reglas que valen toda la plática.
 - Los **turnos**: lo que dice el usuario y lo que contesta el modelo.
 
+Esa memoria de corto plazo se mide en **tokens** (pedacitos de palabra) y tiene un tope que se fija al cargar el modelo (la **caché KV**). Desde 0.18.1, en teléfonos potentes Ari pide 8192 tokens, el doble de lo normal, para que las respuestas largas y el historial no la llenen tan rápido. Si se llena, el motor da error; Ari lo nota, empieza una plática nueva y vuelve a intentar.
+
 Antes, Ari pegaba su personalidad y tus recuerdos dentro de tu primer mensaje, como un papelito "[Contexto privado…]". Gemma podía confundirlo con algo que tú dijiste, o perderle importancia con el tiempo. Desde 0.18.0, Ari le da a Gemma la personalidad y los recuerdos como instrucciones de sistema, y los últimos mensajes como turnos anteriores (el **historial inicial**). Es como presentarle a alguien con una ficha antes de que empiece a platicar, en lugar de pasarle una nota a media plática.
 
 ### CPU, GPU y NPU: dónde "piensa" Gemma

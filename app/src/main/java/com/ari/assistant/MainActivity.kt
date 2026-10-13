@@ -107,6 +107,10 @@ class MainActivity : Activity() {
     private lateinit var modelDownload: ModelDownload
     private lateinit var phoneAgent: PhoneAgent
 
+    // true si Gemma cargó con la memoria de plática grande (más historial cabe).
+    @Volatile
+    private var largeContext = false
+
     // "Mira mi pantalla": la pregunta espera a que toques "Permitir".
     private var screenQuestion: String? = null
     private var screenAskedAt = 0L
@@ -584,6 +588,18 @@ class MainActivity : Activity() {
             .setPositiveButton("Rápida (GPU)") { _, _ -> setEngine(gpu = true) }
             .setNegativeButton("Segura (CPU)") { _, _ -> setEngine(gpu = false) }
             .setNeutralButton("Cancelar", null)
+            .show()
+    }
+
+    private fun offerCpu() {
+        AlertDialog.Builder(this)
+            .setTitle("Gemma falló en la GPU")
+            .setMessage(
+                "Gemma no pudo contestar dos veces seguidas usando la GPU del teléfono. " +
+                    "¿La cambio a la CPU? Es más lenta, pero más segura. Puedes volver a la GPU en Ajustes → Velocidad de Gemma."
+            )
+            .setPositiveButton("Usar la CPU") { _, _ -> setEngine(gpu = false) }
+            .setNegativeButton("Seguir con la GPU", null)
             .show()
     }
 
@@ -1350,24 +1366,36 @@ class MainActivity : Activity() {
         // Versión básica (menos de 7 GB de RAM): sin la "vista", que ocupa mucha memoria.
         val basic = ModelChoice.basic(totalRam())
 
-        fun config(backend: Backend, vision: Boolean) = EngineConfig(
+        fun config(backend: Backend, vision: Boolean, tokens: Int?) = EngineConfig(
             modelPath = modelFile.absolutePath,
             backend = backend,
             visionBackend = if (vision) Backend.CPU() else null,
+            maxNumTokens = tokens,
             maxNumImages = if (vision) AttachmentReader.MAX_PDF_PAGES else null,
             cacheDir = cacheDir.absolutePath
         )
 
+        // Memoria de la plática más grande en teléfonos que la aguantan (respuestas largas
+        // y el historial no la llenan tan rápido); si el motor no la acepta, la normal.
+        fun start(backend: () -> Backend, vision: Boolean): Engine? {
+            if (!basic) runCatching { startEngine(config(backend(), vision, LARGE_CONTEXT_TOKENS)) }.getOrNull()?.let {
+                largeContext = true
+                return it
+            }
+            largeContext = false
+            return runCatching { startEngine(config(backend(), vision, null)) }.getOrNull()
+        }
+
         if (tryGpu) {
             // commit (no apply): la marca tiene que quedar escrita antes de tocar la GPU.
             prefs.edit().putString(KEY_GPU, GPU_TRYING).commit()
-            (if (basic) null else runCatching { startEngine(config(Backend.GPU(), vision = true)) }.getOrNull())?.let {
+            (if (basic) null else start({ Backend.GPU() }, vision = true))?.let {
                 prefs.edit().putString(KEY_GPU, GPU_OK).commit()
                 visionReady = true
                 engineLabel = "GPU, con vista"
                 return it
             }
-            runCatching { startEngine(config(Backend.GPU(), vision = false)) }.getOrNull()?.let {
+            start({ Backend.GPU() }, vision = false)?.let {
                 prefs.edit().putString(KEY_GPU, GPU_OK).commit()
                 visionReady = false
                 engineLabel = if (basic) "GPU, versión básica" else "GPU, solo texto"
@@ -1375,14 +1403,16 @@ class MainActivity : Activity() {
             }
             prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
         }
-        (if (basic) null else runCatching { startEngine(config(Backend.CPU(), vision = true)) }.getOrNull())?.let {
+        (if (basic) null else start({ Backend.CPU() }, vision = true))?.let {
             visionReady = true
             engineLabel = "CPU, con vista"
             return it
         }
         visionReady = false
         engineLabel = if (basic) "CPU, versión básica" else "CPU, solo texto"
-        return startEngine(config(Backend.CPU(), vision = false))
+        start({ Backend.CPU() }, vision = false)?.let { return it }
+        largeContext = false
+        return startEngine(config(Backend.CPU(), vision = false, tokens = null))
     }
 
     /** Crea e inicia el motor; si falla, lo cierra para no dejar memoria ocupada. */
@@ -1845,11 +1875,15 @@ class MainActivity : Activity() {
                     runOnUiThread {
                         if (isDestroyed) return@runOnUiThread
                         liveOverlay.removeCallbacks(filler)
-                        // La memoria de la plática se llenó: Ari empieza una conversación nueva
-                        // (con tus recuerdos y los últimos mensajes) y vuelve a intentar una vez.
-                        if (!retried && response.isEmpty() && isContextFull(throwable)) {
+                        // La memoria de la plática se llenó, o el motor falló antes de escribir nada
+                        // (en la GPU a veces solo dice "Status Code: 13"): Ari empieza una
+                        // conversación nueva (con tus recuerdos y los últimos mensajes) y vuelve a intentar una vez.
+                        if (!retried && response.isEmpty()) {
                             chat.finishAri()
-                            chat.addNote("La plática ya era muy larga para la memoria de Gemma. Empiezo una nueva; tus recuerdos siguen aquí.")
+                            chat.addNote(
+                                if (isContextFull(throwable)) "La plática ya era muy larga para la memoria de Gemma. Empiezo una nueva; tus recuerdos siguen aquí."
+                                else "Gemma tuvo un error (${throwable.message ?: "sin detalle"}). Empiezo una plática nueva y lo intento otra vez; tus recuerdos siguen aquí."
+                            )
                             freshConversation {
                                 chat.startAri()
                                 askGemma(text, attachment, savedAs, retried = true)
@@ -1864,6 +1898,8 @@ class MainActivity : Activity() {
                         chat.appendAri("\n\n_No pude terminar la respuesta._")
                         chat.finishAri()
                         sendButton.isEnabled = true
+                        // Falló dos veces seguidas en la GPU: la CPU es más lenta pero más segura.
+                        if (retried && response.isEmpty() && gpuAllowed() && engineLabel.startsWith("GPU")) offerCpu()
                         if (voiceMode) {
                             voice.stopSpeaking()
                             voice.speak("Hubo un error al generar la respuesta.")
@@ -2126,7 +2162,8 @@ class MainActivity : Activity() {
         val saved = database.recentMessages(GemmaContext.MAX_MESSAGES + 1).map {
             GemmaContext.Turn(it.role == ROLE_USER, it.content)
         }
-        val history = GemmaContext.trimHistory(saved).map {
+        val budget = if (largeContext) GemmaContext.MAX_TOTAL_CHARS else GemmaContext.MAX_TOTAL_CHARS / 2
+        val history = GemmaContext.trimHistory(saved, maxTotal = budget).map {
             if (it.fromUser) Message.user(it.text) else Message.model(it.text)
         }
         return engine.createConversation(
@@ -2812,6 +2849,7 @@ class MainActivity : Activity() {
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val FILLER_DELAY_MS = 1800L
         private const val ENGINE_PREFS = "ari_motor"
+        private const val LARGE_CONTEXT_TOKENS = 8192
         private const val VOICE_PREFS = "ari_voces"
         private const val KEY_VOICES_ON = "activo"
         private const val KEY_OWN_AUDIO_NO = "sin_audio_propio"
