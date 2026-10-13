@@ -1,8 +1,10 @@
 package com.ari.assistant
 
 import android.app.Activity
+import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -48,6 +50,14 @@ class MainActivity : Activity() {
     private lateinit var sendButton: Button
     private lateinit var selectButton: Button
     private lateinit var memoryButton: Button
+    private lateinit var voiceButton: Button
+
+    private lateinit var voice: VoiceController
+
+    // Modo voz: Ari escucha, responde y lee la respuesta en voz alta,
+    // y vuelve a escuchar hasta que el usuario lo detiene.
+    private var voiceMode = false
+    private var silentAttempts = 0
 
     private val backgroundColorValue = Color.rgb(18, 18, 24)
     private val green = Color.rgb(120, 220, 170)
@@ -58,6 +68,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         database = AriDatabase(this)
         buildInterface()
+        voice = VoiceController(this, voiceListener)
         restoreHistory()
         loadSavedModel()
     }
@@ -144,6 +155,23 @@ class MainActivity : Activity() {
             setOnClickListener { sendMessage() }
         }
 
+        voiceButton = Button(this).apply {
+            text = VOICE_START_LABEL
+            setOnClickListener { toggleVoiceMode() }
+        }
+
+        val bottomRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(
+                sendButton,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            )
+            addView(
+                voiceButton,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            )
+        }
+
         root.addView(title)
         root.addView(subtitle)
         root.addView(status)
@@ -157,7 +185,7 @@ class MainActivity : Activity() {
             )
         )
         root.addView(input)
-        root.addView(sendButton)
+        root.addView(bottomRow)
 
         setContentView(root)
     }
@@ -297,7 +325,8 @@ class MainActivity : Activity() {
 
         if (text.startsWith("/")) {
             input.text.clear()
-            handleCommand(text)
+            val reply = handleCommand(text)
+            if (voiceMode) voice.speak(reply)
             return
         }
 
@@ -306,6 +335,10 @@ class MainActivity : Activity() {
         val activeConversation = conversation
         if (!modelReady || activeConversation == null) {
             status.text = "El modelo aún no está listo. Selecciona o espera a que cargue."
+            if (voiceMode) {
+                stopVoiceMode(status.text.toString())
+                voice.speak("El modelo aún no está listo.")
+            }
             return
         }
 
@@ -335,8 +368,13 @@ class MainActivity : Activity() {
                     runOnUiThread {
                         saveResponse(response)
                         busy = false
-                        status.text = "Gemma listo."
                         sendButton.isEnabled = true
+                        if (voiceMode) {
+                            status.text = "Ari está hablando..."
+                            voice.speak(response.toString())
+                        } else {
+                            status.text = "Gemma listo."
+                        }
                     }
                 }
 
@@ -348,6 +386,7 @@ class MainActivity : Activity() {
                             "Error de respuesta: ${throwable.message}"
                         appendChat("\n[Error al generar la respuesta]")
                         sendButton.isEnabled = true
+                        if (voiceMode) voice.speak("Hubo un error al generar la respuesta.")
                     }
                 }
             }
@@ -400,52 +439,148 @@ class MainActivity : Activity() {
             "Mensaje del usuario: $text"
     }
 
-    private fun handleCommand(command: String) {
+    /** Ejecuta un comando local, muestra la respuesta y la devuelve. */
+    private fun handleCommand(command: String): String {
         val name = command.substringBefore(" ").lowercase()
         val argument = command.substringAfter(" ", "").trim()
 
-        appendChat("\n\nTú: $command\n\nAri: ")
-
-        when (name) {
+        val reply = when (name) {
             "/recuerda" -> {
                 if (argument.isEmpty()) {
-                    appendChat("Escribe qué quieres que recuerde, por ejemplo: /recuerda Me gusta el café.")
+                    "Escribe qué quieres que recuerde, por ejemplo: /recuerda Me gusta el café."
                 } else {
                     addMemory(argument)
-                    appendChat("Lo recordaré: $argument")
+                    "Lo recordaré: $argument"
                 }
             }
 
             "/memoria" -> {
                 val memories = database.memories()
                 if (memories.isEmpty()) {
-                    appendChat("Aún no tengo recuerdos guardados.")
+                    "Aún no tengo recuerdos guardados."
                 } else {
-                    appendChat("Esto es lo que recuerdo:")
-                    memories.forEach { appendChat("\n• ${it.content}") }
+                    "Esto es lo que recuerdo:" +
+                        memories.joinToString("") { "\n• ${it.content}" }
                 }
             }
 
             "/olvida" -> {
                 if (argument.isEmpty()) {
-                    appendChat("Escribe qué debo olvidar, por ejemplo: /olvida café.")
+                    "Escribe qué debo olvidar, por ejemplo: /olvida café."
                 } else {
                     val deleted = database.deleteMemoriesMatching(argument)
                     if (deleted > 0) memoriesPending = true
-                    appendChat(
-                        when (deleted) {
-                            0 -> "No encontré recuerdos que contengan \"$argument\"."
-                            1 -> "Olvidé 1 recuerdo."
-                            else -> "Olvidé $deleted recuerdos."
-                        }
-                    )
+                    when (deleted) {
+                        0 -> "No encontré recuerdos que contengan \"$argument\"."
+                        1 -> "Olvidé 1 recuerdo."
+                        else -> "Olvidé $deleted recuerdos."
+                    }
                 }
             }
 
-            else -> appendChat(
-                "No conozco ese comando. Usa /recuerda <texto>, /memoria o /olvida <texto>."
-            )
+            else -> "No conozco ese comando. Usa /recuerda <texto>, /memoria o /olvida <texto>."
         }
+
+        appendChat("\n\nTú: $command\n\nAri: $reply")
+        return reply
+    }
+
+    private fun toggleVoiceMode() {
+        if (voiceMode) {
+            stopVoiceMode("Modo voz detenido.")
+            return
+        }
+
+        if (!voice.isRecognitionAvailable) {
+            status.text = "Este teléfono no tiene un servicio de reconocimiento de voz disponible."
+            return
+        }
+
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_AUDIO)
+            return
+        }
+
+        startVoiceMode()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQUEST_AUDIO) return
+
+        if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+            startVoiceMode()
+        } else {
+            status.text = "Ari necesita permiso de micrófono para el modo voz."
+        }
+    }
+
+    private fun startVoiceMode() {
+        voiceMode = true
+        silentAttempts = 0
+        voiceButton.text = VOICE_STOP_LABEL
+        if (busy) {
+            // Cuando termine la respuesta en curso, Ari la leerá y escuchará.
+            status.text = "Modo voz activo. Esperando la respuesta de Ari..."
+        } else {
+            listen()
+        }
+    }
+
+    private fun stopVoiceMode(message: String) {
+        voiceMode = false
+        voice.stopAll()
+        voiceButton.text = VOICE_START_LABEL
+        status.text = message
+    }
+
+    private fun listen() {
+        status.text = "Preparando el micrófono..."
+        voice.startListening()
+    }
+
+    private val voiceListener = object : VoiceController.Listener {
+        override fun onListeningStarted() {
+            if (voiceMode) status.text = "Escuchando... habla ahora."
+        }
+
+        override fun onPartialSpeech(text: String) {
+            if (voiceMode) input.setText(text)
+        }
+
+        override fun onSpeechResult(text: String) {
+            if (!voiceMode) return
+            silentAttempts = 0
+            input.setText(text)
+            sendMessage()
+        }
+
+        override fun onSpeechError(message: String, noSpeech: Boolean) {
+            if (!voiceMode) return
+
+            if (noSpeech && ++silentAttempts < MAX_SILENT_ATTEMPTS) {
+                listen()
+            } else if (noSpeech) {
+                stopVoiceMode("Modo voz pausado: no te escuché. Toca \"$VOICE_START_LABEL\" para seguir.")
+            } else {
+                stopVoiceMode(message)
+            }
+        }
+
+        override fun onSpeakingFinished() {
+            if (voiceMode && !busy) listen()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (voiceMode) stopVoiceMode("Modo voz detenido.")
     }
 
     private fun addMemory(content: String) {
@@ -525,11 +660,16 @@ class MainActivity : Activity() {
         }
 
         executor.shutdown()
+        voice.release()
         database.close()
     }
 
     companion object {
         private const val PICK_MODEL = 101
+        private const val REQUEST_AUDIO = 102
+        private const val MAX_SILENT_ATTEMPTS = 3
+        private const val VOICE_START_LABEL = "🎤 Voz"
+        private const val VOICE_STOP_LABEL = "⏹ Detener"
         private const val MODEL_FILE_NAME = "gemma-model.litertlm"
         private const val ROLE_USER = "user"
         private const val ROLE_ARI = "ari"
