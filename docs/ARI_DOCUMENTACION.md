@@ -182,7 +182,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Seguridad: revisión de seguridad hecha; Ari ya no contrata modelos sin tu aprobación ni les pasa tus recuerdos, y no aprueba redes sin contraseña.
 - Revisión de código hecha: 10 problemas corregidos, entre ellos que "olvida eso" borraba recuerdos, un ciclo con el permiso de ubicación y cierres por respuestas enormes de la red.
 - Estabilidad: Ari ya no se cierra al girar el teléfono o cambiar el tema; libera la memoria al cambiar de modelo; aguanta errores de memoria; no deja archivos del modelo a medias; y si el equipo no responde, contesta ella con Gemma.
-- Widget animado para la pantalla de inicio, con acceso a Ari y a los pendientes.
+- Widget animado para la pantalla de inicio, con acceso a Ari y al tablero de Claude (con barra de progreso).
 - Compila correctamente; falta probarlo en el teléfono.
 
 ## 5. Plan hacia el lanzamiento
