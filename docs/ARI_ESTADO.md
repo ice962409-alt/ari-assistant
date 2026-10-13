@@ -398,3 +398,8 @@ Reportado por el usuario (captura vista por otra sesión, en 0.17.0): después d
 - `startFastestEngine`: intenta `maxNumTokens = 8192` (LARGE_CONTEXT_TOKENS) fuera de la versión básica y, si el motor no lo acepta, el valor del modelo. `largeContext` decide el historial inicial (4000 o 2000 caracteres).
 - Causa exacta sin confirmar: probablemente la memoria de la plática (KV) llena en la GPU con un mensaje de error distinto.
 
+## Primer uso con la recomendación de modelo (versión 0.19.0)
+
+Pedido del usuario (vía otra sesión): que quien reciba Ari vea sola la recomendación de modelo.
+- `offerModelOnce()`: sin modelo y sin descarga en curso, una sola vez (prefs `ari_descarga/ofrecida`): diálogo con `ModelChoice.recommend` y botones "Descargar ahora" (o "Descargar de todos modos" si `tooWeak`), "Más tarde" (aviso en la barra de estado) y "Ya tengo el archivo". Se llama después del nombre en el primer uso, o al abrir en instalaciones que aún no tienen modelo.
+

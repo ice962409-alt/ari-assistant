@@ -209,7 +209,7 @@ class MainActivity : Activity() {
         restoreHistory()
         loadSavedModel()
         recruitTeam()
-        if (firstRun) askUserName(firstTime = true) else remindBackup()
+        if (firstRun) askUserName(firstTime = true) else if (!offerModelOnce()) remindBackup()
         handleLaunch(intent)
         // Por si Android borró las alarmas (reinicio, actualización, respaldo recuperado).
         storage.execute { runCatching { AlarmReminders.rescheduleAll(this, database) } }
@@ -293,12 +293,48 @@ class MainActivity : Activity() {
             .setPositiveButton("Listo") { _, _ ->
                 updateProfile(profile.copy(userName = Profile.cleanName(field.text.toString())))
                 refreshWelcome()
+                if (firstTime) offerModelOnce()
             }
             .setNegativeButton(if (firstTime) "Ahora no" else "Cancelar") { _, _ ->
-                if (firstTime) updateProfile(profile)
+                if (firstTime) {
+                    updateProfile(profile)
+                    offerModelOnce()
+                }
             }
             .setCancelable(!firstTime)
             .show()
+    }
+
+    /**
+     * La primera vez sin modelo, Ari muestra sola qué Gemma le conviene a este teléfono,
+     * para que nadie tenga que encontrar el botón Modelo. Solo una vez: con "Más tarde",
+     * queda el aviso en la barra de estado. Nada se descarga sin tocar el botón.
+     */
+    private fun offerModelOnce(): Boolean {
+        val prefs = getSharedPreferences(MODEL_OFFER_PREFS, MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_MODEL_OFFERED, false) || savedModelFile() != null || modelDownload.isRunning()) return false
+        prefs.edit().putBoolean(KEY_MODEL_OFFERED, true).apply()
+        val advice = ModelChoice.recommend(totalRam(), modelDownload.freeSpace())
+        val model = advice.model
+        val message = buildString {
+            append(advice.reason).append("\n\n")
+            append("Para pensar, Ari necesita su modelo de inteligencia artificial: ")
+            append("${model.label}, unos ${ModelDownloadText.gb(model.bytes)} GB.\n\n")
+            append("• Es la única vez que Ari usa internet; tus pláticas no salen del teléfono.\n")
+            append("• Solo por Wi-Fi, para no gastar tus datos.\n")
+            append("• Necesitas unos ${ModelDownloadText.gb(model.spaceNeeded)} GB libres.\n")
+            append("• Tarda de 10 minutos a una hora y sigue aunque cierres Ari.")
+        }
+        AlertDialog.Builder(this)
+            .setTitle(if (advice.tooWeak) "Este teléfono tiene poca memoria" else "Para empezar, descarga a Gemma")
+            .setMessage(message)
+            .setPositiveButton(if (advice.tooWeak) "Descargar de todos modos" else "Descargar ahora") { _, _ -> startDownload(model) }
+            .setNegativeButton("Más tarde") { _, _ ->
+                status.text = "Cuando quieras, toca Modelo para descargar a Gemma (${model.label})."
+            }
+            .setNeutralButton("Ya tengo el archivo") { _, _ -> pickModelFile() }
+            .show()
+        return true
     }
 
     private fun showSettingsDialog() {
@@ -2849,6 +2885,8 @@ class MainActivity : Activity() {
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val FILLER_DELAY_MS = 1800L
         private const val ENGINE_PREFS = "ari_motor"
+        private const val MODEL_OFFER_PREFS = "ari_descarga"
+        private const val KEY_MODEL_OFFERED = "ofrecida"
         private const val LARGE_CONTEXT_TOKENS = 8192
         private const val VOICE_PREFS = "ari_voces"
         private const val KEY_VOICES_ON = "activo"

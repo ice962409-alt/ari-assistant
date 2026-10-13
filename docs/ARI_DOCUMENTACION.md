@@ -35,7 +35,7 @@ La primera vez que abres esta versión, Ari te pregunta **cómo te llamas** para
 
 ### Instalar Ari en otro teléfono (versión básica)
 
-Ari se instala con el mismo APK en cualquier teléfono con Android 8 o más nuevo y procesador de 64 bits. Al tocar **Modelo**, Ari mide la memoria RAM y el espacio libre y pone primero el modelo que mejor corre ahí:
+Ari se instala con el mismo APK en cualquier teléfono con Android 8 o más nuevo y procesador de 64 bits. La primera vez, después de preguntar el nombre, Ari muestra sola su recomendación con "Descargar ahora", "Más tarde" o "Ya tengo el archivo" (y siempre está en el botón **Modelo**). Ari mide la memoria RAM y el espacio libre y pone primero el modelo que mejor corre ahí:
 
 - **Gemma 4 E4B** (3.7 GB): el más listo, para teléfonos con 8 GB de RAM o más (como el POCO).
 - **Gemma 4 E2B** (2.6 GB): más ligero y rápido, para teléfonos con 4 a 6 GB de RAM, o si el completo no cabe.
@@ -417,6 +417,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Primer uso más fácil (0.19.0): la primera vez sin modelo, después de preguntar el nombre, Ari muestra sola qué Gemma le conviene al teléfono (con tamaño, espacio y "solo por Wi-Fi") y ofrece "Descargar ahora", "Más tarde" o "Ya tengo el archivo". Solo pregunta una vez; nada se descarga sin tocar el botón.
 - Corrección (0.18.1): tras una respuesta muy larga, Ari se quedaba en "Error de respuesta: Status Code: 13" y fallaban todos los mensajes. Ahora, si Gemma falla antes de escribir, Ari empieza una plática nueva y lo intenta otra vez; si vuelve a fallar en la GPU, ofrece cambiar a la CPU. Y en teléfonos potentes Gemma tiene el doble de memoria de plática (8192 tokens).
 - Gemma recuerda mejor (0.18.0): la personalidad de Ari, tus recuerdos, tu libreta y los últimos 20 mensajes van en las "instrucciones de sistema" de la conversación, así Gemma no los olvida a media plática. Si cambias un recuerdo o el tono, la siguiente pregunta empieza una conversación nueva que ya lo trae. Idea de otra sesión de Claude.
 - Informe de fallos (0.17.0): si Ari se cierra sola, al abrir ofrece mandar el informe (solo datos del teléfono y del error) por WhatsApp o correo; y Ajustes → Reportar un problema. Ari no lo manda sola.
