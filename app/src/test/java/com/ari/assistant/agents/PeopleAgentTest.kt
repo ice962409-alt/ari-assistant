@@ -36,6 +36,11 @@ class PeopleAgentTest {
     }
 
     @Test
+    fun elEjemploDeLaLeccionFunciona() {
+        assertTrue(say("mi hermana Laura es enfermera")!!.reply.contains("Laura"))
+    }
+
+    @Test
     fun recuerdaAQuienLeMencionas() {
         assertEquals("Anotado: Luis (tu primo) es dentista.", say("mi primo Luis es dentista")?.reply)
         val luis = store.saved.single()

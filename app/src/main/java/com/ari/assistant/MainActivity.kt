@@ -206,7 +206,10 @@ class MainActivity : Activity() {
         restoreHistory()
         loadSavedModel()
         ceoTeam.recruit()
-        if (firstRun) askUserName(firstTime = true) else if (!offerModelOnce()) remindBackup()
+        if (firstRun) askUserName(firstTime = true) else if (!offerModelOnce()) {
+            remindBackup()
+            dailyTip()
+        }
         handleLaunch(intent)
         // Por si Android borró las alarmas (reinicio, actualización, respaldo recuperado).
         storage.execute { runCatching { AlarmReminders.rescheduleAll(this, database) } }
@@ -292,6 +295,7 @@ class MainActivity : Activity() {
                 refreshWelcome()
                 if (firstTime) {
                     introduceOnce()
+                    startLessons(quiet = true)
                     offerModelOnce()
                 }
             }
@@ -299,6 +303,7 @@ class MainActivity : Activity() {
                 if (firstTime) {
                     updateProfile(profile)
                     introduceOnce()
+                    startLessons(quiet = true)
                     offerModelOnce()
                 }
             }
@@ -326,10 +331,68 @@ class MainActivity : Activity() {
             .setTitle("Color de Ari")
             .setSingleChoiceItems(names, AriColors.ALL.indexOf(currentColor)) { dialog, which ->
                 applyColor(AriColors.ALL[which])
+                lessonDone("color")
                 dialog.dismiss()
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    // --- Lecciones: Ari te enseña a usarla, una cosa a la vez ---
+
+    private fun lessonPrefs() = getSharedPreferences(LESSON_PREFS, MODE_PRIVATE)
+
+    private fun lessonsDone(): Set<String> = lessonPrefs().getStringSet(KEY_LESSONS_DONE, emptySet()) ?: emptySet()
+
+    /** Empieza (o sigue) las lecciones. [quiet]: sin repetir la explicación (primer uso). */
+    private fun startLessons(quiet: Boolean = false) {
+        val vision = phoneAbilities().vision
+        val next = AriLessons.next(lessonsDone(), vision)
+        if (next == null) {
+            chat.addAri(AriLessons.finished())
+            return
+        }
+        lessonPrefs().edit().putBoolean(KEY_LESSONS_ACTIVE, true).apply()
+        if (!quiet) chat.addAri("Te enseño a usarme con cosas útiles, una a la vez. Cuando la hagas, te digo la siguiente.")
+        showLesson(next, vision)
+    }
+
+    private fun showLesson(lesson: AriLessons.Lesson, vision: Boolean) {
+        val all = AriLessons.available(vision)
+        chat.addAri(AriLessons.prompt(lesson, all.indexOf(lesson) + 1, all.size))
+    }
+
+    /** Pasó algo que enseña una lección ([handler]: el agente, "gemma", "voz", "foto" o "color"). */
+    private fun lessonDone(handler: String) {
+        val lesson = AriLessons.completedBy(handler) ?: return
+        val done = lessonsDone()
+        if (lesson.id in done) return
+        val updated = done + lesson.id
+        lessonPrefs().edit().putStringSet(KEY_LESSONS_DONE, updated).apply()
+        if (!lessonPrefs().getBoolean(KEY_LESSONS_ACTIVE, false)) return
+        val vision = phoneAbilities().vision
+        val all = AriLessons.available(vision)
+        chat.addNote(AriLessons.congrats(lesson, all.count { it.id in updated }, all.size))
+        val next = AriLessons.next(updated, vision)
+        if (next == null) {
+            lessonPrefs().edit().putBoolean(KEY_LESSONS_ACTIVE, false).apply()
+            chat.addAri(AriLessons.finished())
+        } else {
+            showLesson(next, vision)
+        }
+    }
+
+    /** Una vez al día (en la Ari para otros), si aún no aprenden todo, Ari sugiere lo siguiente que puedes probar. */
+    private fun dailyTip() {
+        // Solo en la Ari para otras personas: tú ya la conoces.
+        if (ceoTeam.enabled) return
+        val today = java.time.LocalDate.now().toString()
+        val prefs = lessonPrefs()
+        if (prefs.getString(KEY_TIP_DAY, null) == today) return
+        val vision = phoneAbilities().vision
+        val next = AriLessons.next(lessonsDone(), vision) ?: return
+        prefs.edit().putString(KEY_TIP_DAY, today).apply()
+        chat.addNote("Consejo del día: ${next.title.lowercase()}. ${next.tryThis}")
     }
 
     private fun phoneAbilities() = AriAbilities.Phone(
@@ -400,6 +463,7 @@ class MainActivity : Activity() {
             "Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}",
             "Reconocer voces",
             "Color de Ari: ${currentColor.name}",
+            "Aprender a usar Ari",
             "Reportar un problema",
             "Acerca de Ari y licencias"
         )
@@ -413,7 +477,8 @@ class MainActivity : Activity() {
                     3 -> chooseEngine()
                     4 -> showVoicesDialog()
                     5 -> chooseColor()
-                    6 -> askProblemReport()
+                    6 -> startLessons()
+                    7 -> askProblemReport()
                     else -> showAbout()
                 }
             }
@@ -1607,8 +1672,17 @@ class MainActivity : Activity() {
         AriColors.requested(text)?.let { palette ->
             input.text.clear()
             applyColor(palette)
+            lessonDone("color")
             val reply = if (palette == AriColors.DEFAULT) "¡Listo! Volví a mi color hielo." else "¡Listo! Ahora soy color ${palette.name.lowercase()}. ¿Te gusta?"
             answerLocally(text, reply)
+            return
+        }
+
+        if (AriLessons.asks(text)) {
+            input.text.clear()
+            saveMessage(ROLE_USER, text)
+            chat.addUser(text)
+            startLessons()
             return
         }
 
@@ -1955,6 +2029,9 @@ class MainActivity : Activity() {
                         if (!forGuest) saveResponse(response)
                         chat.finishAri()
                         busy = false
+                        if (!forGuest && response.isNotEmpty()) {
+                            lessonDone(if (attachment?.needsVision == true) "foto" else "gemma")
+                        }
                         sendButton.isEnabled = true
                         notifyIfAway(response.toString())
                         if (speakLive && voiceMode) {
@@ -2126,6 +2203,7 @@ class MainActivity : Activity() {
             saveMessage(ROLE_ARI, result.reply)
             chat.appendAri(result.reply)
             chat.finishAri()
+            if (result.success) lessonDone(agent.id)
             notifyIfAway(result.reply)
             if (voiceMode) {
                 status.text = "Ari está hablando..."
@@ -2181,7 +2259,7 @@ class MainActivity : Activity() {
         if (guest) {
             return engine.createConversation(ConversationConfig(systemInstruction = Contents.of(guestPreface())))
         }
-        val instruction = StringBuilder(profile.personality())
+        val instruction = StringBuilder(profile.personality(ceo = ceoTeam.enabled))
         val memories = database.memories()
         if (memories.isNotEmpty()) {
             instruction.append("\n\nRecuerdos guardados sobre el usuario (úsalos para responder, pero no los repitas literalmente):\n")
@@ -2343,6 +2421,7 @@ class MainActivity : Activity() {
 
     private fun startVoiceMode() {
         voiceMode = true
+        lessonDone("voz")
         silentAttempts = 0
         voiceButton.text = VOICE_STOP_LABEL
         // Así Ari te sigue escuchando si sales de la app o ella abre otra por ti.
@@ -2881,6 +2960,10 @@ class MainActivity : Activity() {
         private const val KEY_MODEL_OFFERED = "ofrecida"
         private const val KEY_INTRODUCED = "presentada"
         private const val COLOR_PREFS = "ari_color"
+        private const val LESSON_PREFS = "ari_lecciones"
+        private const val KEY_LESSONS_DONE = "hechas"
+        private const val KEY_LESSONS_ACTIVE = "activas"
+        private const val KEY_TIP_DAY = "consejo_dia"
         private const val KEY_COLOR = "color"
         private const val LARGE_CONTEXT_TOKENS = 8192
         private const val VOICE_PREFS = "ari_voces"

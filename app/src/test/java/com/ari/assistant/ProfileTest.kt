@@ -37,6 +37,15 @@ class ProfileTest {
     }
 
     @Test
+    fun laAriParaOtrosNoEsCeoYAyudaEnElDiaADia() {
+        val text = Profile("Ana").personality(ceo = false)
+        assertFalse(text.contains("CEO"))
+        assertTrue(text.contains("vida diaria"))
+        assertTrue(text.contains("enséñame"))
+        assertTrue(text.endsWith("Respondes siempre en español."))
+    }
+
+    @Test
     fun limpiaElNombre() {
         assertEquals("María José", Profile.cleanName("  María\n  José "))
         assertEquals(Profile.MAX_NAME_LENGTH, Profile.cleanName("a".repeat(100)).length)

@@ -26,6 +26,8 @@ class ChatView(context: Context) : ScrollView(context) {
 
     private var welcome: View? = null
 
+    private val SUGGESTIONS = listOf("¿Qué puedes hacer?", "Enséñame a usarte", "Ayúdame a organizar mi día")
+
     /** Toque en una sugerencia de la bienvenida (lo envía como si lo escribieras). */
     var onSuggestion: ((String) -> Unit)? = null
     private var welcomeOrb: AriOrbView? = null
@@ -70,20 +72,22 @@ class ChatView(context: Context) : ScrollView(context) {
             gravity = Gravity.CENTER
             setPadding(0, dp(8f), 0, 0)
         })
-        // "¿Qué puedes hacer?": un toque y Ari cuenta todo lo que sabe hacer.
-        box.addView(TextView(context).apply {
-            text = "¿Qué puedes hacer?"
-            textSize = 15f
-            setTextColor(AriTheme.text)
-            gravity = Gravity.CENTER
-            background = AriTheme.rounded(context, AriTheme.bubble, 20f)
-            setPadding(dp(18f), dp(10f), dp(18f), dp(10f))
-            isClickable = true
-            setOnClickListener { onSuggestion?.invoke(text.toString()) }
-        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            topMargin = dp(20f)
-        })
+        // Sugerencias: un toque y se le dice a Ari (lo que puede hacer, aprender a usarla, algo del día).
+        SUGGESTIONS.forEachIndexed { index, suggestion ->
+            box.addView(TextView(context).apply {
+                text = suggestion
+                textSize = 15f
+                setTextColor(AriTheme.text)
+                gravity = Gravity.CENTER
+                background = AriTheme.rounded(context, AriTheme.bubble, 20f)
+                setPadding(dp(18f), dp(10f), dp(18f), dp(10f))
+                isClickable = true
+                setOnClickListener { onSuggestion?.invoke(suggestion) }
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+                topMargin = dp(if (index == 0) 20f else 8f)
+            })
+        }
         welcome = box
         column.addView(box, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
     }

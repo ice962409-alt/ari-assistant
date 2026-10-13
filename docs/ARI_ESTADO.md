@@ -428,3 +428,11 @@ Decisión del usuario: "Dos versiones del APK".
 - main: `CeoHost` (lo que CeoTeam usa de MainActivity) y `PrivateAddress` (antes `NetworkGuard.isPrivateAddress`, lo usa el respaldo).
 - Actions: pruebas de ambas versiones; artefactos `ari-debug-apk` (completa) y `ari-otros-apk`.
 
+## Ari enseña y ayuda en el día a día (versión 0.23.0)
+
+Pedido del usuario: la Ari para otras personas debe mejorar su vida cotidiana, hacerles fácil las cosas y enseñarles a usarla.
+- `AriLessons` (pruebas en `AriLessonsTest`): 8 lecciones (platicar, recordatorio, recuerdo, personas, teléfono, voz, foto, color) con algo concreto para probar; `completedBy(handler)` según el agente que atendió, "gemma", "voz", "foto" o "color"; `asks()` reconoce "enséñame", "¿cómo te uso?", "tutorial".
+- MainActivity: `startLessons`, `lessonDone` (prefs `ari_lecciones`: hechas, activas, consejo_dia), `dailyTip` (solo versión para otros). Se marcan al terminar delegaciones, respuestas de Gemma, modo voz y cambio de color. Primer uso: empiezan solas tras la presentación.
+- `Profile.personality(ceo)`: con `ceo = false` (versión para otros) no habla de ser CEO; se enfoca en la vida diaria y en ofrecer la frase exacta de las funciones.
+- Bienvenida: sugerencias "¿Qué puedes hacer?", "Enséñame a usarte", "Ayúdame a organizar mi día".
+

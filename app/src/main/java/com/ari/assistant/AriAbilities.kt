@@ -45,7 +45,7 @@ object AriAbilities {
         if (phone.voices) append("**Reconocer tu voz**: en Ajustes → Reconocer voces, para saber cuándo eres tú.\n\n")
         append("**Cambiar de color**: \"ponte rosa\", \"cambia tu color a lila\" (o en Ajustes → Color de Ari).\n\n")
         append("**Avisarte**: si sales mientras trabajo, te escribo en las notificaciones y me puedes contestar ahí.\n\n")
-        append("Pregúntame \"¿qué puedes hacer?\" cuando quieras volver a ver esto.")
+        append("Escribe \"enséñame\" y te enseño a usarme paso a paso. Pregúntame \"¿qué puedes hacer?\" cuando quieras volver a ver esto.")
     }
 
     /** Versión corta para decirla en voz. */

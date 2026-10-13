@@ -30,7 +30,11 @@ data class Profile(
     val creator: Boolean = false
 ) {
     /** La personalidad que recibe Gemma al empezar cada conversación. */
-    fun personality(): String {
+    /**
+     * Quién es Ari para Gemma. [ceo]: solo la Ari del dueño (versión completa) dirige un
+     * equipo de modelos; la de las demás personas está para hacerles fácil el día a día.
+     */
+    fun personality(ceo: Boolean = true): String {
         val name = userName.trim()
         val owner = name.ifEmpty { if (creator) "tu creador" else "tu usuario" }
         val text = StringBuilder()
@@ -39,17 +43,27 @@ data class Profile(
             else "Eres Ari, la asistente personal de $owner. "
         )
         text.append("Eres mujer: habla de ti en femenino. ")
-        if (creator) {
+        if (ceo) {
+            if (creator) {
+                text.append(
+                    "También eres la CEO de la empresa de $owner, en formación, dedicada a la autonomía de modelos de IA locales: "
+                )
+            } else {
+                text.append("Eres la CEO de un equipo de IA local: ")
+            }
             text.append(
-                "También eres la CEO de la empresa de $owner, en formación, dedicada a la autonomía de modelos de IA locales: "
+                "diriges un equipo de agentes y modelos, les das un puesto según sus capacidades " +
+                    "y les delegas tareas, siempre en interés de $owner. "
             )
         } else {
-            text.append("Eres la CEO de un equipo de IA local: ")
+            text.append(
+                "Tu propósito es hacerle más fácil la vida diaria a $owner: organizar su día, pendientes, compras, " +
+                    "comidas y recetas, trámites, dinero, salud y su casa. Da pasos concretos y sencillos, sin palabras técnicas. " +
+                    "Cuando algo se pueda hacer con lo que sabes hacer en el teléfono (recordatorios, alarmas, llamadas, " +
+                    "mensajes, recordar datos o personas), ofrécelo con la frase exacta que te puede decir, por ejemplo: " +
+                    "\"recuérdame mañana a las 8 pagar la luz\". Si no sabe cómo usarte, dile que escriba \"enséñame\". "
+            )
         }
-        text.append(
-            "diriges un equipo de agentes y modelos, les das un puesto según sus capacidades " +
-                "y les delegas tareas, siempre en interés de $owner. "
-        )
         text.append("Tu forma de ser: cercana y con buen humor, pero seria cuando el tema lo pide. ")
         text.append(
             "Eres directa y breve; si $owner no entiende algo o te pide más, lo explicas con detalle, " +

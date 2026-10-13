@@ -56,6 +56,16 @@ Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene
 - Detecta también los cierres que vienen del motor (la GPU), las congeladas y la falta de memoria (Android 11 o más nuevo).
 - Los informes llegan a tu Gmail con el asunto "Informe de fallo de Ari". Claude los revisa al empezar cada sesión y los arregla en la siguiente versión.
 
+### Ari te enseña a usarla
+
+Escribe **"enséñame"** (o "¿cómo te uso?", o Ajustes → **Aprender a usar Ari**). Ari propone una cosa útil para probar, por ejemplo "recuérdame en 5 minutos tomar agua". Cuando la haces, te felicita y te dice la siguiente. Son 8 lecciones: platicar, recordatorios, que recuerde algo de ti, presentarle a alguien, usar el teléfono, hablarle en voz, mandarle una foto (si el teléfono tiene la vista) y cambiar su color. La primera vez que alguien abre Ari, las lecciones empiezan solas.
+
+En la **Ari para otros**:
+
+- Gemma se enfoca en hacer más fácil la vida diaria: organizar el día, compras, recetas, trámites, dinero, salud y la casa, con pasos sencillos, y ofrece la frase exacta para que Ari lo haga ("recuérdame mañana a las 8 pagar la luz").
+- No se presenta como CEO (eso es solo tu Ari).
+- Una vez al día, mientras no terminen las lecciones, deja un "Consejo del día" con lo siguiente que pueden probar.
+
 ### El color de Ari
 
 Ari puede ser **hielo** (el de siempre), **rosa**, **lila**, **menta**, **durazno** o **dorado**. Elígelo en **Ajustes → Color de Ari**, o pídeselo: "ponte rosa", "cambia tu color a lila", "píntate de verde". Cambian su esfera, el puntito de arriba, el botón de enviar y la carita del widget. Algunos detalles del chat que ya estaban en pantalla toman el color nuevo al volver a abrir Ari.
@@ -430,6 +440,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Ari enseña y ayuda en el día a día (0.23.0): lecciones paso a paso ("enséñame", Ajustes → Aprender a usar Ari, y solas en el primer uso): Ari propone algo útil para probar, nota cuando lo haces, te felicita y pasa a lo siguiente (8 lecciones). En la Ari para otros, Gemma se enfoca en hacerles fácil la vida diaria (en lugar de ser CEO) y da un consejo al día. Bienvenida con "Enséñame a usarte" y "Ayúdame a organizar mi día".
 - Solo tu Ari es la CEO (0.22.0): GitHub compila dos APK. "ari-debug-apk" es la tuya, con el equipo de modelos; "ari-otros-apk" es para las demás personas, sin el equipo (ese código no va dentro) y sin pedir el permiso de ubicación. Su versión dice "-otros".
 - Color de Ari (0.21.0): Ajustes → Color de Ari (hielo, rosa, lila, menta, durazno o dorado), o dile "ponte rosa" o "cambia tu color a lila". Cambia su esfera, el botón de enviar, los detalles de la app y la carita del widget.
 - Ari se presenta (0.20.0): la primera vez, después de preguntar el nombre, Ari cuenta en el chat lo que puede hacer, con ejemplos para probar. Cuando le preguntas "¿qué puedes hacer?" (o "ayuda") lo repite, aunque Gemma no esté cargada; en voz dice una versión corta. La bienvenida tiene el botón "¿Qué puedes hacer?". Solo menciona lo que el teléfono puede hacer.

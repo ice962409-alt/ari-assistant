@@ -31,6 +31,7 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Esfera más elaborada (0.13.2), decisión del usuario. Falta [prueba].
 - [autónomo] Reconocer voces (0.14.0), decidido por el usuario. Falta [prueba] (sobre todo si el reconocedor del POCO acepta el audio de Ari).
 - [autónomo] Contexto de Gemma con ConversationConfig (0.18.0), idea de otra sesión de Claude (rama ccr-3d48bcea-ddppo3, commit bd7e6a2). Falta [prueba]: que siga recordando y que la primera respuesta no tarde mucho más.
+- [autónomo] Lecciones para aprender a usar Ari y enfoque en la vida diaria en la versión para otros (0.23.0), pedido por el usuario. Falta [prueba] con el tester.
 - [autónomo] Dos versiones: completa (CEO, del dueño) y para otros, sin equipo (0.22.0), decisión del usuario. Falta [prueba] de ari-otros-apk en el teléfono del tester.
 - [autónomo] Color de Ari (0.21.0), pedido por el usuario. Falta [prueba] (sobre todo cómo se ve la carita del widget en cada color).
 - [autónomo] Ari se presenta y dice lo que puede hacer (0.20.0), pedido por el usuario. Falta [prueba].
