@@ -29,7 +29,7 @@ Ari es una asistente personal para Android que funciona con inteligencia artific
 
 Las siguientes veces, el modelo carga solo al abrir la app. Descargar el modelo es la **única vez que Ari usa internet**, y solo cuando tú lo pides: tus conversaciones y recuerdos no salen del teléfono.
 
-Si sales de Ari mientras trabaja (una respuesta larga, una tarea del equipo o cargando a Gemma), te avisa con una notificación cuando termina.
+Si sales de Ari mientras trabaja (una respuesta larga, una tarea del equipo o cargando a Gemma), te escribe en su chat de notificaciones cuando termina (ver "El chat de Ari en las notificaciones").
 
 La primera vez que abres esta versión, Ari te pregunta **cómo te llamas** para llamarte por tu nombre. Puedes dejarlo para después con "Ahora no".
 
