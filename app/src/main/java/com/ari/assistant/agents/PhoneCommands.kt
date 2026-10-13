@@ -4,8 +4,11 @@ package com.ari.assistant.agents
 sealed class PhoneAction {
     data class OpenApp(val name: String) : PhoneAction()
     data class Dial(val number: String) : PhoneAction()
+    /** "llama a mamá": se busca el número en los contactos. */
+    data class DialContact(val name: String) : PhoneAction()
     /** [number] vacío: WhatsApp pregunta a quién enviarlo. */
     data class WhatsApp(val number: String, val text: String) : PhoneAction()
+    data class WhatsAppContact(val name: String, val text: String) : PhoneAction()
     data class Alarm(val hour: Int, val minute: Int, val label: String) : PhoneAction()
     data class Timer(val seconds: Int, val label: String) : PhoneAction()
     data class WebSearch(val query: String) : PhoneAction()
@@ -17,6 +20,8 @@ sealed class PhoneAction {
 }
 
 data class InstalledApp(val label: String, val packageName: String)
+
+data class PhoneContact(val name: String, val number: String)
 
 /**
  * Entiende órdenes como "abre WhatsApp", "llama al 55 1234 5678",
@@ -46,10 +51,18 @@ object PhoneCommands {
             val restPlain = p.substring(found.range.last + 1)
             val number = NUMBER.find(restPlain)
             var textStart = number?.range?.last?.plus(1) ?: 0
-            SAYING.find(restPlain, textStart)?.let { textStart = it.range.last + 1 }
+            val saying = SAYING.find(restPlain, textStart)
+            saying?.let { textStart = it.range.last + 1 }
             val text = rest.substring(textStart).trim().trim(':', ',', ' ')
             if (text.isEmpty()) {
-                return PhoneAction.Missing("¿Qué le escribo? Dime, por ejemplo: manda un WhatsApp al 55 1234 5678 que diga ya voy.")
+                return PhoneAction.Missing("¿Qué le escribo? Dime, por ejemplo: manda un WhatsApp a Juan que diga ya voy.")
+            }
+            // "manda un WhatsApp a Juan que diga …": Juan se busca en los contactos.
+            if (number == null && saying != null) {
+                val name = rest.substring(0, saying.range.first).trim().trim(',', ' ')
+                if (name.isNotEmpty() && name.split(" ").size <= MAX_NAME_WORDS) {
+                    return PhoneAction.WhatsAppContact(name, text)
+                }
             }
             return PhoneAction.WhatsApp(number?.value?.let(::digits).orEmpty(), text)
         }
@@ -58,9 +71,9 @@ object PhoneCommands {
             val target = found.groupValues[1].trim()
             val number = NUMBER.matchEntire(target)
             // "llama la atención que…" es conversación, no una llamada.
-            if (number == null && target.split(" ").size > 3) return null
+            if (number == null && target.split(" ").size > MAX_NAME_WORDS) return null
             return if (number != null) PhoneAction.Dial(digits(number.value))
-            else PhoneAction.Missing("Todavía no puedo buscar en tus contactos. Dime el número: llama al 55 1234 5678.")
+            else PhoneAction.DialContact(o.substring(found.groups[1]!!.range.first).trim())
         }
 
         ALARM.matchEntire(p)?.let { found -> return alarm(found, o) }
@@ -128,22 +141,46 @@ object PhoneCommands {
     }
 
     fun pickApp(name: String, apps: List<InstalledApp>): AppChoice {
+        val matches = best(name, apps, { it.label }, { it.packageName })
+        return when {
+            matches.isEmpty() -> AppChoice.None
+            matches.size == 1 -> AppChoice.Found(matches[0])
+            else -> AppChoice.Several(matches.sortedBy { it.label.length }.take(MAX_CHOICES))
+        }
+    }
+
+    sealed class ContactChoice {
+        data class Found(val contact: PhoneContact) : ContactChoice()
+        data class Several(val contacts: List<PhoneContact>) : ContactChoice()
+        object None : ContactChoice()
+    }
+
+    /** Elige el contacto por su nombre, sin importar acentos ni mayúsculas ("mama" encuentra "Mamá"). */
+    fun pickContact(name: String, contacts: List<PhoneContact>): ContactChoice {
+        // Un contacto con varios números aparece una vez (gana el primero: el principal).
+        val matches = best(name, contacts, { it.name }, { simplify(it.name) })
+        return when {
+            matches.isEmpty() -> ContactChoice.None
+            matches.size == 1 -> ContactChoice.Found(matches[0])
+            else -> ContactChoice.Several(matches.sortedBy { it.name.length }.take(MAX_CHOICES))
+        }
+    }
+
+    /** Lo más parecido a [name]: primero igual, luego empieza con, luego contiene, luego todas las palabras. */
+    private fun <T> best(name: String, items: List<T>, label: (T) -> String, key: (T) -> String): List<T> {
         val wanted = simplify(name)
-        if (wanted.isEmpty()) return AppChoice.None
-        val labeled = apps.map { simplify(it.label) to it }
+        if (wanted.isEmpty()) return emptyList()
+        val labeled = items.map { simplify(label(it)) to it }
         for (rule in listOf<(String) -> Boolean>(
             { it == wanted },
             { it.startsWith(wanted) },
             { it.contains(wanted) },
-            { label -> wanted.split(" ").all { label.contains(it) } }
+            { text -> wanted.split(" ").all { text.contains(it) } }
         )) {
-            val matches = labeled.filter { rule(it.first) }.map { it.second }.distinctBy { it.packageName }
-            when {
-                matches.size == 1 -> return AppChoice.Found(matches[0])
-                matches.size > 1 -> return AppChoice.Several(matches.sortedBy { it.label.length }.take(MAX_CHOICES))
-            }
+            val matches = labeled.filter { rule(it.first) }.map { it.second }.distinctBy(key)
+            if (matches.isNotEmpty()) return matches
         }
-        return AppChoice.None
+        return emptyList()
     }
 
     private fun simplify(text: String) =
@@ -152,6 +189,7 @@ object PhoneCommands {
     private fun digits(text: String) = text.filter { it.isDigit() || it == '+' }
 
     private const val MAX_CHOICES = 4
+    private const val MAX_NAME_WORDS = 3
 
     private val POLITE = Regex("^[¿¡\\s]*(?:ari[,:]?\\s+)?(?:(?:por favor|porfa)[,]?\\s+)?(?:(?:puedes|podrias)\\s+)?")
     private val NUMBER = Regex("\\+?\\d[\\d\\s-]{6,}\\d")

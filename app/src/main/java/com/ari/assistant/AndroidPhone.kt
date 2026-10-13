@@ -3,6 +3,8 @@ package com.ari.assistant
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.provider.ContactsContract
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +15,7 @@ import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
 import com.ari.assistant.agents.InstalledApp
 import com.ari.assistant.agents.PhoneAction
+import com.ari.assistant.agents.PhoneContact
 import com.ari.assistant.agents.PhoneLauncher
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
@@ -34,6 +37,25 @@ class AndroidPhone(context: Context) : PhoneLauncher {
         return pm.queryIntentActivities(launcher, 0)
             .map { InstalledApp(it.loadLabel(pm).toString(), it.activityInfo.packageName) }
             .filter { it.packageName != context.packageName }
+    }
+
+    override fun contacts(): List<PhoneContact>? {
+        if (context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) return null
+        val result = mutableListOf<PhoneContact>()
+        context.contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER),
+            null, null,
+            // El número principal de cada contacto va primero.
+            "${ContactsContract.CommonDataKinds.Phone.IS_SUPER_PRIMARY} DESC, ${ContactsContract.CommonDataKinds.Phone.IS_PRIMARY} DESC"
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                val name = cursor.getString(0) ?: continue
+                val number = cursor.getString(1)?.filter { it.isDigit() || it == '+' } ?: continue
+                if (number.length >= 7) result.add(PhoneContact(name, number))
+            }
+        }
+        return result
     }
 
     override fun launch(action: PhoneAction, app: InstalledApp?): Boolean {
@@ -104,7 +126,8 @@ class AndroidPhone(context: Context) : PhoneLauncher {
             },
             Intent(Settings.ACTION_SETTINGS)
         )
-        is PhoneAction.Missing -> emptyList()
+        // Las de contactos se resuelven en el agente antes de llegar aquí.
+        is PhoneAction.Missing, is PhoneAction.DialContact, is PhoneAction.WhatsAppContact -> emptyList()
     }
 
     private fun whatsApp(action: PhoneAction.WhatsApp): List<Intent> {

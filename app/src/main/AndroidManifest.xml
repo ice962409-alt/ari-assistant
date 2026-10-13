@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- "Pon una alarma a las 7": le pide a la app de reloj que la cree. -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <!-- "Llama a mamá": buscar el número en tus contactos. Se pide la primera vez que lo usas. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <!-- Android 11+ solo deja ver los servicios de voz declarados aquí. -->
     <queries>

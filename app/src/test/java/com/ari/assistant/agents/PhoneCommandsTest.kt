@@ -25,7 +25,8 @@ class PhoneCommandsTest {
     fun llamadas() {
         assertEquals(PhoneAction.Dial("5512345678"), parse("llama al 55 1234 5678"))
         assertEquals(PhoneAction.Dial("+525512345678"), parse("márcale al +52 55 1234 5678"))
-        assertTrue(parse("llama a mamá") is PhoneAction.Missing)
+        assertEquals(PhoneAction.DialContact("mamá"), parse("llama a mamá"))
+        assertEquals(PhoneAction.DialContact("Juan Pérez"), parse("márcale a Juan Pérez"))
         // Conversación, no una llamada.
         assertNull(parse("llama la atención que nadie vino a la fiesta"))
     }
@@ -38,6 +39,8 @@ class PhoneCommandsTest {
         )
         assertEquals(PhoneAction.WhatsApp("", "Feliz cumpleaños"), parse("envía un mensaje por WhatsApp que diga Feliz cumpleaños"))
         assertTrue(parse("manda un whatsapp") is PhoneAction.Missing)
+        assertEquals(PhoneAction.WhatsAppContact("Juan", "Ya voy"), parse("Manda un WhatsApp a Juan que diga Ya voy"))
+        assertEquals(PhoneAction.WhatsAppContact("mi hermana", "llego a las 8"), parse("envíale un whatsapp a mi hermana diciendo llego a las 8"))
     }
 
     @Test
@@ -78,5 +81,21 @@ class PhoneCommandsTest {
         assertTrue(PhoneCommands.pickApp("whats", apps) is PhoneCommands.AppChoice.Several)
         assertTrue(PhoneCommands.pickApp("instagram", apps) is PhoneCommands.AppChoice.None)
         assertFalse(PhoneCommands.pickApp("", apps) is PhoneCommands.AppChoice.Found)
+    }
+
+    @Test
+    fun eligeElContacto() {
+        val contacts = listOf(
+            PhoneContact("Mamá", "+525511111111"),
+            PhoneContact("Mamá", "5522222222"),
+            PhoneContact("Juan Pérez", "5533333333"),
+            PhoneContact("Juan Carlos", "5544444444")
+        )
+        // Sin acentos también la encuentra, y con dos números gana el primero (el principal).
+        val mama = PhoneCommands.pickContact("mama", contacts) as PhoneCommands.ContactChoice.Found
+        assertEquals("+525511111111", mama.contact.number)
+        assertTrue(PhoneCommands.pickContact("juan", contacts) is PhoneCommands.ContactChoice.Several)
+        assertEquals("5533333333", (PhoneCommands.pickContact("juan perez", contacts) as PhoneCommands.ContactChoice.Found).contact.number)
+        assertTrue(PhoneCommands.pickContact("Pedro", contacts) is PhoneCommands.ContactChoice.None)
     }
 }

@@ -5,6 +5,8 @@ interface PhoneLauncher {
     fun installedApps(): List<InstalledApp>
     /** Abre la acción en el teléfono. false si ninguna app instalada sabe hacerla. */
     fun launch(action: PhoneAction, app: InstalledApp? = null): Boolean
+    /** Los contactos con teléfono; null si el usuario aún no dio permiso. */
+    fun contacts(): List<PhoneContact>?
 }
 
 /**
@@ -13,6 +15,10 @@ interface PhoneLauncher {
  * ni envía nada por su cuenta: el último paso lo confirma el usuario en la app.
  */
 class PhoneAgent(private val phone: PhoneLauncher) : Agent {
+
+    /** true cuando la última orden necesitaba los contactos y no hay permiso: la app lo pide. */
+    @Volatile
+    var needsContactsPermission = false
 
     override val id = "telefono"
     override val name = "Agente del teléfono"
@@ -34,6 +40,18 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
             ?: return AgentResult("No entendí qué hacer en el teléfono.", success = false)
 
         if (action is PhoneAction.Missing) return AgentResult(action.message, success = false)
+
+        if (action is PhoneAction.DialContact) return withContact(action.name) { contact ->
+            if (phone.launch(PhoneAction.Dial(contact.number)))
+                AgentResult("Te dejé marcado a ${contact.name} (${contact.number}). Toca llamar para confirmar.")
+            else AgentResult("No encontré una app de teléfono.", success = false)
+        }
+
+        if (action is PhoneAction.WhatsAppContact) return withContact(action.name) { contact ->
+            if (phone.launch(PhoneAction.WhatsApp(contact.number, action.text)))
+                AgentResult("Abrí el chat de ${contact.name} en WhatsApp con el mensaje listo. Revísalo y toca enviar.")
+            else AgentResult("No encontré WhatsApp en tu teléfono.", success = false)
+        }
 
         if (action is PhoneAction.OpenApp) {
             return when (val choice = PhoneCommands.pickApp(action.name, phone.installedApps())) {
@@ -61,6 +79,28 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
             )
         }
         return AgentResult(confirmation(action))
+    }
+
+    /** Busca a [name] en los contactos; si no hay permiso, pide que la app lo solicite. */
+    private fun withContact(name: String, act: (PhoneContact) -> AgentResult): AgentResult {
+        val contacts = phone.contacts()
+        if (contacts == null) {
+            needsContactsPermission = true
+            return AgentResult(
+                "Para buscar a $name en tus contactos necesito tu permiso. Si aceptas, lo hago enseguida. " +
+                    "Solo leo nombres y números, y no salen del teléfono.",
+                success = false
+            )
+        }
+        return when (val choice = PhoneCommands.pickContact(name, contacts)) {
+            is PhoneCommands.ContactChoice.Found -> act(choice.contact)
+            is PhoneCommands.ContactChoice.Several -> AgentResult(
+                "Tienes varios contactos así: ${choice.contacts.joinToString(", ") { it.name }}. ¿A cuál? Dime el nombre completo.",
+                success = false
+            )
+            PhoneCommands.ContactChoice.None ->
+                AgentResult("No encontré a \"$name\" en tus contactos. También puedes decirme el número.", success = false)
+        }
     }
 
     private fun confirmation(action: PhoneAction): String = when (action) {

@@ -75,6 +75,9 @@ class MainActivity : Activity() {
     // Si sales de Ari mientras trabaja, te avisa con una notificación al terminar.
     private var inForeground = false
 
+    // "llama a mamá" esperando el permiso de contactos: se repite al aceptarlo.
+    private var pendingContactRequest: String? = null
+
     // Revisa el avance de la descarga del modelo mientras Ari está a la vista.
     private val downloadWatcher = android.os.Handler(android.os.Looper.getMainLooper())
     private val checkDownload = object : Runnable {
@@ -1067,6 +1070,11 @@ class MainActivity : Activity() {
             }
             if (agent === team) offerCandidates()
             if (agent === reminders && result.success) prepareReminderPermissions()
+            if (agent === phoneAgent && phoneAgent.needsContactsPermission) {
+                phoneAgent.needsContactsPermission = false
+                pendingContactRequest = text
+                requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), REQUEST_CONTACTS)
+            }
         }
     }
 
@@ -1229,6 +1237,17 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CONTACTS) {
+            val request = pendingContactRequest
+            pendingContactRequest = null
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED && request != null && !busy) {
+                input.setText(request)
+                sendMessage()
+            } else if (grantResults.firstOrNull() != PackageManager.PERMISSION_GRANTED) {
+                chat.addNote("Sin permiso de contactos, dime el número: \"llama al 55 1234 5678\".")
+            }
+            return
+        }
         if (requestCode == REQUEST_NOTIFICATIONS) {
             if (AlarmReminders.canNotify(this)) {
                 offerExactAlarms()
@@ -1571,6 +1590,7 @@ class MainActivity : Activity() {
         private const val REQUEST_NOTIFICATIONS = 106
         // Permiso de notificaciones pedido al descargar el modelo: sin más preguntas después.
         private const val REQUEST_NOTIFICATIONS_QUIET = 107
+        private const val REQUEST_CONTACTS = 108
         private const val KEY_EXACT_ASKED = "alarmas_exactas_preguntado"
         private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
