@@ -4,4 +4,6 @@
     <string name="shortcut_live_short">Hablar</string>
     <string name="shortcut_live_long">Hablar con Ari</string>
     <string name="tile_live">Hablar con Ari</string>
+    <!-- A dónde llegan los informes de fallo (Ajustes → Reportar un problema). -->
+    <string name="report_email" translatable="false">javierhedzd@gmail.com</string>
 </resources>

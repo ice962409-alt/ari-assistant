@@ -26,6 +26,11 @@
 
     <!-- Android 11+ solo deja ver los servicios de voz declarados aquí. -->
     <queries>
+        <!-- Informes de fallo: saber si hay una app de correo para mandarlos. -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>

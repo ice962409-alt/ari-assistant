@@ -48,11 +48,11 @@ Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene
 **Informe de fallos (para quien prueba Ari):**
 
 - Si Ari se cierra sola, guarda qué pasó. La siguiente vez que se abre pregunta: "Ari se cerró la última vez. ¿Se lo mandas a quien te pasó la app?".
-- Con **Ver y mandar**, la persona ve el informe completo y elige por dónde mandarlo (WhatsApp, correo…). Ari no lo manda sola ni usa internet.
+- Con **Ver y mandar**, la persona ve el informe completo y toca **Mandar por correo**: se abre un correo ya escrito a tu Gmail y solo toca Enviar (o elige "Otra app"). Ari no lo manda sola ni usa internet.
 - También puede mandar un reporte cuando quiera: **Ajustes → Reportar un problema**, escribe qué pasó y toca Mandar.
 - El informe lleva solo: versión de Ari, modelo del teléfono, versión de Android, RAM, qué Gemma usa, si la GPU funciona y el error técnico. Nada de pláticas, recuerdos, contactos ni nombres.
 - Detecta también los cierres que vienen del motor (la GPU), las congeladas y la falta de memoria (Android 11 o más nuevo).
-- Cuando te llegue un informe, pégalo en la sesión de Claude Code para que lo arregle.
+- Los informes llegan a tu Gmail con el asunto "Informe de fallo de Ari". Claude los revisa al empezar cada sesión y los arregla en la siguiente versión.
 
 ### El color de Ari
 
@@ -425,6 +425,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
 - Color de Ari (0.21.0): Ajustes → Color de Ari (hielo, rosa, lila, menta, durazno o dorado), o dile "ponte rosa" o "cambia tu color a lila". Cambia su esfera, el botón de enviar, los detalles de la app y la carita del widget.
 - Ari se presenta (0.20.0): la primera vez, después de preguntar el nombre, Ari cuenta en el chat lo que puede hacer, con ejemplos para probar. Cuando le preguntas "¿qué puedes hacer?" (o "ayuda") lo repite, aunque Gemma no esté cargada; en voz dice una versión corta. La bienvenida tiene el botón "¿Qué puedes hacer?". Solo menciona lo que el teléfono puede hacer.
 - Primer uso más fácil (0.19.0): la primera vez sin modelo, después de preguntar el nombre, Ari muestra sola qué Gemma le conviene al teléfono (con tamaño, espacio y "solo por Wi-Fi") y ofrece "Descargar ahora", "Más tarde" o "Ya tengo el archivo". Solo pregunta una vez; nada se descarga sin tocar el botón.

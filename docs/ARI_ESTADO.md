@@ -417,4 +417,5 @@ Pedido del usuario: "Se puede incluir cambiar el color de Ari".
 - `AriTheme.ice/iceDeep/iceLight` ahora cambian con `setColors` (y `colorVersion`); `AriOrbView` rehace sus degradados cuando cambia la versión.
 - MainActivity: `applyColor` (prefs `ari_color/color`), Ajustes → Color de Ari, respuesta local al pedirlo.
 - Widget: si el color no es hielo, cada carita se dibuja en un bitmap de 128 px con el tono girado (ColorMatrix de rotación de tono + saturación).
+- Informes de fallo por correo (decisión del usuario: "Por correo a tu Gmail"): `sendReport` usa `ACTION_SENDTO mailto:` a `R.string.report_email` con asunto "Informe de fallo de Ari <versión>"; "Otra app" usa Compartir. Claude los busca en Gmail al empezar cada sesión (CLAUDE.md).
 

@@ -438,9 +438,9 @@ class MainActivity : Activity() {
                 AlertDialog.Builder(this)
                     .setTitle("Ari se cerró la última vez")
                     .setMessage(
-                        "Guardé qué pasó para poder arreglarlo. ¿Se lo mandas a quien te pasó la app? " +
+                        "Guardé qué pasó para poder arreglarlo. ¿Se lo mandas a quien hace Ari? Sale un correo ya escrito; solo tocas Enviar. " +
                             "Solo lleva datos del teléfono y del error: nada de tus pláticas ni recuerdos.\n\n" +
-                            "Tú eliges por dónde (WhatsApp, correo…). Ari no lo manda sola."
+                            "Lo ves antes de mandarlo, y Ari no lo manda sola."
                     )
                     .setPositiveButton("Ver y mandar") { _, _ -> showReport(report, clearAfter = true) }
                     .setNegativeButton("Borrar") { _, _ -> FailureReport.clear(this) }
@@ -463,20 +463,39 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this)
             .setTitle("Informe")
             .setView(view)
-            .setPositiveButton("Mandar") { _, _ ->
-                val share = Intent(Intent.ACTION_SEND)
-                    .setType("text/plain")
-                    .putExtra(Intent.EXTRA_SUBJECT, "Informe de fallo de Ari")
-                    .putExtra(Intent.EXTRA_TEXT, report)
-                try {
-                    startActivity(Intent.createChooser(share, "Mandar el informe"))
-                    if (clearAfter) FailureReport.clear(this)
-                } catch (e: android.content.ActivityNotFoundException) {
-                    status.text = "No encontré una app para mandar el informe."
-                }
-            }
+            .setPositiveButton("Mandar por correo") { _, _ -> sendReport(report, clearAfter, byEmail = true) }
+            .setNeutralButton("Otra app") { _, _ -> sendReport(report, clearAfter, byEmail = false) }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    /**
+     * Manda el informe. Por correo va directo a quien hace Ari (el correo ya sale escrito;
+     * la persona solo toca Enviar), y Claude lo lee para arreglarlo en la siguiente versión.
+     * Ari no lo manda sola ni usa internet: lo envía la app de correo de la persona.
+     */
+    private fun sendReport(report: String, clearAfter: Boolean, byEmail: Boolean) {
+        val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: ""
+        val subject = "Informe de fallo de Ari $version".trim()
+        val email = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+            .putExtra(Intent.EXTRA_EMAIL, arrayOf(getString(R.string.report_email)))
+            .putExtra(Intent.EXTRA_SUBJECT, subject)
+            .putExtra(Intent.EXTRA_TEXT, report)
+        val share = Intent(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_SUBJECT, subject)
+            .putExtra(Intent.EXTRA_TEXT, report)
+        try {
+            if (byEmail && email.resolveActivity(packageManager) != null) {
+                startActivity(email)
+            } else {
+                if (byEmail) status.text = "No encontré una app de correo; elige otra forma de mandarlo."
+                startActivity(Intent.createChooser(share, "Mandar el informe"))
+            }
+            if (clearAfter) FailureReport.clear(this)
+        } catch (e: android.content.ActivityNotFoundException) {
+            status.text = "No encontré una app para mandar el informe."
+        }
     }
 
     /** Ajustes → Reportar un problema: quien prueba cuenta qué pasó y lo manda. */
