@@ -28,7 +28,7 @@ Escribe y toca **Enviar**. Las conversaciones se guardan, y al abrir la app apar
 
 ### Memoria
 
-Ari guarda recuerdos sobre ti y se los pasa a Gemma como contexto.
+Ari guarda recuerdos sobre ti y se los pasa a Gemma en cada conversación, junto con los últimos 20 mensajes. Cuando agregas u olvidas un recuerdo, Gemma lo tiene en cuenta desde el siguiente mensaje.
 
 - **/recuerda** seguido del texto: guarda un recuerdo. Ejemplo: /recuerda Me gusta el café
 - **/memoria**: muestra todos los recuerdos.
@@ -65,12 +65,25 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un erro
 - Carga automática del modelo guardado.
 - Clave de depuración fija, para que las versiones nuevas se instalen encima de las anteriores.
 
-### PR #4 — Modo de voz (abierto, pendiente de fusionar)
+### PR #4 — Modo de voz (fusionado)
 
 - https://github.com/javierhedzd-ops/ari-assistant/pull/4
 - Botón Voz con conversación continua: escuchar, responder, leer en voz alta.
 - Reconocimiento y lectura de voz con los servicios de Android, sin APIs de pago.
 - Probado en el teléfono: funciona.
+
+### PR #2 — Primera versión de la memoria (cerrado sin fusionar)
+
+- https://github.com/javierhedzd-ops/ari-assistant/pull/2
+- Se hizo en paralelo al PR #3 y quedó duplicado. Sus mejoras se rehicieron sobre la versión actual en un PR nuevo.
+
+### PR nuevo — Más contexto para Gemma y estabilidad (abierto)
+
+- Gemma recibe los recuerdos y los últimos 20 mensajes como contexto de toda la conversación, no solo en el primer mensaje.
+- Los cambios en los recuerdos se aplican desde el siguiente mensaje.
+- Girar el teléfono ya no recarga el modelo.
+- Al elegir otro modelo, se libera el anterior de la memoria.
+- GitHub Actions compila también las ramas de trabajo y los PR.
 
 ## 5. Ideas pendientes
 

@@ -17,7 +17,9 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Conversation
+import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
@@ -31,17 +33,17 @@ class MainActivity : Activity() {
     private val executor: ExecutorService =
         Executors.newSingleThreadExecutor()
 
-    private var engine: Engine? = null
-    private var conversation: Conversation? = null
-    private var modelReady = false
+    // Se leen en el hilo de la interfaz y se escriben en [executor].
+    @Volatile private var engine: Engine? = null
+    @Volatile private var conversation: Conversation? = null
+    @Volatile private var modelReady = false
     private var busy = false
 
     private lateinit var database: AriDatabase
 
-    // El modelo no conoce el historial guardado ni los recuerdos hasta que
-    // se los enviamos; estos indicadores marcan qué falta por enviarle.
-    private var historyPending = true
-    private var memoriesPending = true
+    // Los recuerdos cambiaron mientras Ari respondía: hay que recrear la
+    // conversación cuando termine la respuesta.
+    private var refreshPending = false
 
     private lateinit var status: TextView
     private lateinit var chat: TextView
@@ -221,6 +223,11 @@ class MainActivity : Activity() {
     }
 
     private fun selectModel() {
+        if (busy) {
+            status.text = "Espera a que Ari termine de responder antes de cambiar el modelo."
+            return
+        }
+
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
@@ -249,6 +256,9 @@ class MainActivity : Activity() {
 
         executor.execute {
             try {
+                // Liberar el modelo anterior antes de sobrescribir su archivo.
+                closeModel()
+
                 val modelFile = File(filesDir, MODEL_FILE_NAME)
                 val resolver = contentResolver
 
@@ -286,8 +296,11 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Se ejecuta en [executor]. */
     private fun initializeModel(modelFile: File) {
         try {
+            closeModel()
+
             val newEngine = Engine(
                 EngineConfig(
                     modelPath = modelFile.absolutePath,
@@ -297,24 +310,130 @@ class MainActivity : Activity() {
             )
 
             newEngine.initialize()
-            val newConversation = newEngine.createConversation()
-
             engine = newEngine
-            conversation = newConversation
+            conversation = newEngine.createConversation(buildConversationConfig())
             modelReady = true
 
             runOnUiThread {
-                historyPending = true
-                memoriesPending = true
                 status.text = "Gemma cargado. Ari está listo."
                 appendChat("\n\nAri: ¡Hola! Ya estoy listo para conversar.")
                 selectButton.isEnabled = true
             }
         } catch (e: Exception) {
+            closeModel()
             runOnUiThread {
                 status.text =
                     "No se pudo iniciar el modelo: ${e.message}"
                 selectButton.isEnabled = true
+            }
+        }
+    }
+
+    /** Se ejecuta en [executor]. */
+    private fun closeModel() {
+        modelReady = false
+
+        try {
+            conversation?.close()
+        } catch (_: Exception) {
+        }
+        conversation = null
+
+        try {
+            engine?.close()
+        } catch (_: Exception) {
+        }
+        engine = null
+    }
+
+    /**
+     * Instrucciones de Ari con los recuerdos guardados, y los últimos mensajes
+     * como historial inicial, para que Gemma los tenga en toda la conversación.
+     * Se ejecuta en [executor].
+     */
+    private fun buildConversationConfig(): ConversationConfig {
+        val memories = try {
+            database.memories()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        val history = try {
+            database.recentMessages(HISTORY_CONTEXT_LIMIT)
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        val instruction = buildString {
+            append(SYSTEM_PROMPT)
+            if (memories.isNotEmpty()) {
+                append("\n\nRecuerdos guardados sobre el usuario:\n")
+                memories.forEach { append("- ").append(it.content).append('\n') }
+            }
+        }
+
+        return ConversationConfig(
+            systemInstruction = Contents.of(instruction),
+            initialMessages = trimHistory(history).map { message ->
+                if (message.role == ROLE_USER) {
+                    Message.user(message.content)
+                } else {
+                    Message.model(message.content)
+                }
+            }
+        )
+    }
+
+    /** Conserva los mensajes más recientes sin pasar del límite de caracteres. */
+    private fun trimHistory(history: List<ChatMessage>): List<ChatMessage> {
+        val kept = ArrayDeque<ChatMessage>()
+        var total = 0
+
+        for (message in history.asReversed()) {
+            val content = message.content.take(HISTORY_MESSAGE_MAX_CHARS)
+            if (total + content.length > HISTORY_CONTEXT_MAX_CHARS) break
+            total += content.length
+            kept.addFirst(ChatMessage(message.role, content))
+        }
+
+        // La conversación debe empezar con un mensaje del usuario.
+        while (kept.isNotEmpty() && kept.first().role != ROLE_USER) {
+            kept.removeFirst()
+        }
+
+        // Y terminar con una respuesta de Ari: un mensaje del usuario sin
+        // respuesta, o el que se está enviando ahora, no va en el historial.
+        while (kept.isNotEmpty() && kept.last().role == ROLE_USER) {
+            kept.removeLast()
+        }
+
+        return kept.toList()
+    }
+
+    /** Recrea la conversación para que Gemma vea los recuerdos actualizados. */
+    private fun refreshConversation() {
+        if (!modelReady) return
+
+        // No se puede cerrar la conversación mientras genera una respuesta.
+        if (busy) {
+            refreshPending = true
+            return
+        }
+        refreshPending = false
+
+        // Los mensajes también pasan por [executor], así que siempre usan
+        // la conversación ya recreada.
+        executor.execute {
+            val activeEngine = engine ?: return@execute
+            try {
+                conversation?.close()
+                conversation = null
+                conversation = activeEngine.createConversation(buildConversationConfig())
+            } catch (e: Exception) {
+                modelReady = false
+                runOnUiThread {
+                    status.text = "No se pudo actualizar la memoria de Ari: ${e.message}"
+                }
             }
         }
     }
@@ -332,8 +451,7 @@ class MainActivity : Activity() {
 
         if (busy) return
 
-        val activeConversation = conversation
-        if (!modelReady || activeConversation == null) {
+        if (!modelReady) {
             status.text = "El modelo aún no está listo. Selecciona o espera a que cargue."
             if (voiceMode) {
                 stopVoiceMode(status.text.toString())
@@ -342,7 +460,6 @@ class MainActivity : Activity() {
             return
         }
 
-        val prompt = buildPrompt(text)
         database.addMessage(ROLE_USER, text)
 
         input.text.clear()
@@ -353,9 +470,7 @@ class MainActivity : Activity() {
 
         val response = StringBuilder()
 
-        activeConversation.sendMessageAsync(
-            prompt,
-            object : MessageCallback {
+        val callback = object : MessageCallback {
                 override fun onMessage(message: Message) {
                     val chunk = message.toString()
                     runOnUiThread {
@@ -369,6 +484,7 @@ class MainActivity : Activity() {
                         saveResponse(response)
                         busy = false
                         sendButton.isEnabled = true
+                        if (refreshPending) refreshConversation()
                         if (voiceMode) {
                             status.text = "Ari está hablando..."
                             voice.speak(response.toString())
@@ -386,11 +502,24 @@ class MainActivity : Activity() {
                             "Error de respuesta: ${throwable.message}"
                         appendChat("\n[Error al generar la respuesta]")
                         sendButton.isEnabled = true
+                        if (refreshPending) refreshConversation()
                         if (voiceMode) voice.speak("Hubo un error al generar la respuesta.")
                     }
                 }
             }
-        )
+
+        executor.execute {
+            val activeConversation = conversation
+            if (activeConversation == null) {
+                callback.onError(IllegalStateException("El modelo no está listo."))
+                return@execute
+            }
+            try {
+                activeConversation.sendMessageAsync(text, callback)
+            } catch (e: Exception) {
+                callback.onError(e)
+            }
+        }
     }
 
     private fun saveResponse(response: StringBuilder) {
@@ -398,45 +527,6 @@ class MainActivity : Activity() {
         if (content.isNotEmpty()) {
             database.addMessage(ROLE_ARI, content)
         }
-    }
-
-    /**
-     * Añade al mensaje el contexto que el modelo aún no conoce: los
-     * recuerdos (si cambiaron) y, en el primer mensaje tras cargar el
-     * modelo, las últimas conversaciones guardadas.
-     */
-    private fun buildPrompt(text: String): String {
-        val context = StringBuilder()
-
-        if (memoriesPending) {
-            val memories = database.memories()
-            if (memories.isNotEmpty()) {
-                context.append("Recuerdos guardados sobre el usuario:\n")
-                memories.forEach { context.append("- ${it.content}\n") }
-                context.append("\n")
-            }
-        }
-
-        if (historyPending) {
-            val history = database.recentMessages(HISTORY_CONTEXT_LIMIT)
-            if (history.isNotEmpty()) {
-                context.append("Últimos mensajes de conversaciones anteriores:\n")
-                history.forEach { message ->
-                    val speaker = if (message.role == ROLE_USER) "Usuario" else "Ari"
-                    context.append("$speaker: ${message.content.take(HISTORY_CONTEXT_CHARS)}\n")
-                }
-                context.append("\n")
-            }
-        }
-
-        memoriesPending = false
-        historyPending = false
-
-        if (context.isEmpty()) return text
-
-        return "[Contexto privado de Ari. Úsalo para responder, pero no lo repitas literalmente.]\n" +
-            context +
-            "Mensaje del usuario: $text"
     }
 
     /** Ejecuta un comando local, muestra la respuesta y la devuelve. */
@@ -469,7 +559,7 @@ class MainActivity : Activity() {
                     "Escribe qué debo olvidar, por ejemplo: /olvida café."
                 } else {
                     val deleted = database.deleteMemoriesMatching(argument)
-                    if (deleted > 0) memoriesPending = true
+                    if (deleted > 0) refreshConversation()
                     when (deleted) {
                         0 -> "No encontré recuerdos que contengan \"$argument\"."
                         1 -> "Olvidé 1 recuerdo."
@@ -585,7 +675,7 @@ class MainActivity : Activity() {
 
     private fun addMemory(content: String) {
         database.addMemory(content)
-        memoriesPending = true
+        refreshConversation()
     }
 
     private fun showMemoriesDialog() {
@@ -636,7 +726,7 @@ class MainActivity : Activity() {
             .setMessage(memory.content)
             .setPositiveButton("Borrar") { _, _ ->
                 database.deleteMemory(memory.id)
-                memoriesPending = true
+                refreshConversation()
                 status.text = "Recuerdo borrado."
                 showMemoriesDialog()
             }
@@ -647,18 +737,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
 
-        executor.execute {
-            try {
-                conversation?.close()
-            } catch (_: Exception) {
-            }
-
-            try {
-                engine?.close()
-            } catch (_: Exception) {
-            }
-        }
-
+        executor.execute { closeModel() }
         executor.shutdown()
         voice.release()
         database.close()
@@ -674,7 +753,16 @@ class MainActivity : Activity() {
         private const val ROLE_USER = "user"
         private const val ROLE_ARI = "ari"
         private const val HISTORY_DISPLAY_LIMIT = 100
-        private const val HISTORY_CONTEXT_LIMIT = 8
-        private const val HISTORY_CONTEXT_CHARS = 300
+
+        // Contexto que recibe Gemma, limitado para no llenar su ventana.
+        private const val HISTORY_CONTEXT_LIMIT = 20
+        private const val HISTORY_CONTEXT_MAX_CHARS = 4000
+        private const val HISTORY_MESSAGE_MAX_CHARS = 1200
+
+        private const val SYSTEM_PROMPT =
+            "Tu nombre es Ari. Hablas español de forma natural y clara. " +
+                "Utilizas los recuerdos disponibles cuando son relevantes. " +
+                "No inventas recuerdos ni afirmas haber hecho acciones que no realizaste. " +
+                "Si no sabes algo, lo reconoces."
     }
 }
