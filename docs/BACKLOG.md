@@ -22,6 +22,7 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Llamar y escribir a contactos por nombre (0.8.0). Falta [prueba].
 - [autónomo] Ari con cara, modo live y voz fluida (0.10.0). Falta [prueba].
 - [autónomo] Modo live más natural y accesos rápidos (0.10.2). Falta [prueba].
+- [autónomo] Seguridad: solo Ari puede abrir su modo live (0.10.3).
 - [autónomo] Investigación de control total (docs/CONTROL_APPS.md) y acciones de música, YouTube, SMS, correo y calendario (0.9.0).
 
 ## Siguiente

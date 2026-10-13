@@ -26,9 +26,8 @@ class AriLiveTile : TileService() {
     @SuppressLint("StartActivityAndCollapseDeprecated")
     override fun onClick() {
         super.onClick()
-        val intent = Intent(this, MainActivity::class.java)
-            .setAction(MainActivity.ACTION_LIVE)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val intent = Intent(this, LiveShortcutActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val open = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 // Desde Android 14 hay que abrir la app con un PendingIntent.

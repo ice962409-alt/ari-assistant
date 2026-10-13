@@ -306,6 +306,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Seguridad del modo live (0.10.3): solo el widget, el acceso directo y los ajustes rápidos de Ari pueden abrir el modo live; si otra app lo intenta para encender el micrófono, Ari lo ignora.
 - Modo live más natural (0.10.2): habla desde la primera coma en frases largas, dice "a ver…" si Gemma tarda, vibra cuando es tu turno, la pantalla no se apaga y atrás cierra el modo live. Acceso directo "Hablar con Ari" al mantener presionado el icono, botón en los ajustes rápidos y la carita de Ari en las notificaciones.
 - Ari con cara y voz fluida (0.10.0): modo live a pantalla completa con Ari animada, habla frase por frase mientras Gemma escribe, respuestas cortas en voz, se puede interrumpir, saludo al abrir; widget con su carita que respira, parpadea y saluda; icono nuevo.
 - Más acciones seguras (0.9.0): música, YouTube, SMS, correo y citas en el calendario. Propuesta por etapas para el control total de apps.

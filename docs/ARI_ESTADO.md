@@ -286,3 +286,7 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `AriLiveTile`: TileService "Hablar con Ari"; en Android 14+ usa `startActivityAndCollapse(PendingIntent)`; con el teléfono bloqueado pide desbloquear primero.
 - `ic_notification` ahora es la carita en un solo color (también la usa el botón de ajustes rápidos).
 
+## Seguridad del modo live (versión 0.10.3)
+
+- `MainActivity` es exportada (la abre el lanzador), así que cualquier app podía mandarle `ACTION_LIVE` y encender el micrófono. Ahora el widget, el botón de ajustes rápidos y el acceso directo pasan por `LiveShortcutActivity` (no exportada), que deja un boleto en memoria (`consumeTicket`, vence en 10 s). `handleLaunch` solo abre el modo live si hay boleto; si no, la app abre normal.
+

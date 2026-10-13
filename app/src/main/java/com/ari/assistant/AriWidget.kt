@@ -135,9 +135,8 @@ class AriWidget : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_open_ari, openAppIntent)
 
             // Su cara y "Hablar" abren Ari directo en el modo live.
-            val live = Intent(context, MainActivity::class.java)
-                .setAction(MainActivity.ACTION_LIVE)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            val live = Intent(context, LiveShortcutActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             val liveIntent = PendingIntent.getActivity(
                 context, 2, live, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )

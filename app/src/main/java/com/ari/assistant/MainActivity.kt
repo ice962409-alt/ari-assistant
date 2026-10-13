@@ -608,11 +608,15 @@ class MainActivity : Activity() {
         caption?.let { liveCaption.text = it }
     }
 
-    /** "Hablar" en el widget abre Ari directo en el modo live. */
+    /**
+     * El widget, el acceso directo y los ajustes rápidos abren Ari directo en el modo live.
+     * Solo si la orden viene de Ari misma (del puente [LiveShortcutActivity]): otra app
+     * podría mandar la misma orden para encender el micrófono, y esa se ignora.
+     */
     private fun handleLaunch(intent: Intent?) {
         if (intent?.action == ACTION_LIVE) {
             intent.action = null
-            liveOverlay.post { openLive() }
+            if (LiveShortcutActivity.consumeTicket()) liveOverlay.post { openLive() }
         }
     }
 
