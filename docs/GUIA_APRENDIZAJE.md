@@ -156,7 +156,7 @@ Google Play pide que cada app publique una **política de privacidad**: un texto
 
 ### Iconos adaptativos y pantallas "borde a borde"
 
-- Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es un anillo hielo sobre fondo oscuro.
+- Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es su carita color hielo sobre fondo oscuro, y en iconos temáticos se pinta de un solo color con los ojos y la boca recortados.
 - Desde Android 15, las apps se dibujan **de borde a borde**, también detrás de la barra de estado y del teclado. Por eso la app calcula esos márgenes ("insets") para que la barra superior y el campo de texto nunca queden tapados.
 
 ### Pruebas automáticas
