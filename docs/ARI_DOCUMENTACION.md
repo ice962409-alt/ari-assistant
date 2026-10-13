@@ -19,7 +19,7 @@ Ari es una asistente personal para Android que funciona con inteligencia artific
 ### Primer uso
 
 1. Instala el APK.
-2. Toca **Seleccionar modelo** y elige el archivo gemma-4-E4B-it.litertlm. Ari lo copia a su almacenamiento privado.
+2. Toca **Modelo** (arriba a la derecha) y elige el archivo gemma-4-E4B-it.litertlm. Ari lo copia a su almacenamiento privado.
 3. Espera el mensaje "Gemma cargado. Ari está lista".
 
 Las siguientes veces, el modelo carga solo al abrir la app.
