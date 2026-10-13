@@ -39,6 +39,7 @@ import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Conversation
+import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
@@ -1408,7 +1409,8 @@ class MainActivity : Activity() {
         releaseModel()
         try {
             val newEngine = startFastestEngine(modelFile)
-            val newConversation = newEngine.createConversation()
+            conversationForGuest = false
+            val newConversation = openConversation(newEngine, guest = false)
 
             engine = newEngine
             conversation = newConversation
@@ -1416,8 +1418,9 @@ class MainActivity : Activity() {
 
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
-                historyPending = true
-                memoriesPending = true
+                // La conversación nueva ya trae la personalidad, tus recuerdos y la plática.
+                historyPending = false
+                memoriesPending = false
                 status.text = "Gemma cargado ($engineLabel). Ari está lista."
                 notifyIfAway("Gemma terminó de cargar. Ya puedes hablar conmigo.")
                 if (database.recentMessages(1).isEmpty()) {
@@ -1750,8 +1753,14 @@ class MainActivity : Activity() {
         }
 
         val forGuest = guestMode
-        val hadHistoryPending = historyPending
-        val hadMemoriesPending = memoriesPending
+        // Cambiaron tus recuerdos, tu libreta o la personalidad: Gemma empieza una conversación
+        // nueva que ya los trae (con los últimos mensajes, así no pierde el hilo).
+        if (!forGuest && !retried && (historyPending || memoriesPending)) {
+            busy = true
+            sendButton.isEnabled = false
+            freshConversation { askGemma(text, attachment, savedAs, retried = false) }
+            return
+        }
         // En voz, Ari contesta corto y natural, y empieza a hablar con la primera frase.
         val speakLive = voiceMode
         val question = when {
@@ -1871,11 +1880,8 @@ class MainActivity : Activity() {
                 activeConversation.sendMessageAsync(prompt, callback)
             }
         } catch (e: Throwable) {
-            // El contexto no llegó a Gemma: se vuelve a enviar con el siguiente mensaje.
             liveOverlay.removeCallbacks(filler)
             attachment?.delete()
-            historyPending = hadHistoryPending
-            memoriesPending = hadMemoriesPending
             busy = false
             sendButton.isEnabled = true
             status.text = "Error de respuesta: ${e.message ?: e.javaClass.simpleName}"
@@ -1891,16 +1897,17 @@ class MainActivity : Activity() {
 
     /** Cierra la conversación con Gemma y abre otra; Gemma vuelve a recibir quién es Ari y tus recuerdos. */
     private fun freshConversation(then: () -> Unit) {
+        val guest = conversationForGuest
         executor.execute {
             val current = engine
             val oldConversation = conversation
             conversation = null
             runCatching { oldConversation?.close() }
-            conversation = current?.let { runCatching { it.createConversation() }.getOrNull() }
+            conversation = current?.let { runCatching { openConversation(it, guest) }.getOrNull() }
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
-                historyPending = true
-                memoriesPending = true
+                historyPending = false
+                memoriesPending = false
                 if (conversation == null) {
                     busy = false
                     sendButton.isEnabled = true
@@ -2083,70 +2090,48 @@ class MainActivity : Activity() {
         }
     }
 
-    /**
-     * Añade al mensaje el contexto que el modelo aún no conoce: los
-     * recuerdos (si cambiaron) y, en el primer mensaje tras cargar el
-     * modelo, las últimas conversaciones guardadas.
-     */
-    private fun buildPrompt(text: String, savedAs: String = text): String {
+    /** El mensaje tal como le llega a Gemma: el contexto ya va en la conversación (ver [openConversation]). */
+    private fun buildPrompt(text: String, @Suppress("UNUSED_PARAMETER") savedAs: String = text): String {
         if (guestMode) {
-            // Con otra persona: ni recuerdos, ni libreta, ni historial del dueño.
-            val preface = if (historyPending) guestPreface() + "\n\n" else ""
-            historyPending = false
-            memoriesPending = false
             val who = speaker?.name ?: "la persona nueva"
-            return "$preface[Habla $who] $text"
+            return "[Habla $who] $text"
         }
-        val context = StringBuilder()
+        return text
+    }
 
-        if (historyPending) {
-            // Primer mensaje tras cargar el modelo: Gemma recibe quién es Ari.
-            context.append(profile.personality()).append("\n\n")
+    /**
+     * Abre una conversación con Gemma que ya sabe quién es Ari, tus recuerdos, tu libreta
+     * y los últimos mensajes (o, con un invitado, solo lo que puede saber). Gemma lo
+     * conserva durante toda la plática, no solo en el primer mensaje.
+     * Corre en el hilo del modelo.
+     */
+    private fun openConversation(engine: Engine, guest: Boolean): Conversation {
+        if (guest) {
+            return engine.createConversation(ConversationConfig(systemInstruction = Contents.of(guestPreface())))
         }
-
-        if (memoriesPending) {
-            val memories = database.memories()
-            if (memories.isNotEmpty()) {
-                context.append("Recuerdos guardados sobre el usuario:\n")
-                memories.forEach { context.append("- ${it.content}\n") }
-                context.append("\n")
-            }
-            // La libreta de personas, para que Gemma sepa quién es "Luis" o "mi mamá".
-            val people = database.people()
-            if (people.isNotEmpty()) {
-                context.append("Personas que el usuario te ha presentado:\n")
-                people.takeLast(MAX_PEOPLE_IN_PROMPT).forEach {
-                    context.append("- ${PeopleAgent.summary(it).take(PERSON_PROMPT_CHARS)}\n")
-                }
-                context.append("\n")
-            }
+        val instruction = StringBuilder(profile.personality())
+        val memories = database.memories()
+        if (memories.isNotEmpty()) {
+            instruction.append("\n\nRecuerdos guardados sobre el usuario (úsalos para responder, pero no los repitas literalmente):\n")
+            memories.forEach { instruction.append("- ${it.content}\n") }
         }
-
-        if (historyPending) {
-            // El mensaje actual ya va al final del prompt: si ya se guardó, no se repite aquí.
-            val history = database.recentMessages(HISTORY_CONTEXT_LIMIT + 1).let { saved ->
-                val last = saved.lastOrNull()
-                if (last != null && last.role == ROLE_USER && last.content == savedAs) saved.dropLast(1)
-                else saved.takeLast(HISTORY_CONTEXT_LIMIT)
-            }
-            if (history.isNotEmpty()) {
-                context.append("Últimos mensajes de conversaciones anteriores:\n")
-                history.forEach { message ->
-                    val speaker = if (message.role == ROLE_USER) "Usuario" else "Ari"
-                    context.append("$speaker: ${message.content.take(HISTORY_CONTEXT_CHARS)}\n")
-                }
-                context.append("\n")
+        // La libreta de personas, para que Gemma sepa quién es "Luis" o "mi mamá".
+        val people = database.people()
+        if (people.isNotEmpty()) {
+            instruction.append("\nPersonas que el usuario te ha presentado:\n")
+            people.takeLast(MAX_PEOPLE_IN_PROMPT).forEach {
+                instruction.append("- ${PeopleAgent.summary(it).take(PERSON_PROMPT_CHARS)}\n")
             }
         }
-
-        memoriesPending = false
-        historyPending = false
-
-        if (context.isEmpty()) return text
-
-        return "[Contexto privado de Ari. Úsalo para responder, pero no lo repitas literalmente.]\n\n" +
-            context +
-            "Mensaje del usuario: $text"
+        val saved = database.recentMessages(GemmaContext.MAX_MESSAGES + 1).map {
+            GemmaContext.Turn(it.role == ROLE_USER, it.content)
+        }
+        val history = GemmaContext.trimHistory(saved).map {
+            if (it.fromUser) Message.user(it.text) else Message.model(it.text)
+        }
+        return engine.createConversation(
+            ConversationConfig(systemInstruction = Contents.of(instruction.toString()), initialMessages = history)
+        )
     }
 
     /** Ejecuta un comando local, muestra la respuesta y la devuelve. */
@@ -2760,12 +2745,11 @@ class MainActivity : Activity() {
                         conversation = null
                         runCatching { oldConversation?.close() }
                         // Si no se puede abrir otra, Ari pide volver a cargar el modelo.
-                        conversation = runCatching { current.createConversation() }.getOrNull()
+                        conversation = runCatching { openConversation(current, guest = false) }.getOrNull()
                     }
                     profile = Profile.load(profilePrefs)
+                    conversationForGuest = false
                     storage.execute { runCatching { AlarmReminders.rescheduleAll(this@MainActivity, database) } }
-                    historyPending = true
-                    memoriesPending = true
                     chat.clear()
                     restoreHistory()
                     chat.addNote(
@@ -2862,7 +2846,5 @@ class MainActivity : Activity() {
         private const val ROLE_USER = "user"
         private const val ROLE_ARI = "ari"
         private const val HISTORY_PAGE = 30
-        private const val HISTORY_CONTEXT_LIMIT = 8
-        private const val HISTORY_CONTEXT_CHARS = 300
     }
 }

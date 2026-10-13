@@ -226,6 +226,15 @@ Gemma no lee letras sino **tokens**: pedacitos de palabra (en español, una pala
 - Por eso un documento muy largo no cabe completo: Ari solo le pasa unas 1 000 palabras (unas 3 páginas).
 - Una pizarra más grande gastaría mucha más memoria del teléfono; es un equilibrio entre recordar más y no trabar el celular.
 
+### Instrucciones de sistema: lo que Gemma no olvida
+
+Una conversación con un modelo tiene dos tipos de texto:
+
+- Las **instrucciones de sistema** (system prompt): quién es y cómo debe comportarse. Van al principio y el modelo las trata como reglas que valen toda la plática.
+- Los **turnos**: lo que dice el usuario y lo que contesta el modelo.
+
+Antes, Ari pegaba su personalidad y tus recuerdos dentro de tu primer mensaje, como un papelito "[Contexto privado…]". Gemma podía confundirlo con algo que tú dijiste, o perderle importancia con el tiempo. Desde 0.18.0, Ari le da a Gemma la personalidad y los recuerdos como instrucciones de sistema, y los últimos mensajes como turnos anteriores (el **historial inicial**). Es como presentarle a alguien con una ficha antes de que empiece a platicar, en lugar de pasarle una nota a media plática.
+
 ### CPU, GPU y NPU: dónde "piensa" Gemma
 
 Tu teléfono tiene varios cerebros electrónicos:
@@ -480,6 +489,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Falso positivo**: cuando un sistema dice que sí por error, por ejemplo confundir a otra persona contigo.
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
+- **Instrucciones de sistema (system prompt)**: las reglas que recibe un modelo al empezar una conversación y que valen para toda la plática.
 - **Informe de fallo (crash report)**: el registro de por qué se cerró una app, para poder arreglarla.
 - **Traza (stack trace)**: la lista de funciones que se estaban ejecutando cuando ocurrió un error.
 - **ANR**: "la aplicación no responde"; Android cierra una app que se congela varios segundos.

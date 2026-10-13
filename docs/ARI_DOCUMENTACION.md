@@ -417,6 +417,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Gemma recuerda mejor (0.18.0): la personalidad de Ari, tus recuerdos, tu libreta y los últimos 20 mensajes van en las "instrucciones de sistema" de la conversación, así Gemma no los olvida a media plática. Si cambias un recuerdo o el tono, la siguiente pregunta empieza una conversación nueva que ya lo trae. Idea de otra sesión de Claude.
 - Informe de fallos (0.17.0): si Ari se cierra sola, al abrir ofrece mandar el informe (solo datos del teléfono y del error) por WhatsApp o correo; y Ajustes → Reportar un problema. Ari no lo manda sola.
 - Ari elige su modelo según el teléfono (0.16.0): mide la RAM y el espacio y recomienda Gemma 4 E4B (3.7 GB) o el ligero E2B (2.6 GB). En teléfonos con menos de 7 GB de RAM usa su versión básica, sin la vista. Así ya se puede instalar en el teléfono de otra persona.
 - Ari ve tu pantalla y chat de notificaciones (0.15.0): dile "mira mi pantalla" desde otra app, tocas el aviso y "Permitir", y Ari mira una sola imagen y te contesta. Y cuando termina algo, te escribe en un chat de notificaciones al que puedes contestar sin abrir la app. Todo sin internet.

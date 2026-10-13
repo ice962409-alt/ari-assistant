@@ -383,3 +383,11 @@ Pedido del usuario: que la app de la otra persona (tester) avise cuando falle. R
 - Texto con versión, teléfono, Android, RAM, versión básica, modelo, estado de la GPU y la traza (mensajes recortados a 300 caracteres, máximo 6000 caracteres). Pruebas en `FailureReportTest`.
 - MainActivity: `offerFailureReport` al abrir; `showReport` (vista previa + ACTION_SEND); Ajustes → Reportar un problema (`askProblemReport`).
 
+## Contexto de Gemma con ConversationConfig (versión 0.18.0)
+
+Propuesta de otra sesión (rama ccr-3d48bcea-ddppo3, commit bd7e6a2), adaptada a esta rama.
+- `openConversation(engine, guest)`: `ConversationConfig(systemInstruction = personalidad + recuerdos + libreta, initialMessages = GemmaContext.trimHistory(...))`. Invitados: solo `guestPreface()`, sin historial.
+- `GemmaContext.trimHistory` (pruebas en `GemmaContextTest`): últimos 20 mensajes, 4000 caracteres en total, 1200 por mensaje; empieza con el usuario y termina con Ari (se quita el mensaje del usuario sin respuesta, que es el que se está enviando).
+- `buildPrompt` ya no pega "[Contexto privado…]": devuelve el texto (con "[Habla X]" para invitados).
+- `historyPending`/`memoriesPending` ahora significan "hay que recrear la conversación": `askGemma` llama a `freshConversation` antes de enviar. La carga del modelo, `freshConversation` y la recuperación del respaldo usan `openConversation`. Todo pasa por el `executor` de un solo hilo.
+
