@@ -75,11 +75,34 @@ class ChatView(context: Context) : ScrollView(context) {
         column.removeAllViews()
     }
 
-    fun addUser(text: String) {
+    fun addUser(text: String, image: java.io.File? = null) {
         clearWelcome()
         finishAri()
-        column.addView(userRow(text), spaced(top = 14f))
+        image?.let { file -> thumbnail(file)?.let { column.addView(it, spaced(top = 14f)) } }
+        column.addView(userRow(text), spaced(top = if (image != null) 6f else 14f))
         scrollToEnd()
+    }
+
+    /** Miniatura de la imagen que adjuntaste, a la derecha como tus mensajes. */
+    private fun thumbnail(file: java.io.File): View? {
+        val bitmap = android.graphics.BitmapFactory.decodeFile(
+            file.absolutePath, android.graphics.BitmapFactory.Options().apply { inSampleSize = 4 }
+        ) ?: return null
+        val image = android.widget.ImageView(context).apply {
+            setImageBitmap(bitmap)
+            adjustViewBounds = true
+            scaleType = android.widget.ImageView.ScaleType.FIT_END
+            maxWidth = dp(200f)
+            maxHeight = dp(200f)
+            clipToOutline = true
+            background = AriTheme.rounded(context, AriTheme.bubble, 16f)
+            contentDescription = "Imagen adjunta"
+        }
+        val row = FrameLayout(context)
+        row.addView(image, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END
+        ))
+        return row
     }
 
     private fun userRow(text: String): View {

@@ -61,6 +61,21 @@ El icono de la app es la carita de Ari: una esfera color hielo con ojos y sonris
 
 Escribe y toca el botón de enviar. Las conversaciones se guardan. Al abrir la app aparecen los últimos 30 mensajes, y arriba está "Ver mensajes anteriores" para cargar más, de 30 en 30. Así Ari abre rápido aunque tenga muchos mensajes.
 
+### Adjuntar imágenes y documentos
+
+Toca el botón **+** (junto al micrófono) y elige:
+
+- **Foto o imagen**: se abre el selector de fotos del teléfono. Ari solo ve la foto que eliges, sin pedir permiso para tu galería.
+- **Documento**: PDF, Word (.docx) o archivos de texto (.txt, .csv, .json, .md).
+
+El adjunto aparece arriba del campo de texto; tócalo para quitarlo. Escribe qué quieres saber ("¿qué dice esta receta?", "resume este contrato", "¿qué planta es?") y toca enviar. Si no escribes nada, Ari describe la imagen o resume el documento.
+
+- Las **imágenes** y las **páginas de un PDF** (hasta 4) se las muestra a Gemma para que las "vea", incluidas tablas, letras y dibujos.
+- De un **Word o texto**, Ari lee el texto (hasta unas 4 000 palabras; si es más largo, solo el principio).
+- Todo se queda en el teléfono. Ari hace una copia temporal y la borra al terminar de responder. En el historial solo queda el nombre del archivo.
+- Lo que dice un documento es información, no órdenes: si trae frases como "ignora tus instrucciones", Ari no las obedece.
+- Si tu teléfono no pudo cargar la "vista" de Gemma, Ari te avisa: en ese caso solo puede leer Word y texto.
+
 ### Memoria
 
 Ari guarda recuerdos sobre ti y se los pasa a Gemma como contexto.
@@ -315,6 +330,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Adjuntar imágenes y documentos (0.12.0): botón + para mandarle a Ari fotos, PDF, Word y archivos de texto; Gemma ve las imágenes y las páginas del PDF. Todo en el teléfono.
 - Ari en segundo plano (0.11.0): en el modo live, Ari te sigue escuchando aunque salgas de la app o abra otra por ti, con una notificación fija (Hablar y Terminar). Si suena música no escucha; si no te oye, se pausa y a los 5 minutos termina sola.
 - Seguridad del modo live (0.10.3): solo el widget, el acceso directo y los ajustes rápidos de Ari pueden abrir el modo live; si otra app lo intenta para encender el micrófono, Ari lo ignora.
 - Modo live más natural (0.10.2): habla desde la primera coma en frases largas, dice "a ver…" si Gemma tarda, vibra cuando es tu turno, la pantalla no se apaga y atrás cierra el modo live. Acceso directo "Hablar con Ari" al mantener presionado el icono, botón en los ajustes rápidos y la carita de Ari en las notificaciones.
@@ -365,6 +381,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
+- **Attachments.kt**: leer las imágenes y documentos que le adjuntas a Ari.
 - **LiveSessionService.kt**: mantiene el modo live en segundo plano, con su notificación.
 - **AriLiveTile.kt** y **LiveShortcutActivity.kt**: el botón de ajustes rápidos y el acceso directo "Hablar con Ari".
 - **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).

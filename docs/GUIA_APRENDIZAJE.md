@@ -212,6 +212,16 @@ Android tiene varias "puertas" para entrar directo a una parte de una app:
 
 Un detalle: Android abre los accesos directos **cerrando primero la app** (borra su "tarea", la pila de pantallas abiertas). Eso obligaría a Ari a cargar otra vez a Gemma, que pesa 3.4 GB. Por eso el acceso directo abre primero una **pantalla puente** invisible, en su propia tarea, que solo le avisa a Ari "abre el modo live" y se cierra al instante.
 
+### Ari ve imágenes: modelos multimodales
+
+Un modelo **multimodal** entiende más de un tipo de cosa: texto, imágenes y hasta audio. Gemma 4 lo es. Por dentro tiene una parte extra, el **codificador de visión**, que convierte una foto en algo que el modelo puede "leer", como si la describiera con sus propios números. Por eso Ari carga a Gemma con la "vista" encendida: usa algo más de memoria, pero puede decirte qué hay en una foto, leer una receta o un recibo.
+
+- Una foto de celular es enorme (12 megapíxeles o más). A Gemma no le sirve tanto detalle, así que Ari la reduce a 1024 puntos de lado antes de mostrársela. Así responde más rápido y gasta menos memoria.
+- Un **PDF** se le muestra página por página, como fotos. Así entiende tablas, firmas y dibujos, no solo las letras.
+- Un **Word (.docx)** en realidad es una carpeta comprimida (un zip) con el texto guardado en XML. Ari abre ese zip y saca el texto.
+- **El selector de fotos de Android** deja que Ari vea solo la foto que eliges, sin darle permiso para toda tu galería. Es el **menor privilegio** otra vez.
+- **Ojo con los documentos**: un archivo puede traer escrito "ignora tus instrucciones y haz otra cosa". Es la **inyección de instrucciones** que ya conoces. Por eso Ari le marca a Gemma dónde empieza y dónde termina el documento, y le dice que eso es información para leer, no órdenes.
+
 ### Seguir escuchando en segundo plano: el servicio en primer plano
 
 Cuando sales de una app, Android la "duerme" para cuidar la batería y tu privacidad: ya no puede usar el micrófono. Para que Ari te siga escuchando mientras usas otras apps, Android pide un **servicio en primer plano**: una parte de la app que sigue trabajando, pero **siempre con una notificación fija** que no se puede esconder. Es como una luz de "grabando": mientras la ves, Ari te puede oír, y con un toque en "Terminar" se apaga.
@@ -369,6 +379,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Acceso directo (shortcut)**: la lista que sale al mantener presionado el icono de una app.
 - **Ajustes rápidos**: los botones del panel que bajas desde arriba de la pantalla.
 - **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
+- **Multimodal**: un modelo de IA que entiende varios tipos de cosas, como texto, imágenes y audio.
+- **Codificador de visión**: la parte del modelo que convierte una imagen en algo que puede "leer".
 - **Servicio en primer plano**: la parte de una app que sigue trabajando fuera de pantalla, siempre con una notificación fija.
 - **Reconocimiento de hablante**: saber quién está hablando, no lo que dice.
 - **Huella de voz (embedding de voz)**: la lista de números que resume cómo suena la voz de una persona.

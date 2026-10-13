@@ -24,6 +24,8 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Modo live más natural y accesos rápidos (0.10.2). Falta [prueba].
 - [autónomo] Seguridad: solo Ari puede abrir su modo live (0.10.3).
 - [autónomo] Ari en segundo plano en el modo live (0.11.0), pedido por el usuario. Falta [prueba].
+- [autónomo] Adjuntar imágenes y documentos (0.12.0), pedido por el usuario. Falta [prueba].
+- [autónomo] Siguiente para adjuntos: tomar foto con la cámara desde Ari, audios (Gemma 4 también entiende audio) y compartir a Ari desde otras apps ("Compartir → Ari").
 - [decisión] Burbuja flotante con la carita de Ari sobre otras apps (necesita el permiso "mostrar sobre otras apps"). Proponer después de la prueba de 0.11.0.
 - [autónomo] Investigación de control total (docs/CONTROL_APPS.md) y acciones de música, YouTube, SMS, correo y calendario (0.9.0).
 

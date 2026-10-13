@@ -297,3 +297,10 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Fuera de Ari, `listen()` espera 1.2 s y, si `AudioManager.isMusicActive`, pasa a `standby` (no escucha). Tras 3 silencios fuera de Ari, `standby`; a los 5 min en pausa, termina.
 - Falta probar en el POCO que el reconocedor de Google acepte escuchar con la app en segundo plano.
 
+## Adjuntar imágenes y documentos (versión 0.12.0)
+
+- Motor: `EngineConfig(visionBackend = Backend.CPU(), maxNumImages = 4)`; si falla, se reintenta solo texto (`visionReady`). `startEngine` cierra el motor si `initialize()` falla. Falta confirmar en el POCO que gemma-4-E4B-it.litertlm trae el codificador de visión.
+- `Attachments.kt`: `AttachmentReader.read` (imágenes reducidas a 1024 px con EXIF, PDF con `PdfRenderer` hasta 4 páginas como JPEG, .docx desde `word/document.xml`, texto hasta 512 KB), copias en `cacheDir/adjuntos` que se borran al terminar y al abrir la app. `DocumentText` es puro y tiene pruebas.
+- `sendWithAttachment` salta a los agentes y va directo a `askGemma(text, attachment, savedAs)`; con imágenes usa `sendMessageAsync(Contents.of(ImageFile…, Text), callback)`. El contenido del documento va entre <<< >>> marcado como datos (defensa contra inyección de instrucciones).
+- Selector: `ACTION_PICK_IMAGES` (Android 13+, sin permisos) o `ACTION_GET_CONTENT`; documentos con `ACTION_OPEN_DOCUMENT`. Sin cámara directa todavía (no hay FileProvider sin androidx).
+
