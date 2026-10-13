@@ -58,6 +58,42 @@ Comandos:
 
 Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari (Agente de reloj)". Cada tarea queda registrada en una bitácora dentro del teléfono.
 
+### El primer subordinado: el modelo de IA de tu laptop
+
+Ari puede delegar preguntas a otro modelo de IA que corra en tu laptop. El teléfono y la laptop se comunican por la red, sin pasar por internet.
+
+Cómo usarlo:
+
+- "laptop, explícame la fotosíntesis" o "pregúntale a la laptop …": Ari le pasa la pregunta y te lee la respuesta.
+- "busca la laptop": Ari recorre la red y se conecta sola.
+- **/laptop**: muestra si la laptop está conectada y con qué modelo.
+- **/laptop** seguido de la dirección, por ejemplo /laptop http://192.168.1.50:11434: conecta a mano.
+- "desconecta la laptop": olvida la laptop en la red actual.
+- **/delega laptop** seguido de la pregunta: también funciona.
+
+Autonomía: al abrir Ari, si estás en una red aprobada y todavía no tiene subordinado ahí, busca la laptop por su cuenta y te avisa cuando la encuentra.
+
+### Preparar la laptop
+
+Opción más sencilla, **LM Studio**:
+
+1. Descarga LM Studio desde lmstudio.ai e instálalo.
+2. Descarga un modelo pequeño desde la propia app. Para empezar, uno de 3 a 8 mil millones de parámetros (3B a 8B) va bien en la mayoría de las laptops.
+3. En la sección para desarrolladores, enciende el servidor y activa la opción para servir en la red local. Usa el puerto 1234.
+4. Si Windows pregunta si permites el acceso a la red, acepta solo para redes privadas.
+
+Alternativa, **Ollama**: instálalo desde ollama.com, descarga un modelo y permite conexiones desde la red. En las versiones recientes hay una opción en la configuración; en las anteriores se usa la variable de entorno OLLAMA_HOST=0.0.0.0. Usa el puerto 11434.
+
+### Redes y seguridad (para entender qué pasa)
+
+- Ari y la laptop se hablan sin cifrar, como si se pasaran tarjetas postales: cualquiera conectado a la misma red podría leerlas. Por eso Ari solo usa la laptop en redes que tú apruebas.
+- **Red privada** (por ejemplo, tu casa con contraseña): solo están tus dispositivos y gente de confianza. Se puede aprobar.
+- **Red compartida** (un trabajo donde la Wi-Fi solo la usan empleados): no es pública, pero no controlas qué dispositivos hay. Apruébala solo si confías.
+- **Red pública** (cafeterías, aeropuertos, hoteles): no la apruebes.
+- **Hotspot del teléfono**: activa "compartir internet" en el teléfono y conecta la laptop. Es una red solo entre los dos, así que Ari siempre la permite. Es la mejor opción fuera de casa.
+- La primera vez que uses la laptop en una red Wi-Fi, Ari pide el permiso de ubicación. Android lo exige para leer el nombre de la red; Ari no usa tu ubicación para nada más. Después pregunta "¿Usar el subordinado en esta red?".
+- Ari solo se conecta a direcciones de la red local, nunca a internet, y guarda la laptop por separado en cada red.
+
 ## 3. Cómo instalar versiones nuevas
 
 1. Cada cambio que llega a main se compila solo en GitHub Actions: https://github.com/javierhedzd-ops/ari-assistant/actions
@@ -87,19 +123,21 @@ Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari (Agente d
 - Documentación para el usuario exportada a Google Drive y CLAUDE.md con las reglas para Claude.
 - Probado en el teléfono: funciona.
 
-### Ari como CEO de agentes (en prueba, pendiente de PR)
+### Ari como CEO de agentes y primer subordinado (en prueba, pendiente de PR)
 
 - Contrato común para agentes y coordinador (AriCeo) que reparte las tareas antes de recurrir a Gemma.
 - Agente de memoria con frases normales y agente de reloj.
 - Bitácora de tareas en la base de datos y comandos /agentes y /delega.
+- Primer subordinado: el modelo de IA de la laptop, con búsqueda automática en la red.
+- Protección de red: solo en el hotspot del teléfono o en redes aprobadas, y solo direcciones locales.
 - Compila correctamente; falta probarlo en el teléfono.
 
 ## 5. Ideas pendientes
 
 - Siguientes fases del CEO:
-  - Que Gemma ayude a decidir qué agente atiende cada mensaje.
+  - Que Gemma ayude a decidir qué agente atiende cada mensaje, por ejemplo, mandar a la laptop las preguntas difíciles.
   - Agentes que hagan cosas en el teléfono, como recordatorios y alarmas, siempre pidiendo confirmación.
-  - Conectar bots externos, con permisos por agente.
+  - Más subordinados: otros bots o modelos, con permisos por agente.
 - Que Ari empiece a hablar mientras Gemma escribe, en vez de esperar la respuesta completa.
 - Elegir la voz y la velocidad de lectura.
 
@@ -108,7 +146,7 @@ Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari (Agente d
 - **MainActivity.kt**: interfaz, chat, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
-- **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt) y los agentes de memoria y reloj.
+- **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt), los agentes de memoria, reloj y laptop, y el guardia de red (NetworkGuard.kt).
 - **docs/ARI_ESTADO.md**: estado técnico, para que cualquier asistente pueda continuar.
 - **.github/workflows/android.yml**: compilación automática del APK.
 
