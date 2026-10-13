@@ -220,6 +220,8 @@ Un modelo **multimodal** entiende más de un tipo de cosa: texto, imágenes y ha
 - Un **PDF** se le muestra página por página, como fotos. Así entiende tablas, firmas y dibujos, no solo las letras.
 - Un **Word (.docx)** en realidad es una carpeta comprimida (un zip) con el texto guardado en XML. Ari abre ese zip y saca el texto.
 - **El selector de fotos de Android** deja que Ari vea solo la foto que eliges, sin darle permiso para toda tu galería. Es el **menor privilegio** otra vez.
+- **Tomar una foto sin permiso de cámara**: Ari no usa la cámara ella misma; le pide a tu app de cámara que tome la foto y le **presta** un solo archivo para guardarla, con un permiso que solo sirve para esa foto. A esa "ventanilla" se le llama **proveedor de contenido** (*content provider*).
+- **Compartir → Ari**: cuando compartes algo desde otra app, Android le presta el archivo a Ari solo un momento. Por eso Ari lo copia de inmediato a su carpeta temporal, y lo deja listo sin enviarlo.
 - **Ojo con los documentos**: un archivo puede traer escrito "ignora tus instrucciones y haz otra cosa". Es la **inyección de instrucciones** que ya conoces. Por eso Ari le marca a Gemma dónde empieza y dónde termina el documento, y le dice que eso es información para leer, no órdenes.
 
 ### Seguir escuchando en segundo plano: el servicio en primer plano
@@ -381,6 +383,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
 - **Multimodal**: un modelo de IA que entiende varios tipos de cosas, como texto, imágenes y audio.
 - **Codificador de visión**: la parte del modelo que convierte una imagen en algo que puede "leer".
+- **Proveedor de contenido (content provider)**: la "ventanilla" por la que una app presta un archivo a otra, con permiso temporal.
 - **Servicio en primer plano**: la parte de una app que sigue trabajando fuera de pantalla, siempre con una notificación fija.
 - **Reconocimiento de hablante**: saber quién está hablando, no lo que dice.
 - **Huella de voz (embedding de voz)**: la lista de números que resume cómo suena la voz de una persona.

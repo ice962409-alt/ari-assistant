@@ -304,3 +304,8 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `sendWithAttachment` salta a los agentes y va directo a `askGemma(text, attachment, savedAs)`; con imágenes usa `sendMessageAsync(Contents.of(ImageFile…, Text), callback)`. El contenido del documento va entre <<< >>> marcado como datos (defensa contra inyección de instrucciones).
 - Selector: `ACTION_PICK_IMAGES` (Android 13+, sin permisos) o `ACTION_GET_CONTENT`; documentos con `ACTION_OPEN_DOCUMENT`. Sin cámara directa todavía (no hay FileProvider sin androidx).
 
+## Tomar foto y compartir con Ari (versión 0.12.1)
+
+- `CaptureProvider` (no exportado, `grantUriPermissions`): presta `content://com.ari.assistant.camara/foto-<uuid>.jpg` a la cámara con `ACTION_IMAGE_CAPTURE` + `EXTRA_OUTPUT`. Solo acepta nombres `foto-…jpg` (sin rutas). Ari no declara CAMERA, así que no pide permiso. `pendingPhoto` se guarda en `onSaveInstanceState` por si Android cierra a Ari mientras la cámara está abierta. Tras leerla, se borra el original.
+- `ShareActivity` (exportada, ACTION_SEND con image/*, text/*, PDF, docx, JSON): copia el adjunto mientras tiene el permiso temporal (`AttachmentReader.read` o `fromText`), lo deja en memoria (`take()`) y abre MainActivity con `ACTION_SHARED`, que lo muestra con `showAttachment`. Nada se envía solo.
+

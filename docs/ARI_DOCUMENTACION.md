@@ -65,8 +65,11 @@ Escribe y toca el botón de enviar. Las conversaciones se guardan. Al abrir la a
 
 Toca el botón **+** (junto al micrófono) y elige:
 
+- **Tomar foto**: se abre la cámara; la foto que tomes queda adjunta. Ari no pide permiso de cámara: la toma tu app de cámara y solo le presta esa foto a Ari.
 - **Foto o imagen**: se abre el selector de fotos del teléfono. Ari solo ve la foto que eliges, sin pedir permiso para tu galería.
 - **Documento**: PDF, Word (.docx) o archivos de texto (.txt, .csv, .json, .md).
+
+También puedes **compartir con Ari desde otras apps**: en la Galería, WhatsApp, Archivos o el navegador, toca **Compartir** y elige **Ari**. Funciona con fotos, PDF, Word, archivos de texto y textos (un mensaje o un enlace). Ari se abre con el adjunto listo; no se envía nada hasta que tú tocas enviar.
 
 El adjunto aparece arriba del campo de texto; tócalo para quitarlo. Escribe qué quieres saber ("¿qué dice esta receta?", "resume este contrato", "¿qué planta es?") y toca enviar. Si no escribes nada, Ari describe la imagen o resume el documento.
 
@@ -330,6 +333,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Tomar foto y compartir con Ari (0.12.1): "+" → Tomar foto, y "Compartir → Ari" desde la Galería, WhatsApp, Archivos o el navegador.
 - Adjuntar imágenes y documentos (0.12.0): botón + para mandarle a Ari fotos, PDF, Word y archivos de texto; Gemma ve las imágenes y las páginas del PDF. Todo en el teléfono.
 - Ari en segundo plano (0.11.0): en el modo live, Ari te sigue escuchando aunque salgas de la app o abra otra por ti, con una notificación fija (Hablar y Terminar). Si suena música no escucha; si no te oye, se pausa y a los 5 minutos termina sola.
 - Seguridad del modo live (0.10.3): solo el widget, el acceso directo y los ajustes rápidos de Ari pueden abrir el modo live; si otra app lo intenta para encender el micrófono, Ari lo ignora.
@@ -381,7 +385,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
-- **Attachments.kt**: leer las imágenes y documentos que le adjuntas a Ari.
+- **Attachments.kt**: leer las imágenes y documentos que le adjuntas a Ari. **CaptureProvider.kt**: recibe la foto de la cámara. **ShareActivity.kt**: "Compartir → Ari" desde otras apps.
 - **LiveSessionService.kt**: mantiene el modo live en segundo plano, con su notificación.
 - **AriLiveTile.kt** y **LiveShortcutActivity.kt**: el botón de ajustes rápidos y el acceso directo "Hablar con Ari".
 - **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).

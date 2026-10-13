@@ -87,6 +87,35 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <!-- "Compartir → Ari" desde otras apps: imágenes, PDF, documentos y texto.
+             Solo prepara el adjunto; nada se envía hasta que tú lo decides. -->
+        <activity
+            android:name=".ShareActivity"
+            android:exported="true"
+            android:label="Ari"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
+        </activity>
+
+        <!-- Por aquí la cámara le entrega a Ari la foto que tomas. No es accesible para otras apps;
+             solo la cámara recibe permiso temporal para esa foto. -->
+        <provider
+            android:name=".CaptureProvider"
+            android:authorities="com.ari.assistant.camara"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <!-- Botón "Hablar con Ari" en los ajustes rápidos. -->
         <service
             android:name=".AriLiveTile"

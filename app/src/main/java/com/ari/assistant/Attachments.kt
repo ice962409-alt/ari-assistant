@@ -101,6 +101,9 @@ object AttachmentReader {
         }
     }
 
+    /** Texto que te compartieron (un mensaje, un enlace, una nota). */
+    fun fromText(name: String, raw: String): Attachment = document(name, raw)
+
     private fun document(name: String, raw: String): Attachment {
         val (text, truncated) = DocumentText.clip(raw)
         if (text.isBlank()) throw Unsupported("\"$name\" no tiene texto que pueda leer.")

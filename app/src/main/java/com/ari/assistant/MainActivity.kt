@@ -62,6 +62,8 @@ class MainActivity : Activity() {
     // Lo que adjuntaste y todavía no envías.
     private var pendingAttachment: Attachment? = null
     private lateinit var attachmentChip: TextView
+    // La foto que la cámara está tomando para Ari.
+    private var pendingPhoto: String? = null
     private var busy = false
 
     private lateinit var database: AriDatabase
@@ -131,6 +133,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingPhoto = savedInstanceState?.getString(KEY_PHOTO)
         database = AriDatabase(this)
         modelDownload = ModelDownload(this)
         profilePrefs = getSharedPreferences(Profile.PREFS, MODE_PRIVATE)
@@ -153,7 +156,10 @@ class MainActivity : Activity() {
         buildInterface()
         voice = VoiceController(this, voiceListener)
         // Adjuntos que quedaron de una vez anterior (por ejemplo, si Ari se cerró a medias).
-        Thread { AttachmentReader.clean(this) }.start()
+        if (pendingPhoto == null) Thread {
+            AttachmentReader.clean(this)
+            CaptureProvider.clean(this)
+        }.start()
         restoreHistory()
         loadSavedModel()
         recruitTeam()
@@ -639,6 +645,12 @@ class MainActivity : Activity() {
      * podría mandar la misma orden para encender el micrófono, y esa se ignora.
      */
     private fun handleLaunch(intent: Intent?) {
+        if (intent?.action == ACTION_SHARED) {
+            intent.action = null
+            // Lo compartido desde otra app ya viene copiado por ShareActivity.
+            ShareActivity.take()?.let { attachment -> liveOverlay.post { showAttachment(attachment) } }
+            return
+        }
         if (intent?.action == ACTION_LIVE) {
             intent.action = null
             if (LiveShortcutActivity.consumeTicket()) liveOverlay.post { openLive() }
@@ -854,6 +866,17 @@ class MainActivity : Activity() {
         data: Intent?
     ) {
         super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == TAKE_PHOTO) {
+            val photo = pendingPhoto?.let { File(it) }
+            pendingPhoto = null
+            if (resultCode == RESULT_OK && photo != null && photo.length() > 0) {
+                loadAttachment(Uri.parse("content://$CAMERA_AUTHORITY/${photo.name}"))
+            } else {
+                photo?.delete()
+            }
+            return
+        }
 
         if (requestCode == PICK_IMAGE || requestCode == PICK_DOCUMENT) {
             val uri = data?.data
@@ -1088,7 +1111,12 @@ class MainActivity : Activity() {
         if (busy) return
         AlertDialog.Builder(this)
             .setTitle("Adjuntar")
-            .setItems(arrayOf("Foto o imagen", "Documento (PDF, Word o texto)")) { _, which ->
+            .setItems(arrayOf("Tomar foto", "Foto o imagen", "Documento (PDF, Word o texto)")) { _, choice ->
+                if (choice == 0) {
+                    takePhoto()
+                    return@setItems
+                }
+                val which = choice - 1
                 val intent = if (which == 0) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                         // El selector de fotos de Android: Ari solo ve la foto que eliges, sin pedir permisos.
@@ -1112,6 +1140,28 @@ class MainActivity : Activity() {
             .show()
     }
 
+    /** La cámara del teléfono toma la foto y se la entrega a Ari por [CaptureProvider]. */
+    private fun takePhoto() {
+        val (file, uri) = CaptureProvider.newPhoto(this)
+        val intent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+            .putExtra(android.provider.MediaStore.EXTRA_OUTPUT, uri)
+            .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.clipData = android.content.ClipData.newRawUri("foto", uri)
+        try {
+            pendingPhoto = file.absolutePath
+            startActivityForResult(intent, TAKE_PHOTO)
+        } catch (e: android.content.ActivityNotFoundException) {
+            pendingPhoto = null
+            chat.addNote("No encontré una app de cámara en tu teléfono.")
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // Si Android cierra a Ari mientras usas la cámara, al volver sabe qué foto esperaba.
+        pendingPhoto?.let { outState.putString(KEY_PHOTO, it) }
+    }
+
     private fun loadAttachment(uri: Uri) {
         status.text = "Preparando el adjunto…"
         Thread {
@@ -1122,25 +1172,31 @@ class MainActivity : Activity() {
             } catch (e: Throwable) {
                 Result.failure(Exception("No pude abrir ese archivo (${e.message ?: e.javaClass.simpleName})."))
             }
+            // La foto original de la cámara ya no hace falta: Ari se queda con una copia reducida.
+            if (uri.authority == CAMERA_AUTHORITY) CaptureProvider.clean(this)
             runOnUiThread {
                 if (isDestroyed) {
                     result.getOrNull()?.delete()
                     return@runOnUiThread
                 }
-                result.onSuccess { attachment ->
-                    pendingAttachment?.delete()
-                    pendingAttachment = attachment
-                    val extra = if (attachment.skippedPages > 0) " (primeras ${AttachmentReader.MAX_PDF_PAGES} páginas)" else ""
-                    attachmentChip.text = "${attachment.label}$extra   ✕"
-                    attachmentChip.visibility = android.view.View.VISIBLE
-                    status.text = "Escribe qué quieres saber, o toca enviar."
-                    input.requestFocus()
-                }.onFailure {
+                result.onSuccess { attachment -> showAttachment(attachment) }.onFailure {
                     status.text = "Ari está lista."
                     chat.addNote(it.message ?: "No pude abrir ese archivo.")
                 }
             }
         }.start()
+    }
+
+    /** Deja el adjunto listo arriba del campo de texto; se envía cuando tocas enviar. */
+    private fun showAttachment(attachment: Attachment) {
+        if (liveVisible) closeLive()
+        pendingAttachment?.delete()
+        pendingAttachment = attachment
+        val extra = if (attachment.skippedPages > 0) " (primeras ${AttachmentReader.MAX_PDF_PAGES} páginas)" else ""
+        attachmentChip.text = "${attachment.label}$extra   ✕"
+        attachmentChip.visibility = android.view.View.VISIBLE
+        status.text = "Escribe qué quieres saber, o toca enviar."
+        input.requestFocus()
     }
 
     private fun clearAttachment() {
@@ -2056,6 +2112,10 @@ class MainActivity : Activity() {
         private const val REQUEST_CONTACTS = 108
         private const val PICK_IMAGE = 109
         private const val PICK_DOCUMENT = 110
+        private const val TAKE_PHOTO = 111
+        private const val KEY_PHOTO = "foto_pendiente"
+        private const val CAMERA_AUTHORITY = "com.ari.assistant.camara"
+        const val ACTION_SHARED = "com.ari.assistant.SHARED"
         private const val KEY_EXACT_ASKED = "alarmas_exactas_preguntado"
         private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
