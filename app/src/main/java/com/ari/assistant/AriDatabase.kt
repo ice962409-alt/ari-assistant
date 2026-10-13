@@ -5,8 +5,13 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.ari.assistant.agents.MemoryStore
+import com.ari.assistant.agents.Reminder
+import com.ari.assistant.agents.ReminderStore
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 data class ChatMessage(val role: String, val content: String, val id: Long = 0)
 
@@ -20,7 +25,7 @@ data class AgentTaskRecord(
 )
 
 class AriDatabase(context: Context) :
-    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), MemoryStore {
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), MemoryStore, ReminderStore {
 
     init {
         // WAL: las lecturas no esperan a las escrituras de otros hilos (los
@@ -49,11 +54,70 @@ class AriDatabase(context: Context) :
             """.trimIndent()
         )
         createAgentTasksTable(db)
+        createRemindersTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createAgentTasksTable(db)
+        if (oldVersion < 3) createRemindersTable(db)
     }
+
+    /** Recordatorios (versión 3). done: 0 pendiente, 1 avisado, 2 cancelado. */
+    private fun createRemindersTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                text TEXT NOT NULL,
+                due_at INTEGER NOT NULL,
+                done INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+
+    override fun addReminder(text: String, dueAt: LocalDateTime): Long {
+        val values = ContentValues().apply {
+            put("text", text)
+            put("due_at", toMillis(dueAt))
+            put("done", 0)
+            put("created_at", System.currentTimeMillis())
+        }
+        return writableDatabase.insertOrThrow("reminders", null, values)
+    }
+
+    override fun pendingReminders(): List<Reminder> = queryReminders("done = 0", emptyArray())
+
+    /** El recordatorio [id] si sigue pendiente. */
+    fun pendingReminder(id: Long): Reminder? =
+        queryReminders("done = 0 AND id = ?", arrayOf(id.toString())).firstOrNull()
+
+    override fun cancelReminders(ids: List<Long>) = setReminderState(ids, 2)
+
+    fun markReminderDone(id: Long) = setReminderState(listOf(id), 1)
+
+    private fun setReminderState(ids: List<Long>, state: Int) {
+        if (ids.isEmpty()) return
+        val values = ContentValues().apply { put("done", state) }
+        ids.forEach { writableDatabase.update("reminders", values, "id = ?", arrayOf(it.toString())) }
+    }
+
+    private fun queryReminders(where: String, args: Array<String>): List<Reminder> {
+        val result = mutableListOf<Reminder>()
+        readableDatabase.query("reminders", arrayOf("id", "text", "due_at"), where, args, null, null, "due_at ASC")
+            .use { cursor ->
+                while (cursor.moveToNext()) {
+                    result.add(Reminder(cursor.getLong(0), cursor.getString(1), fromMillis(cursor.getLong(2))))
+                }
+            }
+        return result
+    }
+
+    private fun toMillis(time: LocalDateTime) = time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+    private fun fromMillis(millis: Long): LocalDateTime =
+        LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.systemDefault())
 
     /** Bitácora de las tareas que el CEO delega en sus agentes (versión 2). */
     private fun createAgentTasksTable(db: SQLiteDatabase) {
@@ -207,8 +271,8 @@ class AriDatabase(context: Context) :
                     val values = ContentValues()
                     columns.forEach { column ->
                         when (column) {
-                            "success" -> values.put(column, row.optInt(column, 0))
-                            "created_at" -> values.put(column, row.optLong(column, System.currentTimeMillis()))
+                            "success", "done" -> values.put(column, row.optInt(column, 0))
+                            "created_at", "due_at" -> values.put(column, row.optLong(column, System.currentTimeMillis()))
                             else -> values.put(column, row.getString(column))
                         }
                     }
@@ -228,8 +292,8 @@ class AriDatabase(context: Context) :
                 val row = JSONObject()
                 columns.forEachIndexed { index, column ->
                     when (column) {
-                        "success" -> row.put(column, cursor.getInt(index))
-                        "created_at" -> row.put(column, cursor.getLong(index))
+                        "success", "done" -> row.put(column, cursor.getInt(index))
+                        "created_at", "due_at" -> row.put(column, cursor.getLong(index))
                         else -> row.put(column, cursor.getString(index))
                     }
                 }
@@ -241,13 +305,14 @@ class AriDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "ari.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         /** Tablas y columnas que viajan en el respaldo (el id se vuelve a crear). */
         private val TABLES = listOf(
             "memories" to listOf("content", "created_at"),
             "messages" to listOf("role", "content", "created_at"),
-            "agent_tasks" to listOf("agent_id", "request", "reply", "success", "created_at")
+            "agent_tasks" to listOf("agent_id", "request", "reply", "success", "created_at"),
+            "reminders" to listOf("text", "due_at", "done", "created_at")
         )
     }
 }

@@ -22,6 +22,7 @@ import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.ari.assistant.agents.NetworkGuard
+import com.ari.assistant.agents.ReminderAgent
 import com.ari.assistant.agents.TeamAgent
 import com.ari.assistant.ui.AriTheme
 import com.ari.assistant.ui.ChatView
@@ -65,6 +66,8 @@ class MainActivity : Activity() {
     private lateinit var ceo: AriCeo
     private lateinit var team: TeamAgent
     private lateinit var guard: NetworkGuard
+    private lateinit var reminders: ReminderAgent
+    private lateinit var reminderAlarms: AlarmReminders
 
     // Acción con el equipo que espera el permiso de ubicación.
     private var pendingNetworkAction: (() -> Unit)? = null
@@ -101,6 +104,10 @@ class MainActivity : Activity() {
         val firstRun = !Profile.isConfigured(profilePrefs)
         profile = if (firstRun) defaultProfile() else Profile.load(profilePrefs)
         ceo = AriCeo(database)
+        reminderAlarms = AlarmReminders(this)
+        reminders = ReminderAgent(database, reminderAlarms)
+        // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
+        ceo.hire(reminders)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
         ceo.hire(ClockAgent())
         val agentSettings = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
@@ -113,6 +120,41 @@ class MainActivity : Activity() {
         loadSavedModel()
         recruitTeam()
         if (firstRun) askUserName(firstTime = true) else remindBackup()
+        // Por si Android borró las alarmas (reinicio, actualización, respaldo recuperado).
+        storage.execute { runCatching { AlarmReminders.rescheduleAll(this, database) } }
+    }
+
+    /**
+     * Tras programar un recordatorio: pide permiso para notificar (Android 13+)
+     * y, una sola vez, ofrece activar las alarmas exactas para que llegue a tiempo.
+     */
+    private fun prepareReminderPermissions() {
+        if (!AlarmReminders.canNotify(this) && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+            return
+        }
+        offerExactAlarms()
+    }
+
+    private fun offerExactAlarms() {
+        if (reminderAlarms.exact() || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) return
+        if (profilePrefs.getBoolean(KEY_EXACT_ASKED, false)) return
+        profilePrefs.edit().putBoolean(KEY_EXACT_ASKED, true).apply()
+        AlertDialog.Builder(this)
+            .setTitle("¿Recordatorios a la hora exacta?")
+            .setMessage(
+                "Tu teléfono solo deja avisos aproximados, que pueden llegar unos minutos tarde. " +
+                    "Si activas \"Alarmas y recordatorios\" para Ari, llegarán a la hora exacta."
+            )
+            .setPositiveButton("Activar") { _, _ ->
+                runCatching {
+                    startActivity(
+                        Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName"))
+                    )
+                }
+            }
+            .setNegativeButton("Así está bien", null)
+            .show()
     }
 
     /** Regla 3-2-1: si hace una semana que no guardas un respaldo, Ari te lo recuerda. */
@@ -894,6 +936,7 @@ class MainActivity : Activity() {
                 status.text = "Ari está lista."
             }
             if (agent === team) offerCandidates()
+            if (agent === reminders && result.success) prepareReminderPermissions()
         }
     }
 
@@ -1056,6 +1099,14 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_NOTIFICATIONS) {
+            if (AlarmReminders.canNotify(this)) {
+                offerExactAlarms()
+            } else {
+                chat.addNote("Sin permiso de notificaciones no puedo avisarte. Puedes activarlo en los ajustes del teléfono, en Apps → Ari → Notificaciones.")
+            }
+            return
+        }
         if (requestCode == REQUEST_LOCATION) {
             val action = pendingNetworkAction
             pendingNetworkAction = null
@@ -1344,6 +1395,7 @@ class MainActivity : Activity() {
                         conversation = runCatching { current.createConversation() }.getOrNull()
                     }
                     profile = Profile.load(profilePrefs)
+                    storage.execute { runCatching { AlarmReminders.rescheduleAll(this@MainActivity, database) } }
                     historyPending = true
                     memoriesPending = true
                     chat.clear()
@@ -1384,6 +1436,8 @@ class MainActivity : Activity() {
         private const val REQUEST_LOCATION = 103
         private const val EXPORT_BACKUP = 104
         private const val IMPORT_BACKUP = 105
+        private const val REQUEST_NOTIFICATIONS = 106
+        private const val KEY_EXACT_ASKED = "alarmas_exactas_preguntado"
         private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
         private const val AGENT_SETTINGS = "ari_agentes"
