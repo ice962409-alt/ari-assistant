@@ -69,6 +69,17 @@ class MainActivity : Activity() {
     private lateinit var guard: NetworkGuard
     private lateinit var reminders: ReminderAgent
     private lateinit var reminderAlarms: AlarmReminders
+    private lateinit var modelDownload: ModelDownload
+    private lateinit var phoneAgent: PhoneAgent
+
+    // Si sales de Ari mientras trabaja, te avisa con una notificación al terminar.
+    private var inForeground = false
+
+    // Revisa el avance de la descarga del modelo mientras Ari está a la vista.
+    private val downloadWatcher = android.os.Handler(android.os.Looper.getMainLooper())
+    private val checkDownload = object : Runnable {
+        override fun run() = watchDownload()
+    }
 
     // Acción con el equipo que espera el permiso de ubicación.
     private var pendingNetworkAction: (() -> Unit)? = null
@@ -100,6 +111,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         database = AriDatabase(this)
+        modelDownload = ModelDownload(this)
         profilePrefs = getSharedPreferences(Profile.PREFS, MODE_PRIVATE)
         backupPrefs = getSharedPreferences(BackupReminder.PREFS, MODE_PRIVATE)
         val firstRun = !Profile.isConfigured(profilePrefs)
@@ -109,7 +121,8 @@ class MainActivity : Activity() {
         reminders = ReminderAgent(database, reminderAlarms)
         // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
         ceo.hire(reminders)
-        ceo.hire(PhoneAgent(AndroidPhone(this)))
+        phoneAgent = PhoneAgent(AndroidPhone(this))
+        ceo.hire(phoneAgent)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
         ceo.hire(ClockAgent())
         val agentSettings = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
@@ -173,7 +186,8 @@ class MainActivity : Activity() {
     private fun defaultProfile(): Profile {
         val existing = database.recentMessages(1).isNotEmpty() ||
             database.memories().isNotEmpty() ||
-            File(filesDir, MODEL_FILE_NAME).exists()
+            File(filesDir, MODEL_FILE_NAME).exists() ||
+            modelDownload.downloadedFile() != null
         return if (existing) Profile(tone = Tone.FRANK_SWEARING, creator = true) else Profile()
     }
 
@@ -510,20 +524,125 @@ class MainActivity : Activity() {
         }
     }
 
+    /** El modelo elegido a mano (en la memoria interna) o, si no, el descargado. */
+    private fun savedModelFile(): File? =
+        File(filesDir, MODEL_FILE_NAME).takeIf { it.exists() && it.length() > 0L }
+            ?: modelDownload.downloadedFile()
+
     private fun loadSavedModel() {
-        val modelFile = File(filesDir, MODEL_FILE_NAME)
-        if (!modelFile.exists() || modelFile.length() == 0L) return
+        val modelFile = savedModelFile()
+        if (modelFile == null) {
+            if (!modelDownload.isRunning()) status.text = "Toca Modelo para descargar a Gemma y empezar"
+            return
+        }
 
         status.text = "Cargando el modelo guardado..."
         selectButton.isEnabled = false
         executor.execute { initializeModel(modelFile) }
     }
 
+    /** Botón Modelo: descargar a Gemma, ver la descarga o elegir un archivo del teléfono. */
     private fun selectModel() {
         if (busy) {
             status.text = "Espera a que Ari termine de responder para cambiar el modelo."
             return
         }
+        if (modelDownload.isRunning()) {
+            AlertDialog.Builder(this)
+                .setTitle("Descargando a Gemma")
+                .setMessage("La descarga sigue aunque cierres Ari; verás el avance arriba y en las notificaciones.")
+                .setPositiveButton("Seguir", null)
+                .setNegativeButton("Cancelar descarga") { _, _ ->
+                    modelDownload.cancel()
+                    status.text = "Descarga cancelada."
+                }
+                .show()
+            return
+        }
+        val options = arrayOf("Descargar Gemma 4 (3.7 GB, por Wi-Fi)", "Elegir un archivo del teléfono")
+        AlertDialog.Builder(this)
+            .setTitle("Modelo de Ari")
+            .setItems(options) { _, which -> if (which == 0) confirmDownload() else pickModelFile() }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun confirmDownload() {
+        AlertDialog.Builder(this)
+            .setTitle("¿Descargar a Gemma?")
+            .setMessage(
+                "Es la única vez que Ari usa internet: el gestor de descargas del teléfono baja el modelo " +
+                    "oficial (Gemma 4 E4B, unos 3.7 GB) desde Hugging Face. Tus conversaciones y recuerdos " +
+                    "no salen del teléfono.\n\n" +
+                    "• Solo por Wi-Fi, para no gastar tus datos.\n" +
+                    "• Necesitas unos 4.2 GB libres.\n" +
+                    "• Puede tardar de 10 minutos a una hora, y sigue aunque cierres Ari."
+            )
+            .setPositiveButton("Descargar") { _, _ -> startDownload() }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    private fun startDownload() {
+        when (val started = modelDownload.start()) {
+            ModelDownload.Start.Started -> {
+                status.text = "Empezó la descarga de Gemma."
+                chat.addNote("Estoy descargando a Gemma. Te aviso cuando esté lista; puedes cerrar la app mientras.")
+                watchDownload()
+            }
+            is ModelDownload.Start.NoSpace -> chat.addNote(ModelDownloadText.noSpace(started.free))
+            ModelDownload.Start.Unavailable ->
+                chat.addNote("No encuentro dónde guardar el modelo en este teléfono. Elígelo a mano con Modelo → Elegir un archivo.")
+        }
+    }
+
+    /** Muestra el avance y, al terminar, carga el modelo descargado. */
+    private fun watchDownload() {
+        downloadWatcher.removeCallbacks(checkDownload)
+        if (isDestroyed) return
+        when (val state = runCatching { modelDownload.state() }.getOrNull()) {
+            is ModelDownload.State.Running -> {
+                status.text = ModelDownloadText.progress(state.downloaded, state.total)
+                downloadWatcher.postDelayed(checkDownload, DOWNLOAD_CHECK_MS)
+            }
+            is ModelDownload.State.Paused -> {
+                status.text = ModelDownloadText.paused(state.reason, state.downloaded, state.total)
+                downloadWatcher.postDelayed(checkDownload, DOWNLOAD_CHECK_MS)
+            }
+            is ModelDownload.State.Failed -> chat.addNote(ModelDownloadText.failed(state.reason))
+            is ModelDownload.State.Done -> {
+                // Solo se carga si no hay ya un modelo funcionando con este mismo archivo.
+                if (modelReady && savedModelFile() == state.file) return
+                File(filesDir, MODEL_FILE_NAME).delete()
+                status.text = "Descarga completa. Cargando a Gemma..."
+                chat.addNote("¡Listo! Ya descargué a Gemma. La estoy cargando.")
+                selectButton.isEnabled = false
+                modelReady = false
+                executor.execute {
+                    releaseModel()
+                    initializeModel(state.file)
+                }
+            }
+            else -> Unit
+        }
+    }
+
+    private fun notifyIfAway(title: String, text: String) {
+        if (!inForeground && text.isNotBlank()) TaskNotifier.done(this, title, text)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        inForeground = true
+        if (modelDownload.isRunning()) watchDownload()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        downloadWatcher.removeCallbacks(checkDownload)
+    }
+
+    private fun pickModelFile() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
@@ -595,6 +714,8 @@ class MainActivity : Activity() {
                     throw IllegalStateException("No se pudo guardar el modelo.")
                 }
 
+                // El modelo elegido a mano reemplaza al descargado: se borra para liberar 3.7 GB.
+                modelDownload.deleteDownloaded()
                 runOnUiThread {
                     status.text =
                         "Archivo copiado. Iniciando LiteRT-LM..."
@@ -659,6 +780,7 @@ class MainActivity : Activity() {
                 historyPending = true
                 memoriesPending = true
                 status.text = "Gemma cargado. Ari está lista."
+                notifyIfAway("Ari está lista", "Gemma terminó de cargar. Ya puedes hablar con Ari.")
                 if (database.recentMessages(1).isEmpty()) {
                     status.text = "Lista para ayudarte"
                 } else {
@@ -765,6 +887,7 @@ class MainActivity : Activity() {
                         chat.finishAri()
                         busy = false
                         sendButton.isEnabled = true
+                        notifyIfAway("Ari terminó de responder", response.toString())
                         if (voiceMode) {
                             status.text = "Ari está hablando..."
                             voice.speak(response.toString())
@@ -931,6 +1054,8 @@ class MainActivity : Activity() {
             saveMessage(ROLE_ARI, result.reply)
             chat.appendAri(result.reply)
             chat.finishAri()
+            // El agente del teléfono te saca de Ari a propósito: ahí no hace falta avisar.
+            if (agent !== phoneAgent) notifyIfAway("${agent.name} terminó", result.reply)
             if (voiceMode) {
                 status.text = "Ari está hablando..."
                 voice.speak(result.reply)
@@ -1189,6 +1314,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        inForeground = false
         if (voiceMode) stopVoiceMode("Modo voz detenido.")
         // Al salir de Ari, el widget muestra los recuerdos y el equipo al día.
         AriWidget.refresh(this)
@@ -1434,6 +1560,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val PICK_MODEL = 101
+        private const val DOWNLOAD_CHECK_MS = 2000L
         private const val REQUEST_AUDIO = 102
         private const val REQUEST_LOCATION = 103
         private const val EXPORT_BACKUP = 104

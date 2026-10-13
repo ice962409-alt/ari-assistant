@@ -139,3 +139,39 @@ class ReminderBootReceiver : BroadcastReceiver() {
         }
     }
 }
+
+/**
+ * "Ari terminó": si le dejas una tarea y sales de la app, te avisa cuando la
+ * completa (una respuesta larga, un trabajo del equipo, Gemma lista).
+ */
+object TaskNotifier {
+    private const val CHANNEL = "avisos"
+    private const val ID = 4_000_000
+
+    fun done(context: Context, title: String, text: String) {
+        if (!AlarmReminders.canNotify(context)) return
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL, "Tareas terminadas", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Ari te avisa cuando termina algo que le dejaste haciendo."
+            }
+        )
+        val open = PendingIntent.getActivity(
+            context, 1,
+            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val preview = text.trim().replace(Regex("\\s+"), " ").take(300)
+        manager.notify(
+            ID,
+            android.app.Notification.Builder(context, CHANNEL)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .setContentText(preview)
+                .setStyle(android.app.Notification.BigTextStyle().bigText(preview))
+                .setContentIntent(open)
+                .setAutoCancel(true)
+                .build()
+        )
+    }
+}
