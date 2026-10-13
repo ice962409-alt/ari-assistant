@@ -276,3 +276,13 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Voz por frases: `SpeechChunker` (probado) + `VoiceController.beginStream/streamSentence/endStream`; `askGemma` habla cada frase al llegar si el modo voz estaba activo al empezar. `VOICE_STYLE` pide respuestas cortas. Interrumpir: `stopSpeaking()`; si Gemma sigue escribiendo, `endStream()` devuelve false y se vuelve a escuchar al terminar. Silencio de fin de frase pedido: 1000 ms.
 - Widget: `ViewFlipper` con 5 cuadros vectoriales (`ari_face_open/glow/blink`) cada 900 ms; tocar mensajes envía `WIDGET_POKE` → `ari_face_happy` y saludo 4 s (`goAsync`). Detecta también el modelo descargado.
 - Icono: `ic_launcher_foreground` con la cara (zona segura 66 dp), `ic_launcher_monochrome` con ojos y sonrisa recortados, fondo con brillo radial.
+
+## Modo live más natural y accesos rápidos (versión 0.10.2)
+
+- `SpeechChunker`: si lo pendiente pasa de 70 caracteres sin fin de frase, corta en la última ", " (si está después del carácter 25). Pruebas nuevas.
+- `askGemma`: muletilla (`THINKING_FILLERS`) a los 1800 ms si aún no se dijo ninguna frase; se cancela en `onDone`/`onError`.
+- Modo live: `FLAG_KEEP_SCREEN_ON` mientras está abierto; `onBackPressed` lo cierra (la app no usa el gesto atrás predictivo); vibración `CONTEXT_CLICK` al empezar a escuchar.
+- Acceso directo estático (`res/xml/shortcuts.xml`) que apunta a `LiveShortcutActivity`, un puente invisible con `taskAffinity=""`: Android abre los accesos directos con CLEAR_TASK y, sin el puente, Ari recargaría a Gemma.
+- `AriLiveTile`: TileService "Hablar con Ari"; en Android 14+ usa `startActivityAndCollapse(PendingIntent)`; con el teléfono bloqueado pide desbloquear primero.
+- `ic_notification` ahora es la carita en un solo color (también la usa el botón de ajustes rápidos).
+

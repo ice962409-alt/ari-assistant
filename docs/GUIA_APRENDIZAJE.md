@@ -199,7 +199,18 @@ En una conversación entre personas, nadie espera a tener toda la respuesta pens
 - **Por frases**: Gemma escribe la respuesta poco a poco (a esto se le llama *streaming*). En cuanto termina la primera frase, Ari la dice en voz alta mientras Gemma sigue con la siguiente. Así contesta en uno o dos segundos en vez de esperar todo.
 - **Respuestas cortas**: en voz, Ari le pide a Gemma contestar en una a tres frases, sin listas ni formato, como en una plática.
 - **Turnos**: cuando dejas de hablar un segundo, Ari entiende que terminaste y contesta. Cuando ella termina, te vuelve a escuchar sola.
+- **Latencia**: es el tiempo que pasa entre que terminas de hablar y Ari empieza a contestar. Entre personas suele ser menos de un segundo; si pasa de dos, la plática se siente rara. Por eso, si una frase viene larga, Ari empieza a decirla desde la primera coma, y si Gemma tarda en arrancar, dice "a ver…" como haría cualquiera mientras piensa. A esas palabras de relleno se les llama **muletillas**.
+- **Señales de turno**: cuando Ari termina y te toca hablar, el teléfono vibra suavecito. Así sabes que es tu turno sin mirar la pantalla.
 - **Interrumpir**: si la tocas mientras habla, se calla y te escucha. (Que te escuche *mientras* habla sería más natural, pero el micrófono oiría su propia voz; por eso por ahora es con un toque.)
+
+### Accesos directos y ajustes rápidos
+
+Android tiene varias "puertas" para entrar directo a una parte de una app:
+
+- **Acceso directo** (*shortcut*): al mantener presionado el icono de Ari aparece "Hablar con Ari".
+- **Ajustes rápidos** (*Quick Settings*): son los botones que salen al bajar el panel desde arriba, como la linterna o el Wi-Fi. Ari agrega uno, "Hablar con Ari". Si el teléfono está bloqueado, primero te pide desbloquearlo, para que nadie más pueda platicar con tu Ari.
+
+Un detalle: Android abre los accesos directos **cerrando primero la app** (borra su "tarea", la pila de pantallas abiertas). Eso obligaría a Ari a cargar otra vez a Gemma, que pesa 3.4 GB. Por eso el acceso directo abre primero una **pantalla puente** invisible, en su propia tarea, que solo le avisa a Ari "abre el modo live" y se cierra al instante.
 
 ### Intents: cómo una app le pide algo a otra
 
@@ -329,5 +340,10 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Gestor de descargas (DownloadManager)**: el servicio de Android que baja archivos grandes, aunque la app esté cerrada.
 - **AppFunctions**: funciones que una app ofrece a los asistentes de IA para que las usen de forma segura.
 - **SMS**: los mensajes de texto normales del teléfono.
+- **Latencia**: el tiempo de espera entre que terminas de hablar y te contestan.
+- **Muletilla**: una palabra de relleno como "a ver…" que se dice mientras se piensa.
+- **Acceso directo (shortcut)**: la lista que sale al mantener presionado el icono de una app.
+- **Ajustes rápidos**: los botones del panel que bajas desde arriba de la pantalla.
+- **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.

@@ -123,12 +123,12 @@ Funciona escribiendo o con el modo de voz. Al abrir otra app, el modo de voz se 
 
 ### Modo live: platicar con Ari en voz
 
-1. Toca el botón del micrófono (junto al de enviar), o **Hablar** o la cara de Ari en el widget. Se abre el modo live: Ari a pantalla completa. La primera vez pide permiso para usar el micrófono.
+1. Toca el botón del micrófono (junto al de enviar), o **Hablar** o la cara de Ari en el widget. También puedes **mantener presionado el icono de Ari** y elegir "Hablar con Ari", o tocar **Hablar con Ari** en los ajustes rápidos (el panel que bajas desde arriba; la primera vez agrégalo con el lápiz de "editar"). Se abre el modo live: Ari a pantalla completa. La primera vez pide permiso para usar el micrófono.
 2. Ari te saluda por tu nombre y te escucha. Mientras hablas, brilla con tu voz y ves tus palabras abajo.
-3. Mientras piensa, mira de un lado a otro. En cuanto Gemma escribe la primera frase, **Ari empieza a hablar**, sin esperar la respuesta completa, y mueve la boca.
+3. Mientras piensa, mira de un lado a otro. En cuanto Gemma escribe la primera frase, **Ari empieza a hablar**, sin esperar la respuesta completa, y mueve la boca. Si una frase viene larga, la empieza a decir desde la primera coma. Si Gemma tarda en arrancar, Ari dice "a ver…" mientras piensa, como una persona.
 4. En voz, Ari contesta corto y natural, como en una plática, y al final puede ofrecerte más detalle.
 5. **Para interrumpirla**, tócala (o toca "Interrumpir"): se calla y te escucha, como cuando le interrumpes a alguien.
-6. Al terminar de hablar, vuelve a escucharte sola. Para salir, toca el cuadrado o "Escribir".
+6. Al terminar de hablar, vuelve a escucharte sola, y el teléfono vibra suavecito para avisarte que es tu turno. Mientras platican, la pantalla no se apaga. Para salir, toca el cuadrado, "Escribir" o el botón atrás.
 
 El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un error con el micrófono o si sales de la app. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
 
@@ -306,6 +306,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Modo live más natural (0.10.2): habla desde la primera coma en frases largas, dice "a ver…" si Gemma tarda, vibra cuando es tu turno, la pantalla no se apaga y atrás cierra el modo live. Acceso directo "Hablar con Ari" al mantener presionado el icono, botón en los ajustes rápidos y la carita de Ari en las notificaciones.
 - Ari con cara y voz fluida (0.10.0): modo live a pantalla completa con Ari animada, habla frase por frase mientras Gemma escribe, respuestas cortas en voz, se puede interrumpir, saludo al abrir; widget con su carita que respira, parpadea y saluda; icono nuevo.
 - Más acciones seguras (0.9.0): música, YouTube, SMS, correo y citas en el calendario. Propuesta por etapas para el control total de apps.
 - Contactos (0.8.0): "llama a mamá" y "manda un WhatsApp a Juan que diga …" buscan el número en tus contactos.
