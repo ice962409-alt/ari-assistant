@@ -18,7 +18,7 @@ Ari es un asistente personal para Android que funciona con inteligencia artifici
 
 1. Instala el APK.
 2. Toca **Seleccionar modelo** y elige el archivo gemma-4-E4B-it.litertlm. Ari lo copia a su almacenamiento privado.
-3. Espera el mensaje "Gemma cargado. Ari está listo".
+3. Espera el mensaje "Gemma cargado. Ari está lista".
 
 Las siguientes veces, el modelo carga solo al abrir la app.
 
@@ -58,41 +58,74 @@ Comandos:
 
 Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari (Agente de reloj)". Cada tarea queda registrada en una bitácora dentro del teléfono.
 
-### El primer subordinado: el modelo de IA de tu laptop
+### La personalidad de Ari
 
-Ari puede delegar preguntas a otro modelo de IA que corra en tu laptop. El teléfono y la laptop se comunican por la red, sin pasar por internet.
+Ari es mujer y es tu creación. Es cercana y con buen humor, pero seria cuando el tema lo pide. Es directa y breve; si no entiendes algo o le pides más, te lo explica con detalle, paso a paso. Gemma recibe esta personalidad al empezar cada conversación.
+
+### El equipo de modelos: los subordinados de Ari
+
+Ari es la CEO de una empresa en formación dedicada a la autonomía de modelos de IA locales. Sus subordinados son modelos de IA que corren en tus computadoras o celulares, conectados a la misma red. Se comunican por la red local, sin pasar por internet.
+
+Ari busca los modelos por su cuenta, los contrata y le da a cada uno un puesto según su capacidad:
+
+- **Desarrollo de software**: modelos especializados en código, por ejemplo "coder". Atienden lo que tenga que ver con código, programación, Linux o terminal.
+- **Análisis y estrategia**: modelos grandes, de 7B o más. Investigan, comparan y redactan planes y propuestas.
+- **Asistencia general**: modelos medianos o sin tamaño conocido.
+- **Respuestas rápidas**: modelos pequeños, de menos de 4B.
+
+Los modelos que no sirven para conversar (los de "embeddings") no se contratan.
 
 Cómo usarlo:
 
-- "laptop, explícame la fotosíntesis" o "pregúntale a la laptop …": Ari le pasa la pregunta y te lee la respuesta.
-- "busca la laptop": Ari recorre la red y se conecta por su cuenta.
-- **/laptop**: muestra si la laptop está conectada y con qué modelo.
-- **/laptop** seguido de la dirección, por ejemplo /laptop http://192.168.1.50:11434: conecta a mano.
-- "desconecta la laptop": olvida la laptop en la red actual.
-- **/delega laptop** seguido de la pregunta: también funciona.
+- "equipo, …" o "pregúntale al equipo …": Ari elige al mejor del equipo para esa tarea. También funciona "laptop, …".
+- Autonomía: si escribes algo de una especialidad, por ejemplo "escribe un script en Python", y hay un modelo con ese puesto, Ari se lo encarga sin que se lo pidas. Lo demás lo responde Gemma en el teléfono.
+- "busca modelos": Ari recorre la red y forma el equipo.
+- **/equipo**: muestra el equipo, el puesto de cada modelo y si está disponible.
+- **/equipo** seguido de la dirección, por ejemplo /equipo http://192.168.1.50:11434: contrata a mano los modelos de ese servidor.
+- "despide al equipo": olvida el equipo de la red actual.
+- Al abrir Ari, si estás en una red aprobada y todavía no hay equipo ahí, Ari lo busca por su cuenta y te avisa a quién contrató.
 
-Autonomía: al abrir Ari, si estás en una red aprobada y todavía no tiene subordinado ahí, busca la laptop por su cuenta y te avisa cuando la encuentra.
+En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[Desarrollo de software (qwen2.5-coder:7b)]".
 
-### Preparar la laptop
+### Preparar la laptop con Linux (Ollama)
 
-Opción más sencilla, **LM Studio**:
+1. Instala Ollama. En la terminal:
+   curl -fsSL https://ollama.com/install.sh | sh
+2. Descarga uno o más modelos. Cada uno recibirá su propio puesto. Por ejemplo:
+   ollama pull llama3.1:8b (análisis y estrategia)
+   ollama pull qwen2.5-coder:7b (desarrollo de software)
+   ollama pull llama3.2:3b (respuestas rápidas)
+   Empieza con uno o dos: cada modelo ocupa varios GB y usa mucha memoria al responder.
+3. Permite que Ollama acepte conexiones de la red local:
+   sudo systemctl edit ollama
+   En el editor que se abre, escribe estas dos líneas, guarda y cierra:
+   [Service]
+   Environment="OLLAMA_HOST=0.0.0.0"
+   Luego aplica el cambio:
+   sudo systemctl daemon-reload
+   sudo systemctl restart ollama
+4. Si usas el firewall ufw, abre el puerto solo para tu red local:
+   sudo ufw allow from 192.168.0.0/16 to any port 11434 proto tcp
+5. Comprueba que funciona, en la laptop:
+   curl http://localhost:11434/v1/models
+   Debe mostrar la lista de tus modelos.
+6. En Ari, conectado a la misma red: di "busca modelos".
 
-1. Descarga LM Studio desde lmstudio.ai e instálalo.
-2. Descarga un modelo pequeño desde la propia app. Para empezar, uno de 3 a 8 mil millones de parámetros (3B a 8B) va bien en la mayoría de las laptops.
-3. En la sección para desarrolladores, enciende el servidor y activa la opción para servir en la red local. Usa el puerto 1234.
-4. Si Windows pregunta si permites el acceso a la red, acepta solo para redes privadas.
+### Otros equipos: Windows, Mac o celulares
 
-Alternativa, **Ollama**: instálalo desde ollama.com, descarga un modelo y permite conexiones desde la red. En las versiones recientes hay una opción en la configuración; en las anteriores se usa la variable de entorno OLLAMA_HOST=0.0.0.0. Usa el puerto 11434.
+- **LM Studio** (Windows, Mac o Linux): descarga un modelo, enciende el servidor en la sección para desarrolladores y activa la opción de servir en la red local. Usa el puerto 1234.
+- **Celulares Android**: un celular también puede ser subordinado si corre un servidor de modelos, por ejemplo Ollama dentro de Termux, con OLLAMA_HOST=0.0.0.0. Necesita bastante memoria RAM.
+- **llama.cpp**: su servidor también funciona, en el puerto 8080.
 
 ### Redes y seguridad (para entender qué pasa)
 
-- Ari y la laptop se hablan sin cifrar, como si se pasaran tarjetas postales: cualquiera conectado a la misma red podría leerlas. Por eso Ari solo usa la laptop en redes que tú apruebas.
+- Ari y su equipo se hablan sin cifrar, como si se pasaran tarjetas postales: cualquiera conectado a la misma red podría leerlas. Por eso Ari solo trabaja con el equipo en redes que tú apruebas.
 - **Red privada** (por ejemplo, tu casa con contraseña): solo están tus dispositivos y gente de confianza. Se puede aprobar.
 - **Red compartida** (un trabajo donde la Wi-Fi solo la usan empleados): no es pública, pero no controlas qué dispositivos hay. Apruébala solo si confías.
 - **Red pública** (cafeterías, aeropuertos, hoteles): no la apruebes.
-- **Hotspot del teléfono**: activa "compartir internet" en el teléfono y conecta la laptop. Es una red solo entre los dos, así que Ari siempre la permite. Es la mejor opción fuera de casa.
-- La primera vez que uses la laptop en una red Wi-Fi, Ari pide el permiso de ubicación. Android lo exige para leer el nombre de la red; Ari no usa tu ubicación para nada más. Después pregunta "¿Usar el subordinado en esta red?".
-- Ari solo se conecta a direcciones de la red local, nunca a internet, y guarda la laptop por separado en cada red.
+- **Hotspot del teléfono**: activa "compartir internet" en el teléfono y conecta la laptop. Es una red solo entre tus dispositivos, así que Ari siempre la permite. Es la mejor opción fuera de casa.
+- La primera vez que uses el equipo en una red Wi-Fi, Ari pide el permiso de ubicación. Android lo exige para leer el nombre de la red; Ari no usa tu ubicación para nada más. Después pregunta "¿Trabajar con el equipo en esta red?".
+- Ari solo se conecta a direcciones de la red local, nunca a internet, y guarda el equipo por separado en cada red.
 
 ## 3. Cómo instalar versiones nuevas
 
@@ -123,21 +156,26 @@ Alternativa, **Ollama**: instálalo desde ollama.com, descarga un modelo y permi
 - Documentación para el usuario exportada a Google Drive y CLAUDE.md con las reglas para Claude.
 - Probado en el teléfono: funciona.
 
-### Ari como CEO de agentes y primer subordinado (en prueba, pendiente de PR)
+### Ari como CEO, su equipo de modelos y su personalidad (en prueba, pendiente de PR)
 
 - Contrato común para agentes y coordinador (AriCeo) que reparte las tareas antes de recurrir a Gemma.
 - Agente de memoria con frases normales y agente de reloj.
 - Bitácora de tareas en la base de datos y comandos /agentes y /delega.
-- Primer subordinado: el modelo de IA de la laptop, con búsqueda automática en la red.
+- Equipo de modelos: Ari busca todos los modelos de la red (PC o celulares), les asigna un puesto según su capacidad y les delega las tareas de su especialidad.
 - Protección de red: solo en el hotspot del teléfono o en redes aprobadas, y solo direcciones locales.
+- Personalidad de Ari: mujer, cercana, con buen humor, seria cuando hace falta, directa y detallada si hace falta.
 - Compila correctamente; falta probarlo en el teléfono.
 
 ## 5. Ideas pendientes
 
 - Siguientes fases del CEO:
-  - Que Gemma ayude a decidir qué agente atiende cada mensaje, por ejemplo, mandar a la laptop las preguntas difíciles.
+  - Que Gemma ayude a decidir qué agente atiende cada mensaje.
+  - Que Ari ponga a prueba a cada modelo para darle un puesto según lo que de verdad sabe hacer, no solo por su nombre.
+  - Un canal para que Ari comparta sus reportes con Claude, por ejemplo a través de Drive.
   - Agentes que hagan cosas en el teléfono, como recordatorios y alarmas, siempre pidiendo confirmación.
   - Más subordinados: otros bots o modelos, con permisos por agente.
+- Interfaz como la de Claude: burbujas de chat, tema oscuro, texto con formato y respuestas que aparecen mientras se escriben.
+- Optimización y estabilidad en Android.
 - Que Ari empiece a hablar mientras Gemma escribe, en vez de esperar la respuesta completa.
 - Elegir la voz y la velocidad de lectura.
 
@@ -146,7 +184,7 @@ Alternativa, **Ollama**: instálalo desde ollama.com, descarga un modelo y permi
 - **MainActivity.kt**: interfaz, chat, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
-- **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt), los agentes de memoria, reloj y laptop, y el guardia de red (NetworkGuard.kt).
+- **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt), los agentes de memoria y reloj, el equipo de modelos (TeamAgent.kt y Role.kt) y el guardia de red (NetworkGuard.kt).
 - **docs/ARI_ESTADO.md**: estado técnico, para que cualquier asistente pueda continuar.
 - **.github/workflows/android.yml**: compilación automática del APK.
 

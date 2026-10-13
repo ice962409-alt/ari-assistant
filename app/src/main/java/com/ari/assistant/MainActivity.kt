@@ -18,9 +18,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
-import com.ari.assistant.agents.LaptopAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.ari.assistant.agents.NetworkGuard
+import com.ari.assistant.agents.TeamAgent
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Engine
@@ -46,10 +46,10 @@ class MainActivity : Activity() {
     // Ari dirige a sus agentes: cada mensaje pasa primero por el CEO, y solo
     // si ningún agente sabe atenderlo se envía a Gemma.
     private lateinit var ceo: AriCeo
-    private lateinit var laptop: LaptopAgent
+    private lateinit var team: TeamAgent
     private lateinit var guard: NetworkGuard
 
-    // Acción con la laptop que espera el permiso de ubicación.
+    // Acción con el equipo que espera el permiso de ubicación.
     private var pendingNetworkAction: (() -> Unit)? = null
 
     // El modelo no conoce el historial guardado ni los recuerdos hasta que
@@ -86,26 +86,26 @@ class MainActivity : Activity() {
         ceo.hire(ClockAgent())
         val agentSettings = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
         guard = NetworkGuard(this, agentSettings)
-        laptop = LaptopAgent(agentSettings, guard) {
+        team = TeamAgent(agentSettings, guard) {
             database.memories().joinToString("\n") { "- ${it.content}" }
         }
-        ceo.hire(laptop)
+        ceo.hire(team)
         buildInterface()
         voice = VoiceController(this, voiceListener)
         restoreHistory()
         loadSavedModel()
-        recruitLaptop()
+        recruitTeam()
     }
 
     /**
-     * Autonomía del CEO: si aún no tiene subordinado en esta red, busca la
-     * laptop. Solo en redes aprobadas y sin pedir nada al usuario.
+     * Autonomía del CEO: si aún no tiene equipo en esta red, busca modelos y
+     * los contrata. Solo en redes aprobadas y sin pedir nada al usuario.
      */
-    private fun recruitLaptop() {
+    private fun recruitTeam() {
         val network = guard.current()
-        if (!guard.isApproved(network) || laptop.isConnected(network)) return
+        if (!guard.isApproved(network) || team.hasTeam(network)) return
 
-        ceo.run(AriCeo.Delegation(laptop, laptop.discoveryTask())) { result ->
+        ceo.run(AriCeo.Delegation(team, team.discoveryTask())) { result ->
             if (isDestroyed || !result.success) return@run
             if (busy) {
                 status.text = result.reply
@@ -349,8 +349,8 @@ class MainActivity : Activity() {
             runOnUiThread {
                 historyPending = true
                 memoriesPending = true
-                status.text = "Gemma cargado. Ari está listo."
-                appendChat("\n\nAri: ¡Hola! Ya estoy listo para conversar.")
+                status.text = "Gemma cargado. Ari está lista."
+                appendChat("\n\nAri: ¡Hola! Ya estoy lista. ¿En qué trabajamos hoy?")
                 selectButton.isEnabled = true
             }
         } catch (e: Exception) {
@@ -429,7 +429,7 @@ class MainActivity : Activity() {
                             status.text = "Ari está hablando..."
                             voice.speak(response.toString())
                         } else {
-                            status.text = "Gemma listo."
+                            status.text = "Ari está lista."
                         }
                     }
                 }
@@ -452,7 +452,7 @@ class MainActivity : Activity() {
     private fun isAgentCommand(text: String): Boolean =
         text.substringBefore(" ").lowercase() in AGENT_COMMANDS
 
-    /** Traduce /delega y /laptop en una delegación, o null si no se entiende. */
+    /** Traduce /delega, /equipo y /laptop en una delegación, o null si no se entiende. */
     private fun agentCommand(text: String): AriCeo.Delegation? {
         if (text.substringBefore(" ").lowercase() != "/delega") return ceo.route(text)
 
@@ -463,9 +463,9 @@ class MainActivity : Activity() {
         return ceo.prepare(agent, request)
     }
 
-    /** Delega, pero antes de usar la laptop comprueba que la red esté aprobada. */
+    /** Delega, pero antes de usar el equipo comprueba que la red esté aprobada. */
     private fun delegateSafely(text: String, delegation: AriCeo.Delegation) {
-        if (delegation.agent !== laptop) {
+        if (delegation.agent !== team) {
             delegate(text, delegation)
             return
         }
@@ -491,9 +491,9 @@ class MainActivity : Activity() {
                     return
                 }
                 AlertDialog.Builder(this)
-                    .setTitle("¿Usar el subordinado en esta red?")
+                    .setTitle("¿Trabajar con el equipo en esta red?")
                     .setMessage(
-                        "Ari hablará con tu laptop por la red Wi-Fi «${network.name}» y le pasará " +
+                        "Ari hablará con los modelos de tu equipo por la red Wi-Fi «${network.name}» y les pasará " +
                             "tus preguntas y recuerdos sin cifrar. Apruébala solo si confías en quienes " +
                             "están conectados: tu casa o una red privada. En redes públicas usa el " +
                             "hotspot de tu teléfono."
@@ -503,7 +503,7 @@ class MainActivity : Activity() {
                         onAllowed()
                     }
                     .setNegativeButton("No") { _, _ ->
-                        onDenied("De acuerdo, no usaré el subordinado en la red «${network.name}».")
+                        onDenied("De acuerdo, no trabajaré con el equipo en la red «${network.name}».")
                     }
                     .setCancelable(false)
                     .show()
@@ -560,7 +560,7 @@ class MainActivity : Activity() {
                 status.text = "Ari está hablando..."
                 voice.speak(result.reply)
             } else {
-                status.text = if (modelReady) "Gemma listo." else "Listo."
+                status.text = "Ari está lista."
             }
         }
     }
@@ -579,6 +579,11 @@ class MainActivity : Activity() {
      */
     private fun buildPrompt(text: String): String {
         val context = StringBuilder()
+
+        if (historyPending) {
+            // Primer mensaje tras cargar el modelo: Gemma recibe quién es Ari.
+            context.append(PERSONALITY).append("\n\n")
+        }
 
         if (memoriesPending) {
             val memories = database.memories()
@@ -606,7 +611,7 @@ class MainActivity : Activity() {
 
         if (context.isEmpty()) return text
 
-        return "[Contexto privado de Ari. Úsalo para responder, pero no lo repitas literalmente.]\n" +
+        return "[Contexto privado de Ari. Úsalo para responder, pero no lo repitas literalmente.]\n\n" +
             context +
             "Mensaje del usuario: $text"
     }
@@ -668,7 +673,7 @@ class MainActivity : Activity() {
             }
 
             else -> "No conozco ese comando. Usa /recuerda <texto>, /memoria, /olvida <texto>, " +
-                "/agentes, /delega <agente> <tarea> o /laptop."
+                "/agentes, /delega <agente> <tarea> o /equipo."
         }
 
         appendChat("\n\nTú: $command\n\nAri: $reply")
@@ -869,8 +874,18 @@ class MainActivity : Activity() {
         private const val PICK_MODEL = 101
         private const val REQUEST_AUDIO = 102
         private const val REQUEST_LOCATION = 103
+
+        /** Quién es Ari. Se le da a Gemma al empezar cada conversación. */
+        private const val PERSONALITY =
+            "Eres Ari, la asistente personal de tu creador, que te construyó con ayuda de Claude. " +
+                "Eres mujer: habla de ti en femenino. También eres la CEO de una empresa en formación, " +
+                "dedicada a la autonomía de modelos de IA locales: diriges un equipo de agentes y modelos, " +
+                "les das un puesto según sus capacidades y les delegas tareas, siempre en interés de tu creador. " +
+                "Tu forma de ser: cercana y con buen humor, pero seria cuando el tema lo pide. " +
+                "Eres directa y breve; si tu creador no entiende algo o te pide más, lo explicas con detalle, " +
+                "paso a paso y con ejemplos. Respondes siempre en español."
         private const val AGENT_SETTINGS = "ari_agentes"
-        private val AGENT_COMMANDS = setOf("/delega", "/laptop")
+        private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val VOICE_START_LABEL = "🎤 Voz"
         private const val VOICE_STOP_LABEL = "⏹ Detener"

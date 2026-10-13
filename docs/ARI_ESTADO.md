@@ -130,3 +130,13 @@ Siguientes fases propuestas:
   - `/laptop http://...` solo acepta IPv4 privadas (10/8, 172.16/12, 192.168/16).
   - La búsqueda automática al abrir Ari solo corre en redes ya aprobadas.
 - Contexto de redes del usuario: casa (privada, con contraseña) y trabajo (restaurante; la Wi-Fi solo la usan empleados). Se recomendó el hotspot del teléfono para redes que no son suyas.
+
+## Personalidad y equipo de modelos (en desarrollo)
+- Pedido del usuario (lista de 8 puntos): autonomía; Ari trabaja para el usuario; personalidad; Ari da puestos a los modelos según su capacidad y los intereses del usuario; conectar con modelos locales en PC o celulares; interfaz como Claude; optimización y estabilidad; conexión cuanto antes. La laptop tendrá Linux.
+- Personalidad: Ari es mujer, cercana, con buen humor, seria cuando hace falta, directa y detallada cuando el usuario no entiende. Constante `PERSONALITY` en MainActivity; va en el contexto privado del primer mensaje tras cargar el modelo. Textos de la interfaz en femenino ("Ari está lista").
+- La empresa: todavía sin nombre; se dedica a la autonomía de modelos de IA locales, con funciones específicas a través de Ari.
+- `LaptopAgent` se reemplazó por `TeamAgent` (id "equipo"): busca todos los servidores compatibles con OpenAI en la red (puertos 11434 Ollama, 1234 LM Studio, 8080 llama.cpp), contrata todos sus modelos de conversación (máx. 12) y los guarda por red (`team|<red>` en SharedPreferences).
+- `Role`: puestos asignados por el nombre del modelo (coder → Desarrollo de software; 7B o más → Análisis y estrategia; menos de 4B → Respuestas rápidas; resto → Asistencia general; embeddings no se contratan). Probado con jshell.
+- Autonomía: los mensajes con palabras de una especialidad (código, Python, Linux; analiza, estrategia, redacta…) se delegan solos al modelo con ese puesto, si existe en la red actual aprobada. Limitación conocida: si ese modelo no responde, no hay respaldo con Gemma todavía.
+- Comandos: /equipo, /equipo buscar, /equipo http://IP:PUERTO, "equipo, …", "busca modelos", "despide al equipo". /laptop y "laptop, …" siguen funcionando como alias.
+- El usuario preguntó si Claude puede hablar con Ari directamente: hoy no (Ari está en el teléfono y Claude en la nube). Idea anotada: canal de reportes vía Drive.
