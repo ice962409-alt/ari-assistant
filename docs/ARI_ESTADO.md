@@ -90,4 +90,4 @@ Pendiente de verificar:
 - Se pausa tras 3 intentos seguidos sin escuchar nada, ante un error del micrófono o al salir de la app.
 - La respuesta se limpia de Markdown antes de leerla y se divide en frases si es muy larga.
 - Permiso `RECORD_AUDIO` (se pide al tocar Voz por primera vez) y `<queries>` para ver los servicios de voz en Android 11+.
-- Pendiente: compilación en Actions y prueba en el dispositivo.
+- Compila correctamente en Actions (run 38352930025). Pendiente: prueba en el dispositivo.
