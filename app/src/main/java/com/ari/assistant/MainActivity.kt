@@ -1,10 +1,12 @@
 package com.ari.assistant
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
@@ -32,11 +34,20 @@ class MainActivity : Activity() {
     private var modelReady = false
     private var busy = false
 
+    private lateinit var database: AriDatabase
+
+    // El modelo no conoce el historial guardado ni los recuerdos hasta que
+    // se los enviamos; estos indicadores marcan qué falta por enviarle.
+    private var historyPending = true
+    private var memoriesPending = true
+
     private lateinit var status: TextView
     private lateinit var chat: TextView
+    private lateinit var scroll: ScrollView
     private lateinit var input: EditText
     private lateinit var sendButton: Button
     private lateinit var selectButton: Button
+    private lateinit var memoryButton: Button
 
     private val backgroundColorValue = Color.rgb(18, 18, 24)
     private val green = Color.rgb(120, 220, 170)
@@ -45,7 +56,10 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        database = AriDatabase(this)
         buildInterface()
+        restoreHistory()
+        loadSavedModel()
     }
 
     private fun buildInterface() {
@@ -81,6 +95,23 @@ class MainActivity : Activity() {
             setOnClickListener { selectModel() }
         }
 
+        memoryButton = Button(this).apply {
+            text = "Memoria"
+            setOnClickListener { showMemoriesDialog() }
+        }
+
+        val buttonRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(
+                selectButton,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            )
+            addView(
+                memoryButton,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            )
+        }
+
         chat = TextView(this).apply {
             text = "Ari está esperando que cargues el modelo."
             textSize = 16f
@@ -88,7 +119,7 @@ class MainActivity : Activity() {
             setPadding(8, 12, 8, 12)
         }
 
-        val scroll = ScrollView(this).apply {
+        scroll = ScrollView(this).apply {
             addView(
                 chat,
                 ViewGroup.LayoutParams(
@@ -110,14 +141,13 @@ class MainActivity : Activity() {
 
         sendButton = Button(this).apply {
             text = "Enviar"
-            isEnabled = false
             setOnClickListener { sendMessage() }
         }
 
         root.addView(title)
         root.addView(subtitle)
         root.addView(status)
-        root.addView(selectButton)
+        root.addView(buttonRow)
         root.addView(
             scroll,
             LinearLayout.LayoutParams(
@@ -130,6 +160,36 @@ class MainActivity : Activity() {
         root.addView(sendButton)
 
         setContentView(root)
+    }
+
+    private fun restoreHistory() {
+        val history = database.recentMessages(HISTORY_DISPLAY_LIMIT)
+        if (history.isEmpty()) return
+
+        chat.text = ""
+        history.forEach { message ->
+            val speaker = if (message.role == ROLE_USER) "Tú" else "Ari"
+            chat.append("\n\n$speaker: ${message.content}")
+        }
+        scrollToBottom()
+    }
+
+    private fun loadSavedModel() {
+        val modelFile = File(filesDir, MODEL_FILE_NAME)
+        if (!modelFile.exists() || modelFile.length() == 0L) return
+
+        status.text = "Cargando el modelo guardado..."
+        selectButton.isEnabled = false
+        executor.execute { initializeModel(modelFile) }
+    }
+
+    private fun scrollToBottom() {
+        scroll.post { scroll.scrollTo(0, chat.bottom) }
+    }
+
+    private fun appendChat(text: String) {
+        chat.append(text)
+        scrollToBottom()
     }
 
     private fun selectModel() {
@@ -161,7 +221,7 @@ class MainActivity : Activity() {
 
         executor.execute {
             try {
-                val modelFile = File(filesDir, "gemma-model.litertlm")
+                val modelFile = File(filesDir, MODEL_FILE_NAME)
                 val resolver = contentResolver
 
                 val inputStream = resolver.openInputStream(uri)
@@ -216,9 +276,10 @@ class MainActivity : Activity() {
             modelReady = true
 
             runOnUiThread {
+                historyPending = true
+                memoriesPending = true
                 status.text = "Gemma cargado. Ari está listo."
-                chat.append("\n\nAri: ¡Hola! Ya estoy listo para conversar.")
-                sendButton.isEnabled = true
+                appendChat("\n\nAri: ¡Hola! Ya estoy listo para conversar.")
                 selectButton.isEnabled = true
             }
         } catch (e: Exception) {
@@ -226,36 +287,53 @@ class MainActivity : Activity() {
                 status.text =
                     "No se pudo iniciar el modelo: ${e.message}"
                 selectButton.isEnabled = true
-                sendButton.isEnabled = false
             }
         }
     }
 
     private fun sendMessage() {
         val text = input.text.toString().trim()
+        if (text.isEmpty()) return
 
-        if (text.isEmpty() || !modelReady || busy) return
+        if (text.startsWith("/")) {
+            input.text.clear()
+            handleCommand(text)
+            return
+        }
 
-        val activeConversation = conversation ?: return
+        if (busy) return
+
+        val activeConversation = conversation
+        if (!modelReady || activeConversation == null) {
+            status.text = "El modelo aún no está listo. Selecciona o espera a que cargue."
+            return
+        }
+
+        val prompt = buildPrompt(text)
+        database.addMessage(ROLE_USER, text)
 
         input.text.clear()
-        chat.append("\n\nTú: $text\n\nAri: ")
+        appendChat("\n\nTú: $text\n\nAri: ")
         status.text = "Ari está pensando..."
         busy = true
         sendButton.isEnabled = false
 
+        val response = StringBuilder()
+
         activeConversation.sendMessageAsync(
-            text,
+            prompt,
             object : MessageCallback {
                 override fun onMessage(message: Message) {
                     val chunk = message.toString()
                     runOnUiThread {
-                        chat.append(chunk)
+                        response.append(chunk)
+                        appendChat(chunk)
                     }
                 }
 
                 override fun onDone() {
                     runOnUiThread {
+                        saveResponse(response)
                         busy = false
                         status.text = "Gemma listo."
                         sendButton.isEnabled = true
@@ -264,15 +342,171 @@ class MainActivity : Activity() {
 
                 override fun onError(throwable: Throwable) {
                     runOnUiThread {
+                        saveResponse(response)
                         busy = false
                         status.text =
                             "Error de respuesta: ${throwable.message}"
-                        chat.append("\n[Error al generar la respuesta]")
+                        appendChat("\n[Error al generar la respuesta]")
                         sendButton.isEnabled = true
                     }
                 }
             }
         )
+    }
+
+    private fun saveResponse(response: StringBuilder) {
+        val content = response.toString().trim()
+        if (content.isNotEmpty()) {
+            database.addMessage(ROLE_ARI, content)
+        }
+    }
+
+    /**
+     * Añade al mensaje el contexto que el modelo aún no conoce: los
+     * recuerdos (si cambiaron) y, en el primer mensaje tras cargar el
+     * modelo, las últimas conversaciones guardadas.
+     */
+    private fun buildPrompt(text: String): String {
+        val context = StringBuilder()
+
+        if (memoriesPending) {
+            val memories = database.memories()
+            if (memories.isNotEmpty()) {
+                context.append("Recuerdos guardados sobre el usuario:\n")
+                memories.forEach { context.append("- ${it.content}\n") }
+                context.append("\n")
+            }
+        }
+
+        if (historyPending) {
+            val history = database.recentMessages(HISTORY_CONTEXT_LIMIT)
+            if (history.isNotEmpty()) {
+                context.append("Últimos mensajes de conversaciones anteriores:\n")
+                history.forEach { message ->
+                    val speaker = if (message.role == ROLE_USER) "Usuario" else "Ari"
+                    context.append("$speaker: ${message.content.take(HISTORY_CONTEXT_CHARS)}\n")
+                }
+                context.append("\n")
+            }
+        }
+
+        memoriesPending = false
+        historyPending = false
+
+        if (context.isEmpty()) return text
+
+        return "[Contexto privado de Ari. Úsalo para responder, pero no lo repitas literalmente.]\n" +
+            context +
+            "Mensaje del usuario: $text"
+    }
+
+    private fun handleCommand(command: String) {
+        val name = command.substringBefore(" ").lowercase()
+        val argument = command.substringAfter(" ", "").trim()
+
+        appendChat("\n\nTú: $command\n\nAri: ")
+
+        when (name) {
+            "/recuerda" -> {
+                if (argument.isEmpty()) {
+                    appendChat("Escribe qué quieres que recuerde, por ejemplo: /recuerda Me gusta el café.")
+                } else {
+                    addMemory(argument)
+                    appendChat("Lo recordaré: $argument")
+                }
+            }
+
+            "/memoria" -> {
+                val memories = database.memories()
+                if (memories.isEmpty()) {
+                    appendChat("Aún no tengo recuerdos guardados.")
+                } else {
+                    appendChat("Esto es lo que recuerdo:")
+                    memories.forEach { appendChat("\n• ${it.content}") }
+                }
+            }
+
+            "/olvida" -> {
+                if (argument.isEmpty()) {
+                    appendChat("Escribe qué debo olvidar, por ejemplo: /olvida café.")
+                } else {
+                    val deleted = database.deleteMemoriesMatching(argument)
+                    if (deleted > 0) memoriesPending = true
+                    appendChat(
+                        when (deleted) {
+                            0 -> "No encontré recuerdos que contengan \"$argument\"."
+                            1 -> "Olvidé 1 recuerdo."
+                            else -> "Olvidé $deleted recuerdos."
+                        }
+                    )
+                }
+            }
+
+            else -> appendChat(
+                "No conozco ese comando. Usa /recuerda <texto>, /memoria o /olvida <texto>."
+            )
+        }
+    }
+
+    private fun addMemory(content: String) {
+        database.addMemory(content)
+        memoriesPending = true
+    }
+
+    private fun showMemoriesDialog() {
+        val memories = database.memories()
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Recuerdos de Ari")
+            .setPositiveButton("Agregar") { _, _ -> showAddMemoryDialog() }
+            .setNegativeButton("Cerrar", null)
+
+        if (memories.isEmpty()) {
+            builder.setMessage("Aún no hay recuerdos. Agrega uno o usa /recuerda <texto>.")
+        } else {
+            val items = memories.map { it.content }.toTypedArray()
+            builder.setItems(items) { _, which ->
+                confirmDeleteMemory(memories[which])
+            }
+        }
+
+        builder.show()
+    }
+
+    private fun showAddMemoryDialog() {
+        val field = EditText(this).apply {
+            hint = "Algo que Ari debe recordar"
+            inputType = InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or
+                InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Nuevo recuerdo")
+            .setView(field)
+            .setPositiveButton("Guardar") { _, _ ->
+                val content = field.text.toString().trim()
+                if (content.isNotEmpty()) {
+                    addMemory(content)
+                    status.text = "Recuerdo guardado."
+                }
+                showMemoriesDialog()
+            }
+            .setNegativeButton("Cancelar") { _, _ -> showMemoriesDialog() }
+            .show()
+    }
+
+    private fun confirmDeleteMemory(memory: Memory) {
+        AlertDialog.Builder(this)
+            .setTitle("¿Borrar este recuerdo?")
+            .setMessage(memory.content)
+            .setPositiveButton("Borrar") { _, _ ->
+                database.deleteMemory(memory.id)
+                memoriesPending = true
+                status.text = "Recuerdo borrado."
+                showMemoriesDialog()
+            }
+            .setNegativeButton("Cancelar") { _, _ -> showMemoriesDialog() }
+            .show()
     }
 
     override fun onDestroy() {
@@ -291,9 +525,16 @@ class MainActivity : Activity() {
         }
 
         executor.shutdown()
+        database.close()
     }
 
     companion object {
         private const val PICK_MODEL = 101
+        private const val MODEL_FILE_NAME = "gemma-model.litertlm"
+        private const val ROLE_USER = "user"
+        private const val ROLE_ARI = "ari"
+        private const val HISTORY_DISPLAY_LIMIT = 100
+        private const val HISTORY_CONTEXT_LIMIT = 8
+        private const val HISTORY_CONTEXT_CHARS = 300
     }
 }

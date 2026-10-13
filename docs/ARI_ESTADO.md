@@ -55,3 +55,27 @@ Ari es un asistente Android local que utiliza Gemma 4 E4B-it mediante LiteRT-LM.
 - La integración GitHub de ChatGPT devolvió 404 al intentar acceder al repositorio, aunque el usuario confirmó que puede verlo desde Android.
 - Este documento es un punto de partida; debe verificarse contra el contenido real del repositorio.
 - Próximo paso: confirmar el archivo en GitHub y después revisar el MainActivity.kt actual antes de implementar SQLite.
+
+## Actualización: memoria local persistente (Claude, rama ccr-e45f2eee-wkjpdl)
+El usuario confirmó que el APK anterior se instala y que Gemma responde.
+
+Cambios implementados:
+- Nuevo `AriDatabase.kt` (SQLiteOpenHelper, base `ari.db`) con tablas `messages` y `memories`.
+- Cada mensaje del usuario y cada respuesta de Ari se guardan en SQLite.
+- Al abrir la app se muestran los últimos 100 mensajes guardados.
+- Si existe `filesDir/gemma-model.litertlm`, el modelo se carga automáticamente en segundo plano; si falla, se muestra el error y se puede volver a seleccionar.
+- Comandos locales (funcionan aunque el modelo no haya cargado): `/recuerda <texto>`, `/memoria`, `/olvida <texto>` (borra los recuerdos que contienen el texto, sin distinguir mayúsculas).
+- Botón "Memoria": lista los recuerdos, permite agregar uno nuevo y borrar uno tocándolo (con confirmación).
+- Contexto para Gemma: en el primer mensaje tras cargar el modelo se envían los recuerdos y los últimos 8 mensajes guardados (máx. 300 caracteres cada uno); después, los recuerdos solo se reenvían cuando cambian.
+
+Verificado:
+- Compilación correcta en GitHub Actions (run 38349873628, workflow_dispatch sobre esta rama).
+
+Pendiente de verificar:
+- Prueba en el dispositivo: persistencia tras cerrar la app, carga automática del modelo, comandos y botón Memoria.
+
+## Firma de depuración fija
+- Al instalar el APK nuevo encima del anterior, Android mostró "No se instaló la app debido a un conflicto con un paquete": cada ejecución de GitHub Actions generaba una clave de depuración distinta.
+- Se añadió `app/debug.keystore` (clave de depuración pública, contraseña estándar `android`) y `signingConfigs.debug` en `app/build.gradle.kts`. Desde este APK, las siguientes actualizaciones se instalan encima sin desinstalar.
+- Hace falta desinstalar Ari una sola vez para pasar a la firma fija. Esto borra el modelo copiado y hay que volver a seleccionarlo.
+- Esta clave es solo para depuración; una versión de publicación necesitará su propia clave, guardada como secreto y no en el repositorio.
