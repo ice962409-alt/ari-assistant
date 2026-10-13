@@ -12,3 +12,4 @@ build/
 local.properties
 *.jks
 *.keystore
+!app/debug.keystore
