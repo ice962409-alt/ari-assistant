@@ -106,7 +106,7 @@ Comandos:
 - **/agentes**: muestra el equipo, qué hace cada agente y las últimas tareas.
 - **/delega** seguido del agente y la tarea: encarga la tarea a un agente concreto. Ejemplo: /delega reloj qué hora es
 
-Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari (Agente de reloj)". Cada tarea queda registrada en una bitácora dentro del teléfono.
+Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari · Agente de reloj". Cada tarea queda registrada en una bitácora dentro del teléfono.
 
 ### La personalidad de Ari
 
@@ -244,7 +244,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 ## 7. Archivos principales del código
 
-- **MainActivity.kt**: interfaz, chat, comandos y conexión con Gemma.
+- **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
