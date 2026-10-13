@@ -59,6 +59,28 @@ Para agregarlo: mantén presionado un espacio vacío de la pantalla de inicio �
 
 Por privacidad, el widget no muestra el texto de tus conversaciones ni de tus recuerdos, porque cualquiera que vea tu pantalla los leería. Tampoco se conecta a internet. Se actualiza al salir de Ari y cada 30 minutos.
 
+### Ari Estado: el widget que muestra cómo trabaja Claude
+
+Ari Estado es una app aparte, pequeña, que solo tiene un widget: **"Claude trabajando"**. Así Ari sigue sin conectarse a internet; solo esta app lo hace, y únicamente para leer el estado.
+
+Lo que muestra el widget:
+
+- Si Claude está **Trabajando**, **En pausa** o **Sin noticias** (lleva más de 45 minutos sin actualizar; quizá se cerró la sesión).
+- La tarea en la que está, una **barra de progreso** y, mientras trabaja, una barra fina animada.
+- El paso y el porcentaje, hace cuánto se actualizó y cuántos pendientes te esperan.
+- Botones **Actualizar** y **Tablero**.
+
+Además, te manda una **notificación** cuando Claude se detiene o deja de dar noticias, para que entres y escribas "sigue". Revisa cada 15 minutos, y al momento si tocas Actualizar.
+
+Cómo funciona: Claude escribe su estado en el repositorio privado **Ari-estado** y la app lo lee con una **llave de solo lectura** que solo da acceso a ese repositorio. La llave se guarda cifrada en la caja fuerte del teléfono (el Keystore).
+
+Para instalarla:
+
+1. Descarga **ari-estado-apk** de la compilación más reciente en GitHub Actions e instálalo.
+2. Abre Ari Estado: la pantalla te explica cómo crear la llave en GitHub (solo lectura, solo Ari-estado, con vencimiento). Pégala ahí, nunca en un chat.
+3. Toca **Guardar y probar**: debe decir "¡Funciona!".
+4. Agrega el widget: mantén presionado un espacio vacío de la pantalla de inicio → Widgets → Ari Estado → "Claude trabajando".
+
 ### Ari como CEO de sus agentes
 
 Ari dirige un equipo de agentes. Cada mensaje pasa primero por Ari, que decide si lo atiende un agente o lo responde Gemma. Los agentes contestan al instante y funcionan con texto y con voz, aunque el modelo no haya cargado.
@@ -183,6 +205,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Revisión de código hecha: 10 problemas corregidos, entre ellos que "olvida eso" borraba recuerdos, un ciclo con el permiso de ubicación y cierres por respuestas enormes de la red.
 - Estabilidad: Ari ya no se cierra al girar el teléfono o cambiar el tema; libera la memoria al cambiar de modelo; aguanta errores de memoria; no deja archivos del modelo a medias; y si el equipo no responde, contesta ella con Gemma.
 - Widget animado para la pantalla de inicio, con acceso a Ari y al tablero de Claude (con barra de progreso).
+- App Ari Estado: widget "Claude trabajando" con la tarea, barra de progreso y avisos cuando Claude se detiene, leído del repositorio privado Ari-estado con una llave de solo lectura.
 - Compila correctamente; falta probarlo en el teléfono.
 
 ## 5. Plan hacia el lanzamiento
@@ -211,6 +234,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
+- **estado/**: la app Ari Estado (widget del progreso de Claude, llave cifrada y revisión cada 15 minutos).
 - **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt), los agentes de memoria y reloj, el equipo de modelos (TeamAgent.kt y Role.kt) y el guardia de red (NetworkGuard.kt).
 - **docs/ARI_ESTADO.md**: estado técnico, para que cualquier asistente pueda continuar.
 - **.github/workflows/android.yml**: compilación automática del APK.

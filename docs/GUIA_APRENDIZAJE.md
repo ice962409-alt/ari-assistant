@@ -132,6 +132,22 @@ El widget vive en tu teléfono y Claude trabaja en un servidor en la nube. Son d
 
 La lección: **cada conexión nueva es una puerta**. Antes de abrirla, pregúntate qué datos pasarían por ella y quién más podría usarla.
 
+### Llaves de acceso y el "menor privilegio"
+
+Una **llave de acceso** (en GitHub, *personal access token*) es como una contraseña pensada para que una app entre a tu cuenta. La regla de oro es el **menor privilegio**: darle a cada llave **solo lo mínimo que necesita**.
+
+- La llave de Ari Estado solo puede **leer** y solo el repositorio **Ari-estado**. Si alguien la robara, solo vería en qué trabaja Claude: ni tu código, ni tus datos, ni tu cuenta.
+- Tiene **fecha de vencimiento** (por ejemplo, 90 días). Si se perdiera, deja de servir sola.
+- **Nunca la mandes por chat** ni la guardes en notas: todo lo que escribes en un chat queda guardado en la conversación.
+
+### Guardar secretos en el teléfono: el Keystore
+
+Android tiene una "caja fuerte" en el hardware del teléfono, el **Keystore**. Ari Estado guarda ahí una clave y con ella **cifra** la llave de GitHub. Esa clave no se puede sacar del teléfono, así que aunque alguien copiara los archivos de la app, no podría leer la llave.
+
+### Revisar en segundo plano sin gastar batería
+
+Android no deja que una app consulte internet cuando quiera, para cuidar la batería. Ari Estado usa el **JobScheduler**, el sistema de "tareas programadas" de Android: revisa cada 15 minutos (lo mínimo permitido) y solo cuando hay red.
+
 ## 7. Herramientas para trabajar con Claude
 
 ### Skills y plugins
@@ -169,5 +185,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Hook**: una acción automática que se dispara cuando pasa algo.
 - **Repositorio**: la carpeta del proyecto con todo su historial, guardada en GitHub.
 - **SQLite**: la pequeña base de datos donde Ari guarda los mensajes y los recuerdos dentro del teléfono.
+- **Keystore**: la caja fuerte del teléfono para guardar claves de cifrado.
+- **Llave de acceso (token)**: una contraseña limitada que una app usa para entrar a un servicio.
+- **Menor privilegio**: darle a cada cosa solo los permisos mínimos que necesita.
 - **SSID**: el nombre de una red Wi-Fi.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
