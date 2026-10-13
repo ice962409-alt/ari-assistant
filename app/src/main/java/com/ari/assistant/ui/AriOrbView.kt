@@ -64,6 +64,19 @@ class AriOrbView(context: Context) : View(context) {
         style = Paint.Style.STROKE
     }
     private val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = AriTheme.ice }
+    // Detalles de la esfera: remolino de luz por dentro, sombra en el borde, brillo de orilla,
+    // un tinte según el ánimo, mejillas, brillo en los ojos y destellos cuando está feliz.
+    private val swirl = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val shade = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        color = Color.WHITE
+    }
+    private val tint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val cheek = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(255, 150, 170) }
+    private val sparkle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+    private val clip = Path()
     private val oval = RectF()
     private val path = Path()
     private var shaderSize = 0f
@@ -115,6 +128,14 @@ class AriOrbView(context: Context) : View(context) {
                 intArrayOf(Color.rgb(222, 246, 253), AriTheme.ice, AriTheme.iceDeep),
                 floatArrayOf(0f, 0.45f, 1f), Shader.TileMode.CLAMP
             )
+            // Sombra suave abajo a la derecha: le da volumen, como una canica.
+            shade.shader = RadialGradient(
+                cx - radius * 0.2f, cy - radius * 0.25f, radius * 1.25f,
+                intArrayOf(Color.argb(0, 11, 26, 34), Color.argb(0, 11, 26, 34), Color.argb(80, 11, 26, 34)),
+                floatArrayOf(0f, 0.62f, 1f), Shader.TileMode.CLAMP
+            )
+            clip.reset()
+            clip.addCircle(cx, cy, radius, Path.Direction.CW)
         }
         glow.alpha = (255 * haloStrength).toInt().coerceIn(0, 255)
         canvas.drawCircle(cx, cy, size * 0.5f, glow)
@@ -133,8 +154,39 @@ class AriOrbView(context: Context) : View(context) {
         canvas.save()
         canvas.scale(r / radius, r / radius, cx, cy)
         canvas.drawCircle(cx, cy, radius, body)
+        canvas.save()
+        canvas.clipPath(clip)
+        // Remolino de luz que gira despacio dentro de la esfera (más rápido cuando piensa).
+        val spin = t * (if (mood == Mood.THINKING) 1.6f else 0.35f)
+        for (i in 0 until 2) {
+            canvas.save()
+            canvas.rotate(Math.toDegrees((spin + i * PI).toDouble()).toFloat(), cx, cy)
+            swirl.color = if (i == 0) Color.argb(34, 255, 255, 255) else Color.argb(30, 95, 184, 218)
+            oval.set(cx - radius * 0.95f, cy - radius * 0.28f, cx + radius * 0.35f, cy + radius * 0.12f)
+            canvas.drawOval(oval, swirl)
+            canvas.restore()
+        }
+        // Tinte según el ánimo: más cian al escucharte, lila al pensar, tibio al estar feliz.
+        val tintColor = when (mood) {
+            Mood.LISTENING -> Color.argb((30 + smoothLevel * 70).toInt(), 127, 227, 255)
+            Mood.THINKING -> Color.argb(42, 185, 168, 255)
+            Mood.HAPPY -> Color.argb(36, 255, 205, 170)
+            Mood.SPEAKING -> Color.argb(24, 200, 240, 255)
+            Mood.IDLE -> Color.TRANSPARENT
+        }
+        if (tintColor != Color.TRANSPARENT) {
+            tint.color = tintColor
+            canvas.drawCircle(cx, cy, radius, tint)
+        }
+        canvas.drawCircle(cx, cy, radius, shade)
+        canvas.restore()
         oval.set(cx - radius * 0.55f, cy - radius * 0.75f, cx - radius * 0.05f, cy - radius * 0.45f)
         canvas.drawOval(oval, shine)
+        // Brillo de orilla arriba a la izquierda.
+        rim.strokeWidth = radius * 0.035f
+        rim.alpha = 110
+        oval.set(cx - radius * 0.93f, cy - radius * 0.93f, cx + radius * 0.93f, cy + radius * 0.93f)
+        canvas.drawArc(oval, 195f, 70f, false, rim)
         canvas.restore()
 
         // Ojos: miran alrededor al pensar y parpadean de vez en cuando.
@@ -164,8 +216,26 @@ class AriOrbView(context: Context) : View(context) {
                 else -> {
                     oval.set(ex - eyeW / 2, eyeY - eyeH / 2, ex + eyeW / 2, eyeY + eyeH / 2)
                     canvas.drawOval(oval, face)
+                    // Brillito en el ojo: la hace ver viva.
+                    canvas.drawCircle(ex - eyeW * 0.12f, eyeY - eyeH * 0.22f, eyeW * 0.2f, sparkle)
                 }
             }
+            // Cejas que se levantan un poco cuando piensa.
+            if (mood == Mood.THINKING) {
+                path.reset()
+                val browY = eyeY - eyeH * 0.85f
+                path.moveTo(ex - eyeW * 0.9f, browY + side * r * 0.02f)
+                path.quadTo(ex, browY - r * 0.06f, ex + eyeW * 0.9f, browY - side * r * 0.02f)
+                canvas.drawPath(path, line)
+            }
+            // Mejillas: apenas se notan, y se sonrojan cuando está feliz o platicando.
+            cheek.alpha = when (mood) {
+                Mood.HAPPY -> 120
+                Mood.SPEAKING -> 70
+                else -> 35
+            }
+            oval.set(ex + side * eyeW * 0.4f - r * 0.11f, cy + r * 0.14f, ex + side * eyeW * 0.4f + r * 0.11f, cy + r * 0.24f)
+            canvas.drawOval(oval, cheek)
         }
 
         // Boca: sonrisa, o se abre y cierra mientras habla.
@@ -182,6 +252,16 @@ class AriOrbView(context: Context) : View(context) {
             canvas.drawPath(path, line)
         }
 
+        // Destellos alrededor cuando está feliz.
+        if (mood == Mood.HAPPY) {
+            for (i in 0 until 3) {
+                val angle = (-PI / 2 + (i - 1) * 0.9).toFloat()
+                val twinkle = (sin(t * 6f + i * 2f) + 1f) / 2f
+                val d = r * 1.3f
+                drawStar(canvas, cx + cos(angle) * d, cy + sin(angle) * d, size * (0.02f + 0.02f * twinkle))
+            }
+        }
+
         // Tres puntitos que giran mientras piensa.
         if (mood == Mood.THINKING) {
             for (i in 0 until 3) {
@@ -192,5 +272,17 @@ class AriOrbView(context: Context) : View(context) {
         }
 
         if (isShown && !paused) postInvalidateOnAnimation()
+    }
+
+    /** Estrellita de cuatro puntas. */
+    private fun drawStar(canvas: Canvas, x: Float, y: Float, s: Float) {
+        path.reset()
+        path.moveTo(x, y - s)
+        path.quadTo(x, y, x + s, y)
+        path.quadTo(x, y, x, y + s)
+        path.quadTo(x, y, x - s, y)
+        path.quadTo(x, y, x, y - s)
+        path.close()
+        canvas.drawPath(path, sparkle)
     }
 }

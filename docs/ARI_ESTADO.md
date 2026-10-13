@@ -347,3 +347,9 @@ El usuario probó 0.12.3 y dijo que responde lento. Hasta aquí Gemma corría co
 - Ajustes → Velocidad de Gemma: "Rápida (GPU)" borra la marca; "Segura (CPU)" la pone en "falla"; recarga el modelo.
 - Revisado en LiteRT-LM: el modo "pensar" de Gemma 4 solo se activa si la plantilla recibe `enable_thinking`; Ari no lo manda, así que no hay razonamiento oculto que la haga lenta.
 
+## Esfera más elaborada (versión 0.13.2)
+
+Decisión del usuario en el tablero: "Seguir con la esfera, más elaborada".
+- `AriOrbView`: remolino de luz recortado al círculo (más rápido al pensar), tinte por ánimo, sombra radial cacheada, brillo de orilla, brillo en los ojos, cejas al pensar, mejillas (más intensas feliz/hablando), destellos de cuatro puntas cuando está feliz.
+- Widget: `ari_face_*` con sombra, brillo de orilla, mejillas y brillo en los ojos.
+

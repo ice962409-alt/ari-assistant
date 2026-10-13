@@ -177,7 +177,7 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas con Ari en pant
 
 ### El widget de Ari
 
-Ari tiene un widget para tu pantalla de inicio con **su carita animada**: un círculo color hielo con ojos y sonrisa que respira y parpadea. Es una caricatura provisional hasta tener su diseño definitivo.
+Ari tiene un widget para tu pantalla de inicio con **su carita animada**: una esfera color hielo, como una canica con luz por dentro, con ojos con brillo, mejillas y sonrisa, que respira y parpadea. Elegiste quedarte con la esfera y hacerla más elaborada.
 
 - **Tocar su cara o "Hablar"**: abre el modo live para platicar en voz.
 - **Tocar sus mensajes**: le haces "cosquillas"; pone cara feliz y te saluda unos segundos.
@@ -349,6 +349,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Esfera más elaborada (0.13.2): la carita de Ari tiene volumen (sombra y brillo de orilla), un remolino de luz que gira por dentro, brillo en los ojos, mejillas que se sonrojan cuando está feliz o platicando, cejas cuando piensa, destellos cuando está contenta y un tinte según su ánimo (cian al escucharte, lila al pensar). También en el widget.
 - Más rápida (0.13.1): Gemma corre en la GPU del teléfono si se puede, con vuelta automática a la CPU. Si la GPU llegara a cerrar la app al cargar, la siguiente vez Ari usa la CPU sola. Ajustes → Velocidad de Gemma para cambiarlo.
 - Libreta de personas (0.13.0): Ari recuerda a quien le mencionas ("mi primo Luis es dentista", "Luis cumple el 5 de mayo"), te cuenta lo que sabe ("qué sabes de Luis"), lista a quién conoce y los próximos cumpleaños. Gemma también la recibe.
 - Revisión de código de todo lo nuevo (0.12.3): 10 correcciones antes de tu prueba. Entre ellas, que una foto compartida con Ari cerrada ya no se borra al abrir, que el modo live no se traba si la voz del teléfono falla, que otra app no puede usar "Compartir → Ari" para que Ari lea sus propios archivos privados, que abrir y cerrar el modo live muy rápido ya no puede cerrar la app, y que la pantalla se puede apagar cuando el modo live se pausa solo.

@@ -16,7 +16,20 @@
             </gradient>
         </aapt:attr>
     </path>
+    <!-- Sombra suave abajo a la derecha (volumen) y brillo de orilla arriba a la izquierda. -->
+    <path android:pathData="M12,50a38,38 0 1,0 76,0a38,38 0 1,0 -76,0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="44" android:centerY="41" android:gradientRadius="48">
+                <item android:offset="0" android:color="#000B1A22" />
+                <item android:offset="0.62" android:color="#000B1A22" />
+                <item android:offset="1" android:color="#500B1A22" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:strokeColor="#70FFFFFF" android:strokeWidth="2.2" android:strokeLineCap="round" android:pathData="M17.5,37A35,35 0 0,1 37,16.5" />
     <path android:fillColor="#59FFFFFF" android:pathData="M29,30a9,4.5 0 1,0 18,0a9,4.5 0 1,0 -18,0z" />
     <path android:strokeColor="#FF0B1A22" android:strokeWidth="3" android:strokeLineCap="round" android:pathData="M34,47L42,47M58,47L66,47" />
     <path android:strokeColor="#FF0B1A22" android:strokeWidth="3" android:strokeLineCap="round" android:pathData="M42,60Q50,67 58,60" />
+    <!-- Mejillas. -->
+    <path android:fillColor="#30FF96AA" android:pathData="M27,58.5a5,3 0 1,0 10,0a5,3 0 1,0 -10,0zM63,58.5a5,3 0 1,0 10,0a5,3 0 1,0 -10,0z" />
 </vector>
