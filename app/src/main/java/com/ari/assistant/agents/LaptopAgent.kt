@@ -4,9 +4,7 @@ import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.Inet4Address
 import java.net.InetSocketAddress
-import java.net.NetworkInterface
 import java.net.Socket
 import java.net.URL
 import java.util.concurrent.Callable
@@ -22,6 +20,7 @@ import java.util.concurrent.TimeUnit
  */
 class LaptopAgent(
     private val settings: SharedPreferences,
+    private val guard: NetworkGuard,
     /** Contexto sobre el usuario (sus recuerdos) que se le pasa al subordinado. */
     private val userContext: () -> String
 ) : Agent {
@@ -36,14 +35,14 @@ class LaptopAgent(
         "/laptop"
     )
 
-    val isConnected: Boolean
-        get() = baseUrl != null
+    /** La laptop se guarda por red: la misma dirección en otra red puede ser otro equipo. */
+    fun isConnected(network: NetworkGuard.Network): Boolean = baseUrl(network) != null
 
-    private val baseUrl: String?
-        get() = settings.getString(KEY_URL, null)
+    private fun baseUrl(network: NetworkGuard.Network): String? =
+        guard.key(network)?.let { settings.getString("$KEY_URL|$it", null) }
 
-    private val modelName: String?
-        get() = settings.getString(KEY_MODEL, null)
+    private fun modelName(network: NetworkGuard.Network): String? =
+        guard.key(network)?.let { settings.getString("$KEY_MODEL|$it", null) }
 
     /** Tarea para buscar la laptop sin que el usuario lo pida (al abrir Ari). */
     fun discoveryTask() = AgentTask("búsqueda automática", ACTION_DISCOVER)
@@ -70,25 +69,42 @@ class LaptopAgent(
         match(message, normalized)
             ?: message.trim().takeIf { it.isNotEmpty() }?.let { AgentTask(message, ACTION_ASK, it) }
 
-    override fun execute(task: AgentTask): AgentResult = when (task.action) {
-        ACTION_DISCOVER -> discover()
-        ACTION_SET -> connect(task.argument)
-        ACTION_STATUS -> status()
-        ACTION_FORGET -> {
-            settings.edit().remove(KEY_URL).remove(KEY_MODEL).apply()
-            AgentResult("Desconecté la laptop. Di \"busca la laptop\" para volver a conectarla.")
+    override fun execute(task: AgentTask): AgentResult {
+        val network = guard.current()
+        val blocked = when {
+            network is NetworkGuard.Network.None ->
+                "El teléfono no está conectado a ninguna red."
+            network is NetworkGuard.Network.UnknownWifi ->
+                "No puedo reconocer esta red Wi-Fi. Necesito el permiso de ubicación y la ubicación encendida."
+            !guard.isApproved(network) ->
+                "No uso el subordinado en ${guard.describe(network)} porque no la has aprobado."
+            else -> null
         }
-        ACTION_ASK -> ask(task.argument)
-        else -> AgentResult("Acción desconocida: ${task.action}", success = false)
+        if (blocked != null) return AgentResult(blocked, success = false)
+
+        return when (task.action) {
+            ACTION_DISCOVER -> discover(network)
+            ACTION_SET -> connect(network, task.argument)
+            ACTION_STATUS -> status(network)
+            ACTION_FORGET -> {
+                val key = guard.key(network)
+                settings.edit().remove("$KEY_URL|$key").remove("$KEY_MODEL|$key").apply()
+                AgentResult("Desconecté la laptop en esta red. Di \"busca la laptop\" para volver a conectarla.")
+            }
+            ACTION_ASK -> ask(network, task.argument)
+            else -> AgentResult("Acción desconocida: ${task.action}", success = false)
+        }
     }
 
-    private fun status(): AgentResult {
-        val url = baseUrl ?: return AgentResult(
+    private fun status(network: NetworkGuard.Network): AgentResult {
+        val url = baseUrl(network) ?: return AgentResult(
             "Todavía no tengo un subordinado en la laptop. Di \"busca la laptop\" o usa /laptop http://IP:PUERTO.",
             success = false
         )
         return if (isReachable(url)) {
-            AgentResult("La laptop está conectada en $url con el modelo ${modelName ?: "desconocido"}.")
+            AgentResult(
+                "La laptop está conectada en $url (${guard.describe(network)}) con el modelo ${modelName(network) ?: "desconocido"}."
+            )
         } else {
             AgentResult(
                 "Tengo guardada la laptop en $url, pero no responde. ¿Está encendida y en la misma red Wi-Fi?",
@@ -97,15 +113,15 @@ class LaptopAgent(
         }
     }
 
-    private fun ask(question: String): AgentResult {
-        if (baseUrl == null) {
-            // Autonomía: si aún no tiene subordinado, lo busca antes de preguntar.
-            val found = discover()
+    private fun ask(network: NetworkGuard.Network, question: String): AgentResult {
+        if (baseUrl(network) == null) {
+            // Autonomía: si aún no tiene subordinado en esta red, lo busca antes de preguntar.
+            val found = discover(network)
             if (!found.success) return found
         }
 
-        val url = baseUrl ?: return AgentResult("No encontré la laptop.", success = false)
-        val model = modelName ?: findModel(url)
+        val url = baseUrl(network) ?: return AgentResult("No encontré la laptop.", success = false)
+        val model = modelName(network) ?: findModel(url)
             ?: return AgentResult("La laptop responde, pero no tiene ningún modelo cargado.", success = false)
 
         val messages = JSONArray()
@@ -145,29 +161,37 @@ class LaptopAgent(
         }
     }
 
-    private fun connect(url: String): AgentResult {
+    private fun connect(network: NetworkGuard.Network, url: String): AgentResult {
+        val host = runCatching { URL(url).host }.getOrNull().orEmpty()
+        if (!NetworkGuard.isPrivateAddress(host)) {
+            return AgentResult(
+                "Solo me conecto a direcciones de la red local, como http://192.168.1.50:11434.",
+                success = false
+            )
+        }
+
         val model = findModel(url) ?: return AgentResult(
             "No encontré un servidor de modelos en $url. Revisa la dirección y que el servidor acepte conexiones de la red.",
             success = false
         )
-        save(url, model)
+        save(network, url, model)
         return AgentResult("Conexión lista con la laptop en $url. Mi subordinado es el modelo $model.")
     }
 
     /** Recorre la red Wi-Fi buscando un servidor de modelos en los puertos conocidos. */
-    private fun discover(): AgentResult {
-        baseUrl?.let { saved ->
+    private fun discover(network: NetworkGuard.Network): AgentResult {
+        baseUrl(network)?.let { saved ->
             findModel(saved)?.let { model ->
-                save(saved, model)
+                save(network, saved, model)
                 return AgentResult("La laptop ya está conectada en $saved con el modelo $model.")
             }
         }
 
-        val candidates = localSubnets().flatMap { prefix ->
+        val candidates = guard.subnets(network).flatMap { prefix ->
             (1..254).flatMap { host -> KNOWN_PORTS.map { port -> "$prefix.$host" to port } }
         }
         if (candidates.isEmpty()) {
-            return AgentResult("El teléfono no está conectado a ninguna red Wi-Fi.", success = false)
+            return AgentResult("No encontré dónde buscar en ${guard.describe(network)}.", success = false)
         }
 
         val pool = Executors.newFixedThreadPool(SCAN_THREADS)
@@ -180,7 +204,7 @@ class LaptopAgent(
             repeat(candidates.size) {
                 val url = scan.poll(SCAN_TIMEOUT_MS, TimeUnit.MILLISECONDS)?.get() ?: return@repeat
                 val model = findModel(url) ?: return@repeat
-                save(url, model)
+                save(network, url, model)
                 return AgentResult("¡Encontré mi primer subordinado! Modelo $model en la laptop ($url).")
             }
         } finally {
@@ -193,8 +217,9 @@ class LaptopAgent(
         )
     }
 
-    private fun save(url: String, model: String) {
-        settings.edit().putString(KEY_URL, url).putString(KEY_MODEL, model).apply()
+    private fun save(network: NetworkGuard.Network, url: String, model: String) {
+        val key = guard.key(network) ?: return
+        settings.edit().putString("$KEY_URL|$key", url).putString("$KEY_MODEL|$key", model).apply()
     }
 
     private fun isReachable(url: String): Boolean = findModel(url) != null
@@ -233,17 +258,6 @@ class LaptopAgent(
             connection.disconnect()
         }
     }
-
-    /** Prefijos /24 de las redes locales del teléfono, por ejemplo "192.168.1". */
-    private fun localSubnets(): List<String> =
-        NetworkInterface.getNetworkInterfaces().toList()
-            .filter { it.isUp && !it.isLoopback }
-            .flatMap { it.inetAddresses.toList() }
-            .filterIsInstance<Inet4Address>()
-            .filter { it.isSiteLocalAddress }
-            .map { it.hostAddress.orEmpty().substringBeforeLast('.') }
-            .filter { it.isNotEmpty() }
-            .distinct()
 
     companion object {
         private const val ACTION_ASK = "preguntar"

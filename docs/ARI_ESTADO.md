@@ -124,4 +124,9 @@ Siguientes fases propuestas:
 - A la laptop se le pasan los recuerdos del usuario como contexto.
 - `AriCeo` ahora ejecuta los agentes en un hilo en segundo plano y entrega el resultado en el hilo principal.
 - Permiso `INTERNET` añadido.
-- **Pendiente de decisión del usuario:** Android bloquea HTTP sin cifrar. Hace falta `usesCleartextTraffic` (o HTTPS en la laptop) para que funcione. Propuesta: permitirlo y limitar el agente a direcciones de red privada. Hasta entonces, las conexiones a la laptop fallarán en el teléfono.
+- Decisión del usuario: permitir HTTP (`usesCleartextTraffic`) con estas protecciones:
+  - `NetworkGuard`: el subordinado solo se usa en el hotspot del teléfono (siempre permitido) o en redes Wi-Fi aprobadas por el usuario (diálogo "¿Usar el subordinado en esta red?"). Para leer el nombre de la Wi-Fi, Android exige el permiso de ubicación; se pide solo al usar la laptop.
+  - La laptop se guarda por red (`laptop_url|<red>`), para no mandar datos a otro equipo con la misma IP en otra red.
+  - `/laptop http://...` solo acepta IPv4 privadas (10/8, 172.16/12, 192.168/16).
+  - La búsqueda automática al abrir Ari solo corre en redes ya aprobadas.
+- Contexto de redes del usuario: casa (privada, con contraseña) y trabajo (restaurante; la Wi-Fi solo la usan empleados). Se recomendó el hotspot del teléfono para redes que no son suyas.

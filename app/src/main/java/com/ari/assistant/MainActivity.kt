@@ -20,6 +20,7 @@ import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.LaptopAgent
 import com.ari.assistant.agents.MemoryAgent
+import com.ari.assistant.agents.NetworkGuard
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Engine
@@ -46,6 +47,10 @@ class MainActivity : Activity() {
     // si ningún agente sabe atenderlo se envía a Gemma.
     private lateinit var ceo: AriCeo
     private lateinit var laptop: LaptopAgent
+    private lateinit var guard: NetworkGuard
+
+    // Acción con la laptop que espera el permiso de ubicación.
+    private var pendingNetworkAction: (() -> Unit)? = null
 
     // El modelo no conoce el historial guardado ni los recuerdos hasta que
     // se los enviamos; estos indicadores marcan qué falta por enviarle.
@@ -79,7 +84,9 @@ class MainActivity : Activity() {
         ceo = AriCeo(database)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
         ceo.hire(ClockAgent())
-        laptop = LaptopAgent(getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)) {
+        val agentSettings = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
+        guard = NetworkGuard(this, agentSettings)
+        laptop = LaptopAgent(agentSettings, guard) {
             database.memories().joinToString("\n") { "- ${it.content}" }
         }
         ceo.hire(laptop)
@@ -90,9 +97,13 @@ class MainActivity : Activity() {
         recruitLaptop()
     }
 
-    /** Autonomía del CEO: si aún no tiene subordinado, busca la laptop en la red. */
+    /**
+     * Autonomía del CEO: si aún no tiene subordinado en esta red, busca la
+     * laptop. Solo en redes aprobadas y sin pedir nada al usuario.
+     */
     private fun recruitLaptop() {
-        if (laptop.isConnected) return
+        val network = guard.current()
+        if (!guard.isApproved(network) || laptop.isConnected(network)) return
 
         ceo.run(AriCeo.Delegation(laptop, laptop.discoveryTask())) { result ->
             if (isDestroyed || !result.success) return@run
@@ -359,7 +370,7 @@ class MainActivity : Activity() {
             if (isAgentCommand(text)) {
                 if (busy) return
                 agentCommand(text)?.let { delegation ->
-                    delegate(text, delegation)
+                    delegateSafely(text, delegation)
                     return
                 }
             }
@@ -373,7 +384,7 @@ class MainActivity : Activity() {
         if (busy) return
 
         ceo.route(text)?.let { delegation ->
-            delegate(text, delegation)
+            delegateSafely(text, delegation)
             return
         }
 
@@ -450,6 +461,83 @@ class MainActivity : Activity() {
         val request = argument.substringAfter(" ", "").trim()
         if (request.isEmpty()) return null
         return ceo.prepare(agent, request)
+    }
+
+    /** Delega, pero antes de usar la laptop comprueba que la red esté aprobada. */
+    private fun delegateSafely(text: String, delegation: AriCeo.Delegation) {
+        if (delegation.agent !== laptop) {
+            delegate(text, delegation)
+            return
+        }
+        input.text.clear()
+        withApprovedNetwork(
+            onAllowed = { delegate(text, delegation) },
+            onDenied = { reason -> answerLocally(text, reason) }
+        )
+    }
+
+    /**
+     * Ejecuta [onAllowed] solo en el hotspot del teléfono o en una red Wi-Fi
+     * aprobada. Si hace falta, pide el permiso de ubicación (para leer el
+     * nombre de la red) o la aprobación de la red.
+     */
+    private fun withApprovedNetwork(onAllowed: () -> Unit, onDenied: (String) -> Unit) {
+        when (val network = guard.current()) {
+            is NetworkGuard.Network.Hotspot -> onAllowed()
+
+            is NetworkGuard.Network.Wifi -> {
+                if (guard.isApproved(network)) {
+                    onAllowed()
+                    return
+                }
+                AlertDialog.Builder(this)
+                    .setTitle("¿Usar el subordinado en esta red?")
+                    .setMessage(
+                        "Ari hablará con tu laptop por la red Wi-Fi «${network.name}» y le pasará " +
+                            "tus preguntas y recuerdos sin cifrar. Apruébala solo si confías en quienes " +
+                            "están conectados: tu casa o una red privada. En redes públicas usa el " +
+                            "hotspot de tu teléfono."
+                    )
+                    .setPositiveButton("Aprobar") { _, _ ->
+                        guard.approve(network)
+                        onAllowed()
+                    }
+                    .setNegativeButton("No") { _, _ ->
+                        onDenied("De acuerdo, no usaré el subordinado en la red «${network.name}».")
+                    }
+                    .setCancelable(false)
+                    .show()
+            }
+
+            is NetworkGuard.Network.UnknownWifi -> {
+                if (!guard.hasLocationPermission()) {
+                    pendingNetworkAction = { withApprovedNetwork(onAllowed, onDenied) }
+                    requestPermissions(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ),
+                        REQUEST_LOCATION
+                    )
+                } else {
+                    onDenied(
+                        "No puedo leer el nombre de la red Wi-Fi. Enciende la ubicación del teléfono " +
+                            "y vuelve a intentarlo."
+                    )
+                }
+            }
+
+            is NetworkGuard.Network.None ->
+                onDenied("El teléfono no está conectado a ninguna red. Conéctate a tu Wi-Fi o activa el hotspot.")
+        }
+    }
+
+    /** Muestra (y lee, en modo voz) una respuesta de Ari que no pasó por ningún agente. */
+    private fun answerLocally(text: String, reply: String) {
+        database.addMessage(ROLE_USER, text)
+        database.addMessage(ROLE_ARI, reply)
+        appendChat("\n\nTú: $text\n\nAri: $reply")
+        if (voiceMode) voice.speak(reply)
     }
 
     /** Ari delega en un agente; el agente trabaja en segundo plano. */
@@ -614,6 +702,16 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_LOCATION) {
+            val action = pendingNetworkAction
+            pendingNetworkAction = null
+            if (grantResults.any { it == PackageManager.PERMISSION_GRANTED }) {
+                action?.invoke()
+            } else {
+                status.text = "Sin el permiso de ubicación, Ari no puede reconocer la red Wi-Fi."
+            }
+            return
+        }
         if (requestCode != REQUEST_AUDIO) return
 
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
@@ -770,6 +868,7 @@ class MainActivity : Activity() {
     companion object {
         private const val PICK_MODEL = 101
         private const val REQUEST_AUDIO = 102
+        private const val REQUEST_LOCATION = 103
         private const val AGENT_SETTINGS = "ari_agentes"
         private val AGENT_COMMANDS = setOf("/delega", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
