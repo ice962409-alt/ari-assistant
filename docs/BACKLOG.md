@@ -9,7 +9,7 @@ Etiquetas:
 Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (https://claude.ai/artifact/7kCcA7Ppg1tGW1HDATrfyB) y se espera la respuesta ahí.
 
 ## En curso
-- [autónomo] Primer uso guiado: descarga del modelo desde la app en lugar de buscar el archivo a mano.
+- [autónomo] Estabilidad, segunda ronda.
 
 ## Hecho recientemente
 - [autónomo] Respaldo cifrado de la memoria de Ari (0.3.0). Falta [prueba] en el teléfono.
@@ -19,7 +19,8 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Estabilidad, segunda ronda: base de datos fuera del hilo principal, historial largo sin lentitud, pruebas automáticas de las reglas de enrutamiento.
 
 ## Esperando al usuario
-- [decisión] ¿Así quiere la personalidad de Ari? (en el tablero)
+- [decisión] Personalidad: qué significa "sin censura" (en el tablero). El cambio automático fue bloqueado por el sistema de permisos; se espera la opción del usuario.
+- [decisión] Primer uso guiado: descargar el modelo exige que Ari se conecte a internet una vez (hoy no puede). Preguntar antes de empezar.
 - [permiso] Hacer privado el repositorio de GitHub (en el tablero).
 - [prueba] APK de estabilidad (en el tablero).
 - [prueba] Laptop con Linux y equipo de modelos (en el tablero).
