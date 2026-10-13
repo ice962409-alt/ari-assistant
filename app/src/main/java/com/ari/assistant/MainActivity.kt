@@ -22,6 +22,7 @@ import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.ari.assistant.agents.NetworkGuard
+import com.ari.assistant.agents.PhoneAgent
 import com.ari.assistant.agents.ReminderAgent
 import com.ari.assistant.agents.TeamAgent
 import com.ari.assistant.ui.AriTheme
@@ -108,6 +109,7 @@ class MainActivity : Activity() {
         reminders = ReminderAgent(database, reminderAlarms)
         // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
         ceo.hire(reminders)
+        ceo.hire(PhoneAgent(AndroidPhone(this)))
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
         ceo.hire(ClockAgent())
         val agentSettings = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
