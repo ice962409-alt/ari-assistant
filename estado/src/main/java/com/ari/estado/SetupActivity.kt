@@ -85,6 +85,17 @@ class SetupActivity : Activity() {
         status = text("", 15f, green)
         column.addView(status, spaced())
 
+        // Si la app se cerró sola, se muestra el motivo para poder corregirlo.
+        CrashLog.last(this)?.let { trace ->
+            column.addView(text("La app se cerró inesperadamente. Toma una captura de esto y mándasela a Claude:", 15f, Color.rgb(255, 155, 106)))
+            column.addView(text(trace.lines().take(12).joinToString("\n"), 12f, muted))
+            column.addView(button("Borrar este registro") {
+                CrashLog.clear(this)
+                status.text = "Registro borrado."
+            })
+        }
+        StatusStore.error(this)?.let { status.text = "Último aviso: $it" }
+
         column.addView(text("Para agregar el widget", 18f, green))
         column.addView(
             text(

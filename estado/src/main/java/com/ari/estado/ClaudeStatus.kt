@@ -17,7 +17,9 @@ data class ClaudeStatus(
     val progress: Int,
     val next: String,
     val pending: Int,
-    val updatedAt: Instant?
+    val updatedAt: Instant?,
+    /** Enlace a la sesión de Claude Code donde se escribe "sigue". */
+    val session: String
 ) {
     /**
      * Claude dice que trabaja, pero no actualiza desde hace mucho: lo más
@@ -39,7 +41,9 @@ data class ClaudeStatus(
                 progress = o.optInt("progreso", 0).coerceIn(0, 100),
                 next = o.optString("siguiente", ""),
                 pending = o.optInt("pendientes", 0),
-                updatedAt = runCatching { Instant.parse(o.optString("actualizado")) }.getOrNull()
+                updatedAt = runCatching { Instant.parse(o.optString("actualizado")) }.getOrNull(),
+                // Solo enlaces de claude.ai: el estado no puede mandar al usuario a otro sitio.
+                session = o.optString("sesion", "").takeIf { it.startsWith("https://claude.ai/") }.orEmpty()
             )
         }
     }

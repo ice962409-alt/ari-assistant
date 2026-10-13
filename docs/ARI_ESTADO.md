@@ -187,3 +187,5 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `RefreshJob` (JobScheduler, cada 15 minutos y al tocar Actualizar) redibuja el widget y avisa con una notificación cuando Claude se detiene o lleva más de 45 minutos sin actualizar estando activo.
 - Ari (la app principal) sigue sin conectarse a internet.
 - Nota: `ari-assistant` ya era privado; la comprobación anterior con curl pasaba por el proxy autenticado de la sesión. Para saber la visibilidad hay que leer el campo `private` de la API.
+- Corrección 0.1.1: Ari Estado se cerraba al programar la revisión, porque Android 14+ exige `ACCESS_NETWORK_STATE` para `setRequiredNetworkType`. Añadido el permiso; programar va protegido con try/catch; `AriEstadoApp` guarda el último cierre inesperado y la pantalla de la app lo muestra.
+- `estado.json` tiene `sesion` (enlace a la sesión de Claude Code). La notificación y el aviso naranja del widget lo abren. El usuario había escrito "sigue" en un chat normal de Claude por error.

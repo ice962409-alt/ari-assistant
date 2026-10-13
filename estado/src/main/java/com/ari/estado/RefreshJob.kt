@@ -28,7 +28,12 @@ class RefreshJob : JobService() {
 
     override fun onStartJob(params: JobParameters): Boolean {
         worker = Thread {
-            refresh(applicationContext)
+            try {
+                refresh(applicationContext)
+            } catch (e: Throwable) {
+                CrashLog.save(applicationContext, e)
+                StatusStore.saveError(applicationContext, "Error al revisar: ${e.message ?: e.javaClass.simpleName}")
+            }
             jobFinished(params, false)
         }.also { it.start() }
         return true
@@ -47,9 +52,9 @@ class RefreshJob : JobService() {
         private const val BOARD_URL = "https://claude.ai/artifact/7kCcA7Ppg1tGW1HDATrfyB"
 
         /** Programa la revisión cada 15 minutos (no duplica si ya existe). */
-        fun schedule(context: Context) {
-            val scheduler = context.getSystemService(JobScheduler::class.java) ?: return
-            if (scheduler.getPendingJob(PERIODIC_ID) != null) return
+        fun schedule(context: Context) = safely(context) {
+            val scheduler = context.getSystemService(JobScheduler::class.java) ?: return@safely
+            if (scheduler.getPendingJob(PERIODIC_ID) != null) return@safely
             scheduler.schedule(
                 JobInfo.Builder(PERIODIC_ID, ComponentName(context, RefreshJob::class.java))
                     .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
@@ -59,9 +64,19 @@ class RefreshJob : JobService() {
             )
         }
 
+        /** Programar nunca debe cerrar la app: si Android lo rechaza, se guarda el motivo. */
+        private fun safely(context: Context, block: () -> Unit) {
+            try {
+                block()
+            } catch (e: Throwable) {
+                CrashLog.save(context, e)
+                StatusStore.saveError(context, "No pude programar la revisión: ${e.message ?: e.javaClass.simpleName}")
+            }
+        }
+
         /** Revisa en cuanto haya red. */
-        fun runNow(context: Context) {
-            val scheduler = context.getSystemService(JobScheduler::class.java) ?: return
+        fun runNow(context: Context) = safely(context) {
+            val scheduler = context.getSystemService(JobScheduler::class.java) ?: return@safely
             scheduler.schedule(
                 JobInfo.Builder(NOW_ID, ComponentName(context, RefreshJob::class.java))
                     .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
@@ -119,10 +134,12 @@ class RefreshJob : JobService() {
             manager.createNotificationChannel(
                 NotificationChannel(CHANNEL, "Avisos de Claude", NotificationManager.IMPORTANCE_DEFAULT)
             )
+            // Lleva directo a la sesión de Claude Code, donde se escribe "sigue".
+            val target = StatusStore.status(context)?.session?.takeIf { it.isNotBlank() } ?: BOARD_URL
             val openBoard = PendingIntent.getActivity(
                 context,
                 0,
-                Intent(Intent.ACTION_VIEW, Uri.parse(BOARD_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                Intent(Intent.ACTION_VIEW, Uri.parse(target)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val notification = Notification.Builder(context, CHANNEL)

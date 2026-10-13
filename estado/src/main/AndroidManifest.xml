@@ -2,12 +2,16 @@
 
     <!-- Solo para leer estado.json del repositorio privado Ari-estado, por HTTPS. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 14+ lo exige para programar la revisión "solo cuando haya red";
+         sin él, Android cierra la app al programarla. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Avisar cuando Claude se detiene o deja de dar noticias. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Que la revisión periódica siga programada después de reiniciar el teléfono. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
+        android:name=".AriEstadoApp"
         android:allowBackup="false"
         android:label="Ari Estado"
         android:theme="@android:style/Theme.Material.NoActionBar">

@@ -98,8 +98,8 @@ class StatusWidget : AppWidgetProvider() {
                         R.id.widget_note,
                         when {
                             error != null -> error
-                            stale -> "Quizá se cerró la sesión de Claude. Entra y escribe \"sigue\"."
-                            !status.active -> "Claude se detuvo. Escribe \"sigue\" para que continúe."
+                            stale -> "Quizá se cerró la sesión de Claude. Toca aquí y escribe \"sigue\"."
+                            !status.active -> "Claude se detuvo. Toca aquí y escribe \"sigue\"."
                             else -> ""
                         }
                     )
@@ -126,6 +126,18 @@ class StatusWidget : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_board, board)
+
+            // Tocar el aviso naranja abre la sesión de Claude para escribir "sigue".
+            status?.session?.takeIf { it.isNotBlank() }?.let { url ->
+                views.setOnClickPendingIntent(
+                    R.id.widget_note,
+                    PendingIntent.getActivity(
+                        context, 3,
+                        Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                )
+            }
             return views
         }
 
