@@ -47,6 +47,8 @@ Respuestas según cómo funciona Ari hoy:
 - **Notificaciones (POST_NOTIFICATIONS)**: avisar los recordatorios.
 - **Alarmas exactas (SCHEDULE_EXACT_ALARM)**: que los recordatorios lleguen a la hora pedida; si el usuario no lo activa, llegan con un posible retraso.
 - **Iniciar al encender (RECEIVE_BOOT_COMPLETED)**: volver a programar los recordatorios después de reiniciar.
+- **Poner alarmas (SET_ALARM)**: crear alarmas en la app de reloj cuando el usuario lo pide.
+- **Ver apps instaladas (queries de MAIN/LAUNCHER)**: abrir la app que el usuario nombra. No se usa QUERY_ALL_PACKAGES.
 - **Tráfico sin cifrar (usesCleartextTraffic)**: Ollama y LM Studio solo hablan HTTP; Ari lo limita a direcciones privadas de redes aprobadas.
 
 ## 7. Requisitos técnicos [autónomo]

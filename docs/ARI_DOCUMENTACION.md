@@ -93,6 +93,20 @@ Cómo entiende la hora: si no dices "de la mañana" o "de la tarde", Ari elige l
 
 La primera vez, Ari pide permiso para mandarte notificaciones. Si tu teléfono solo permite avisos aproximados, te ofrece activar "Alarmas y recordatorios" para que lleguen a la hora exacta. Si el teléfono estuvo apagado a la hora del aviso, te llega al encenderlo como "recordatorio atrasado". Los recordatorios también van en el respaldo cifrado.
 
+### Ari usa tu teléfono por ti
+
+Ari abre tus apps y te prepara acciones. Por seguridad, **nunca llama ni envía nada sola**: deja todo listo y tú confirmas en la app (tocar "llamar" o "enviar").
+
+- **Abrir apps**: "abre WhatsApp", "abre Spotify", "abre la app de Google Maps". Si hay varias parecidas (WhatsApp y WhatsApp Business), Ari pregunta cuál.
+- **Llamar**: "llama al 55 1234 5678". Ari deja el número marcado. Por ahora necesita el número; los contactos vendrán después.
+- **WhatsApp**: "manda un WhatsApp al 55 1234 5678 que diga ya voy" abre el chat con el mensaje escrito. Sin número ("manda un WhatsApp que diga hola"), eliges el chat tú.
+- **Alarmas y temporizadores**: "pon una alarma a las 7", "despiértame mañana a las 6 y media", "pon un temporizador de 10 minutos". Se crean en la app de reloj del teléfono.
+- **Buscar**: "busca en Google recetas de pozole".
+- **Mapas**: "cómo llego al aeropuerto", "llévame a casa de mi abuela".
+- **Cámara y ajustes**: "abre la cámara", "toma una foto", "abre los ajustes de wifi" (también bluetooth, sonido, pantalla, batería, ubicación y notificaciones).
+
+Funciona escribiendo o con el modo de voz. Al abrir otra app, el modo de voz se detiene.
+
 ### Modo de voz
 
 1. Toca el botón del micrófono, junto al de enviar. La primera vez, Ari pide permiso para usar el micrófono.
@@ -269,6 +283,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Ari usa tu teléfono (0.6.0): abre apps, deja marcados números, prepara mensajes de WhatsApp, pone alarmas y temporizadores, busca en Google, abre rutas, la cámara y los ajustes; tú confirmas el último paso.
 - Recordatorios (0.5.0): "recuérdame mañana a las 9 …", "en 20 minutos", "el viernes a las 5 de la tarde"; lista y cancelación; notificación aunque Ari esté cerrada; se reprograman al reiniciar el teléfono.
 - Preparación para Google Play (0.4.2): sección Acerca de Ari y licencias, borrador de la política de privacidad y guía de publicación (docs/GOOGLE_PLAY.md).
 - Recordatorio de respaldo (0.4.1): si tienes recuerdos y hace una semana que no guardas un respaldo, Ari te lo dice al abrir. Guardar el respaldo en Drive ya funciona aunque Drive no acepte reescribir archivos, y "Ver mensajes anteriores" ya no te mueve de donde estabas leyendo.
@@ -284,6 +299,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 ## 6. Ideas pendientes
 
+- Que Ari toque botones dentro de otras apps (permiso de Accesibilidad): decisión en el tablero por sus riesgos.
+- Llamar o escribir por el nombre del contacto ("llama a mamá"), con permiso de contactos.
 - Mensajes de Ari sin que le hables: aviso de respaldo, saludo de la mañana o aviso si el equipo no responde (decisión en el tablero).
 - Siguientes fases del CEO:
   - Que Gemma ayude a decidir qué agente atiende cada mensaje.
@@ -300,6 +317,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **Profile.kt**: tu nombre, el tono de Ari y su personalidad.
 - **ReminderNotifier.kt** y **agents/ReminderAgent.kt**, **agents/ReminderParser.kt**: los recordatorios (entender la frase, programar la alarma y mostrar la notificación).
+- **AndroidPhone.kt**, **agents/PhoneAgent.kt** y **agents/PhoneCommands.kt**: abrir apps y preparar acciones en el teléfono.
 - **AriBackup.kt** y **BackupCrypto.kt**: el respaldo y su cifrado con contraseña.
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.

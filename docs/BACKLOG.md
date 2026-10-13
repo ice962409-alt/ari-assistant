@@ -17,10 +17,13 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [decisión] Personalidad: franca, con groserías de vez en cuando (0.3.1).
 - [autónomo] Una Ari para cada usuario: nombre y tono por persona (0.4.0).
 - [autónomo] Recordatorios con notificación (0.5.0). Falta [prueba] en el teléfono.
+- [autónomo] Ari abre apps y prepara acciones (0.6.0). Falta [prueba] en el teléfono.
 
 ## Siguiente
+- [autónomo] Llamar y escribir por nombre de contacto (requiere [permiso] de contactos al usarlo).
 
 ## Esperando al usuario
+- [decisión] Control total de otras apps con Accesibilidad (en el tablero).
 - [decisión] Qué mensajes manda Ari sola, además de los recordatorios (en el tablero).
 - [decisión] Primer uso guiado: descargar el modelo exige que Ari se conecte a internet una vez (hoy no puede). Preguntar antes de empezar.
 - [prueba] APK 0.3.1 con la personalidad nueva (en el tablero).

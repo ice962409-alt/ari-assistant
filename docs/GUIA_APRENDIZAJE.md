@@ -181,6 +181,22 @@ Una app cerrada no puede "estar pendiente" de la hora: Android la detiene para a
 - **Al reiniciar el teléfono, Android borra todas las alarmas.** Por eso Ari guarda los recordatorios en su base de datos y, al encender el teléfono, los vuelve a programar.
 - **Entender la frase**: "recuérdame mañana a las 3 pagar la luz" se separa en partes: el día ("mañana"), la hora ("a las 3", que se entiende como 15:00) y lo que queda ("pagar la luz"). A esto se le llama **analizar** (en inglés, *parsing*).
 
+### Intents: cómo una app le pide algo a otra
+
+En Android, las apps no se tocan entre sí directamente: se mandan **intents**, que son como notas de encargo. Ari no sabe usar WhatsApp por dentro; le manda a Android la nota "abre WhatsApp con este chat y este mensaje", y WhatsApp hace el resto. Lo mismo para "marca este número" (lo abre el teléfono), "pon una alarma a las 7" (la crea el reloj) o "busca esto" (lo abre el navegador).
+
+Lo bueno de los intents: **la otra app sigue al mando**. Por eso, al final, tú tocas "llamar" o "enviar". Ari prepara, tú confirmas.
+
+### El permiso de Accesibilidad (y por qué es delicado)
+
+Para que una app toque botones y escriba **dentro** de otras apps, Android tiene el permiso de **Accesibilidad**. Existe para ayudar a personas con discapacidad, por ejemplo leyendo la pantalla en voz alta. Pero es el permiso más poderoso del teléfono:
+
+- La app puede **ver todo** lo que aparece en pantalla, incluidas tus apps del banco y lo que escribes.
+- Un texto malicioso en una página o un mensaje podría intentar **engañar a la IA** para que haga algo que no pediste. A esto se le llama **inyección de instrucciones**.
+- Google Play casi no lo permite en apps que no son de accesibilidad.
+
+Por eso Ari empieza solo con intents, y el control total queda como decisión tuya, con límites claros si se hace.
+
 ### Permisos de Android
 
 Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono y la ubicación.
@@ -279,4 +295,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **AlarmManager**: el despertador de Android; despierta a una app a una hora para que haga algo.
 - **Notificación**: el aviso que aparece arriba en la pantalla del teléfono.
 - **Analizar una frase (parsing)**: separar un texto en partes que el programa entiende, como el día, la hora y la tarea.
+- **Intent**: la "nota de encargo" con la que una app le pide algo a otra en Android.
+- **Accesibilidad**: el permiso que deja a una app ver y controlar la pantalla; muy poderoso y delicado.
+- **Inyección de instrucciones**: cuando un texto intenta engañar a una IA para que haga algo que su dueño no pidió.
 - **Widget**: un mini panel de una app en la pantalla de inicio.

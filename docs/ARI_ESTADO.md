@@ -240,3 +240,11 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Base de datos v3: tabla `reminders` (done 0/1/2), en el respaldo. `ReminderNotifier.kt`: `AlarmReminders` (exacta si `canScheduleExactAlarms`, si no `setAndAllowWhileIdle`), `ReminderReceiver`, `ReminderBootReceiver` (BOOT_COMPLETED, MY_PACKAGE_REPLACED). `rescheduleAll` al abrir, al reiniciar y tras recuperar un respaldo; los vencidos se avisan como atrasados.
 - Permisos nuevos: POST_NOTIFICATIONS (se pide tras el primer recordatorio), SCHEDULE_EXACT_ALARM (se ofrece una vez), RECEIVE_BOOT_COMPLETED. Icono `drawable/ic_notification.xml`.
 - Pendiente (tablero `mensajes-de-ari`): qué mensajes propios manda Ari (aviso de respaldo, saludo de la mañana, equipo caído).
+
+## Ari usa el teléfono (versión 0.6.0)
+
+- `agents/PhoneCommands.kt` (puro, `PhoneCommandsTest`): `PhoneAction` = OpenApp, Dial, WhatsApp, Alarm, Timer, WebSearch, Navigate, Camera, Settings, Missing. `pickApp` elige por nombre (igual, empieza con, contiene, todas las palabras); si hay varias, pregunta.
+- `agents/PhoneAgent.kt` (`PhoneAgentTest`): va después del agente de recordatorios y antes de memoria. Nunca completa llamadas ni envíos: ACTION_DIAL, wa.me con texto o ACTION_SEND, ACTION_SET_ALARM/SET_TIMER, ACTION_WEB_SEARCH, google.navigation/geo, cámara, ajustes.
+- `AndroidPhone.kt`: lanza en el hilo principal (el agente espera con un CountDownLatch); prueba intents alternativos; número a E.164 con el país de la red/SIM.
+- Manifiesto: `<queries>` MAIN/LAUNCHER y paquetes de WhatsApp; permiso `SET_ALARM` (normal).
+- Decisión pendiente (tablero `control-total`): Accesibilidad para tocar botones en otras apps. Riesgos: ve toda la pantalla, inyección de instrucciones, restricción de Google Play.
