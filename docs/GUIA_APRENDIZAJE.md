@@ -132,6 +132,8 @@ El widget vive en tu teléfono y Claude trabaja en un servidor en la nube. Son d
 
 La lección: **cada conexión nueva es una puerta**. Antes de abrirla, pregúntate qué datos pasarían por ella y quién más podría usarla.
 
+**Cómo lo resolvimos:** en lugar de abrir esa puerta en Ari, creamos **Ari Estado**, una app aparte que solo hace una cosa: leer el estado de Claude. Así, si algo saliera mal en esa app, Ari y tus datos no se ven afectados. A esto se le llama **aislar**: separar lo que necesita internet de lo que guarda datos personales.
+
 ### Llaves de acceso y el "menor privilegio"
 
 Una **llave de acceso** (en GitHub, *personal access token*) es como una contraseña pensada para que una app entre a tu cuenta. La regla de oro es el **menor privilegio**: darle a cada llave **solo lo mínimo que necesita**.
