@@ -124,7 +124,7 @@ Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari · Agente
 
 ### La personalidad de Ari
 
-Ari es mujer y es tu creación. Es cercana y con buen humor, pero seria cuando el tema lo pide. Es directa y breve; si no entiendes algo o le pides más, te lo explica con detalle, paso a paso. Gemma recibe esta personalidad al empezar cada conversación.
+Ari es mujer y es tu creación. Es cercana y con buen humor, pero seria cuando el tema lo pide. Es directa y breve; si no entiendes algo o le pides más, te lo explica con detalle, paso a paso. Es franca: dice lo que piensa sin rodeos y no endulza las malas noticias, y de vez en cuando suelta alguna grosería si el momento lo pide. Gemma recibe esta personalidad al empezar cada conversación.
 
 ### El equipo de modelos: los subordinados de Ari
 
@@ -237,7 +237,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Respaldo cifrado de la memoria: guardar y recuperar recuerdos, historial, equipo y redes aprobadas en un archivo con contraseña (versión 0.3.0). Base de los respaldos y de la mudanza a otra PC.
 - Ari Estado 0.1.2: muestra el inicio y la longitud de la llave guardada y quita espacios que se cuelen al pegarla.
 - Estabilidad, segunda ronda: 17 pruebas automáticas que se ejecutan en cada compilación (reglas de los agentes, puestos de los modelos, direcciones privadas y cifrado del respaldo); los mensajes se guardan en segundo plano; la base de datos es más rápida (modo WAL); el primer mensaje tras cargar el modelo ya no le llega repetido a Gemma; y el historial se carga por partes para que la app abra rápido.
-- Compila correctamente y las pruebas pasan; falta probarlo en el teléfono.
+- Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
+- Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 
 ## 5. Plan hacia el lanzamiento
 

@@ -210,4 +210,4 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `MemoryAgent` depende de la interfaz `agents/MemoryStore` (la implementa `AriDatabase`). El cifrado del respaldo está en `BackupCrypto.kt`.
 - `MainActivity.saveMessage()` guarda en el executor `storage` (un hilo, en orden); `onDestroy` cierra la base de datos en ese hilo. `AriDatabase` usa WAL.
 - `buildPrompt` ya no repite el mensaje actual en el historial; si `sendMessageAsync` falla, se restauran `historyPending`/`memoriesPending`.
-- Pendiente: la personalidad "sin censura" (decisión del usuario; un cambio automático fue bloqueado por el sistema de permisos). La descarga guiada del modelo requiere decidir si Ari puede usar internet una vez.
+- Personalidad (0.3.1): el usuario eligió "Franca, con groserías de vez en cuando"; se agregó a `PERSONALITY`. La descarga guiada del modelo espera la decisión de si Ari puede usar internet una vez (tablero, `descarga-modelo`).

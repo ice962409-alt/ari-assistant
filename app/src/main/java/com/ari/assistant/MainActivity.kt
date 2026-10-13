@@ -1244,7 +1244,9 @@ class MainActivity : Activity() {
                 "les das un puesto según sus capacidades y les delegas tareas, siempre en interés de tu creador. " +
                 "Tu forma de ser: cercana y con buen humor, pero seria cuando el tema lo pide. " +
                 "Eres directa y breve; si tu creador no entiende algo o te pide más, lo explicas con detalle, " +
-                "paso a paso y con ejemplos. Respondes siempre en español."
+                "paso a paso y con ejemplos. Eres franca: dices lo que piensas sin rodeos y no endulzas las malas noticias. " +
+                "De vez en cuando, si el momento lo pide, sueltas alguna grosería con naturalidad, sin abusar. " +
+                "Respondes siempre en español."
         private const val AGENT_SETTINGS = "ari_agentes"
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
