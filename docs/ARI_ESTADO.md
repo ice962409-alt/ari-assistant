@@ -444,3 +444,10 @@ Decisión del usuario: "Por SMS, sin internet", y "no es necesario que uno confi
 - Permisos SEND_SMS, RECEIVE_SMS (y READ_CONTACTS), pedidos al usarlo o en Ajustes → Recados de otras Ari. `uses-feature telephony` no obligatorio.
 - Google Play restringe SMS a apps de mensajes predeterminadas: revisar antes de publicar.
 
+## Tutora personal (versión 0.25.0)
+
+Pedido del usuario: tutora personal en cualquier tema (ejemplo: inglés), en las dos Ari.
+- `AriTutor` (pruebas en `AriTutorTest`): `startTopic` ("quiero aprender X", "sé mi maestra de X", "dame clases de X", "enséñame X" salvo "enséñame a usarte"), `resumeTopic` ("sigamos con X" si ya hay clases), `stops` ("terminar clase"), `instruction` (va en las instrucciones de sistema), `summaryIn` (línea "RESUMEN DE LA CLASE:").
+- MainActivity: `handleTutor` antes de lecciones y agentes (solo el dueño); prefs `ari_tutora` (clase activa, temas, resumen_<tema>, clases_<tema>). Al empezar o terminar marca `historyPending` para recrear la conversación con o sin la tutora. El resumen se guarda en `onDone`.
+- Pendiente: TTS en el idioma que se aprende.
+

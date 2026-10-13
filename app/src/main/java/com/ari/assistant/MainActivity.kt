@@ -402,6 +402,64 @@ class MainActivity : Activity() {
         chat.addNote("Consejo del día: ${next.title.lowercase()}. ${next.tryThis}")
     }
 
+    // --- Tutora personal: "quiero aprender inglés" ---
+
+    private fun tutorPrefs() = getSharedPreferences(TUTOR_PREFS, MODE_PRIVATE)
+
+    /** El tema de la clase en curso (null: sin clase). */
+    private val tutorTopic: String? get() = tutorPrefs().getString(KEY_TUTOR_ACTIVE, null)
+
+    private fun tutorKey(topic: String) = com.ari.assistant.agents.normalizeForAgents(topic).replace(' ', '_')
+
+    private fun tutorTopics(): Set<String> = tutorPrefs().getStringSet(KEY_TUTOR_TOPICS, emptySet()).orEmpty()
+
+    private fun tutorSummary(topic: String): String? = tutorPrefs().getString("resumen_${tutorKey(topic)}", null)
+
+    private fun tutorSessions(topic: String): Int = tutorPrefs().getInt("clases_${tutorKey(topic)}", 0)
+
+    private fun saveTutorSummary(topic: String, summary: String) {
+        tutorPrefs().edit().putString("resumen_${tutorKey(topic)}", summary).apply()
+    }
+
+    /** Empieza, sigue o termina una clase. true si el mensaje era para eso. */
+    private fun handleTutor(text: String): Boolean {
+        val current = tutorTopic
+        if (current != null && AriTutor.stops(text)) {
+            input.text.clear()
+            tutorPrefs().edit().remove(KEY_TUTOR_ACTIVE).apply()
+            historyPending = true
+            val summary = tutorSummary(current)
+            answerLocally(
+                text,
+                "¡Buena clase de $current! " +
+                    (summary?.let { "Guardé lo que vimos: $it. " } ?: "") +
+                    "Cuando quieras seguir, dime \"sigamos con $current\"."
+            )
+            return true
+        }
+        val topic = AriTutor.startTopic(text) ?: AriTutor.resumeTopic(text, tutorTopics()) ?: return false
+        if (!modelReady || conversation == null) {
+            input.text.clear()
+            answerLocally(text, "Para darte clases de $topic necesito a Gemma. Toca Modelo para descargarla o espera a que cargue.")
+            return true
+        }
+        val key = tutorKey(topic)
+        tutorPrefs().edit()
+            .putString(KEY_TUTOR_ACTIVE, topic)
+            .putStringSet(KEY_TUTOR_TOPICS, tutorTopics() + topic)
+            .putInt("clases_$key", tutorSessions(topic) + 1)
+            .apply()
+        // La conversación nueva trae las instrucciones de tutora (ver openConversation).
+        historyPending = true
+        input.text.clear()
+        saveMessage(ROLE_USER, text)
+        chat.addUser(text)
+        chat.addNote("Clase de $topic. Contesta sus preguntas y ejercicios; escribe \"terminar clase\" para salir.")
+        chat.startAri()
+        askGemma(text)
+        return true
+    }
+
     // --- Recados entre Ari (por SMS, sin internet) ---
 
     private val messageListener = object : AriMessenger.Listener {
@@ -1728,6 +1786,8 @@ class MainActivity : Activity() {
             return
         }
 
+        if (!guestMode && handleTutor(text)) return
+
         if (AriLessons.asks(text)) {
             input.text.clear()
             saveMessage(ROLE_USER, text)
@@ -2079,6 +2139,9 @@ class MainActivity : Activity() {
                         if (!forGuest) saveResponse(response)
                         chat.finishAri()
                         busy = false
+                        if (!forGuest) tutorTopic?.let { topic ->
+                            AriTutor.summaryIn(response.toString())?.let { saveTutorSummary(topic, it) }
+                        }
                         if (!forGuest && response.isNotEmpty()) {
                             lessonDone(if (attachment?.needsVision == true) "foto" else "gemma")
                         }
@@ -2330,6 +2393,10 @@ class MainActivity : Activity() {
             people.takeLast(MAX_PEOPLE_IN_PROMPT).forEach {
                 instruction.append("- ${PeopleAgent.summary(it).take(PERSON_PROMPT_CHARS)}\n")
             }
+        }
+        // Modo tutora: Gemma enseña el tema paso a paso y deja un resumen para la próxima clase.
+        tutorTopic?.let { topic ->
+            instruction.append("\n\n").append(AriTutor.instruction(topic, tutorSummary(topic), tutorSessions(topic)))
         }
         val saved = database.recentMessages(GemmaContext.MAX_MESSAGES + 1).map {
             GemmaContext.Turn(it.role == ROLE_USER, it.content)
@@ -3040,6 +3107,9 @@ class MainActivity : Activity() {
         private const val KEY_INTRODUCED = "presentada"
         private const val COLOR_PREFS = "ari_color"
         private const val LESSON_PREFS = "ari_lecciones"
+        private const val TUTOR_PREFS = "ari_tutora"
+        private const val KEY_TUTOR_ACTIVE = "clase"
+        private const val KEY_TUTOR_TOPICS = "temas"
         private const val KEY_LESSONS_DONE = "hechas"
         private const val KEY_LESSONS_ACTIVE = "activas"
         private const val KEY_TIP_DAY = "consejo_dia"

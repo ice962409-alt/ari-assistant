@@ -159,6 +159,12 @@ Google Play pide que cada app publique una **política de privacidad**: un texto
 - Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es su carita color hielo sobre fondo oscuro, y en iconos temáticos se pinta de un solo color con los ojos y la boca recortados.
 - Desde Android 15, las apps se dibujan **de borde a borde**, también detrás de la barra de estado y del teclado. Por eso la app calcula esos márgenes ("insets") para que la barra superior y el campo de texto nunca queden tapados.
 
+### Ari tutora: cómo se le da un "papel" a un modelo
+
+Cuando le pides a Ari que sea tu maestra, Ari agrega a las **instrucciones de sistema** de Gemma un papel nuevo: "ahora eres tutora de inglés; enseña una idea a la vez, haz una pregunta y corrige con cariño". Al modelo no se le cambia nada por dentro: solo se le dan otras reglas para esa conversación.
+
+Para que recuerde dónde se quedaron, Gemma deja al final de cada tema una línea "RESUMEN DE LA CLASE: …". Ari la guarda y, en la siguiente clase, se la vuelve a dar a Gemma. Así una conversación nueva sabe lo que ya aprendiste sin tener que guardar toda la plática.
+
 ### Recados entre Ari: un protocolo sencillo
 
 Para que dos Ari se entiendan por SMS, se pusieron de acuerdo en una **marca**: todo recado empieza con "[Ari de Nombre]". A eso se le llama un **protocolo**: reglas que dos programas siguen para entenderse (como decir "cambio" por radio).

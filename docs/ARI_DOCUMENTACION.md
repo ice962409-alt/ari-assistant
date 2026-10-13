@@ -56,6 +56,17 @@ Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene
 - Detecta también los cierres que vienen del motor (la GPU), las congeladas y la falta de memoria (Android 11 o más nuevo).
 - Los informes llegan a tu Gmail con el asunto "Informe de fallo de Ari". Claude los revisa al empezar cada sesión y los arregla en la siguiente versión.
 
+### Tutora personal
+
+Ari puede ser tu maestra de lo que quieras, en las dos versiones (la tuya y la de otros):
+
+- Para empezar: "quiero aprender inglés", "sé mi maestra de guitarra", "dame clases de cocina", "enséñame Excel".
+- La primera clase te pregunta tu nivel y para qué lo quieres. Después enseña una idea a la vez, con ejemplos del día a día, y te pone una pregunta o ejercicio. Te corrige y ajusta la dificultad.
+- En idiomas escribe la frase, su traducción y cómo se pronuncia.
+- Al terminar un tema deja una línea "RESUMEN DE LA CLASE: …" que Ari guarda.
+- Para salir: "terminar clase". Para seguir otro día: "sigamos con inglés". Ari repasa lo último y sigue con lo siguiente.
+- Funciona por escrito y en voz. En voz, las frases en otro idioma las lee la voz en español del teléfono, así que la pronunciación no es perfecta; para eso, guíate por la pronunciación escrita.
+
 ### Recados entre Ari
 
 Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que ya salí"). Ari busca a esa persona en tus contactos y le manda un SMS **directo**, sin pedirte confirmar: así lo decidiste para los recados. El SMS dice "[Ari de Tu Nombre] llego a las 8".
@@ -451,6 +462,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Tutora personal (0.25.0), en las dos Ari: "quiero aprender inglés", "sé mi maestra de guitarra". Ari enseña paso a paso, pone ejercicios, corrige con cariño y guarda un resumen de cada clase para seguir después ("sigamos con inglés"). "Terminar clase" para salir.
 - Recados entre Ari (0.24.0): "dile a mi mamá que llego a las 8" y Ari le manda un SMS directo (sin pedirte confirmar, como lo pediste). Si tu mamá tiene Ari, su Ari se lo dice en voz y en su chat; si no, le llega como SMS normal. Sin internet.
 - Ari enseña y ayuda en el día a día (0.23.0): lecciones paso a paso ("enséñame", Ajustes → Aprender a usar Ari, y solas en el primer uso): Ari propone algo útil para probar, nota cuando lo haces, te felicita y pasa a lo siguiente (8 lecciones). En la Ari para otros, Gemma se enfoca en hacerles fácil la vida diaria (en lugar de ser CEO) y da un consejo al día. Bienvenida con "Enséñame a usarte" y "Ayúdame a organizar mi día".
 - Solo tu Ari es la CEO (0.22.0): GitHub compila dos APK. "ari-debug-apk" es la tuya, con el equipo de modelos; "ari-otros-apk" es para las demás personas, sin el equipo (ese código no va dentro) y sin pedir el permiso de ubicación. Su versión dice "-otros".
