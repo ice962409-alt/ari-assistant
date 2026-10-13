@@ -293,16 +293,47 @@ class MainActivity : Activity() {
             .setPositiveButton("Listo") { _, _ ->
                 updateProfile(profile.copy(userName = Profile.cleanName(field.text.toString())))
                 refreshWelcome()
-                if (firstTime) offerModelOnce()
+                if (firstTime) {
+                    introduceOnce()
+                    offerModelOnce()
+                }
             }
             .setNegativeButton(if (firstTime) "Ahora no" else "Cancelar") { _, _ ->
                 if (firstTime) {
                     updateProfile(profile)
+                    introduceOnce()
                     offerModelOnce()
                 }
             }
             .setCancelable(!firstTime)
             .show()
+    }
+
+    private fun phoneAbilities() = AriAbilities.Phone(
+        vision = if (modelReady) visionReady else !ModelChoice.basic(totalRam()),
+        voices = voiceIdentity.supported && !voice.ownAudioUnsupported
+    )
+
+    /** Ari cuenta lo que puede hacer, con ejemplos. [question] es lo que le preguntaste (null: se presenta sola). */
+    private fun introduce(question: String?) {
+        val phone = phoneAbilities()
+        val intro = AriAbilities.intro(profile.userName, phone)
+        if (question != null) {
+            saveMessage(ROLE_USER, question)
+            chat.addUser(question)
+        }
+        saveMessage(ROLE_ARI, intro)
+        chat.addAri(intro)
+        if (voiceMode) voice.speak(AriAbilities.spoken(phone))
+        notifyIfAway(intro)
+    }
+
+    /** La primera vez, Ari se presenta sola en el chat. */
+    private fun introduceOnce() {
+        val prefs = getSharedPreferences(MODEL_OFFER_PREFS, MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_INTRODUCED, false)) return
+        prefs.edit().putBoolean(KEY_INTRODUCED, true).apply()
+        introduce(null)
     }
 
     /**
@@ -826,6 +857,10 @@ class MainActivity : Activity() {
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1))
 
         chat = ChatView(this)
+        chat.onSuggestion = { suggestion ->
+            input.setText(suggestion)
+            sendMessage()
+        }
         root.addView(chat, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
         // Campo para escribir, redondeado como el de Claude, con micrófono y enviar.
@@ -1553,6 +1588,12 @@ class MainActivity : Activity() {
         }
 
         if (busy) return
+
+        if (AriAbilities.asks(text)) {
+            input.text.clear()
+            introduce(text)
+            return
+        }
 
         if (ScreenRequest.matches(text)) {
             lookAtScreen(text)
@@ -2887,6 +2928,7 @@ class MainActivity : Activity() {
         private const val ENGINE_PREFS = "ari_motor"
         private const val MODEL_OFFER_PREFS = "ari_descarga"
         private const val KEY_MODEL_OFFERED = "ofrecida"
+        private const val KEY_INTRODUCED = "presentada"
         private const val LARGE_CONTEXT_TOKENS = 8192
         private const val VOICE_PREFS = "ari_voces"
         private const val KEY_VOICES_ON = "activo"

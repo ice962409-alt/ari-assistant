@@ -54,6 +54,10 @@ Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene
 - Detecta también los cierres que vienen del motor (la GPU), las congeladas y la falta de memoria (Android 11 o más nuevo).
 - Cuando te llegue un informe, pégalo en la sesión de Claude Code para que lo arregle.
 
+### Lo que Ari puede hacer por ti
+
+La primera vez, Ari se presenta sola en el chat y explica lo que sabe hacer, con ejemplos. Para volver a verlo, pregúntale **"¿qué puedes hacer?"** o **"ayuda"**, o toca el botón **"¿Qué puedes hacer?"** de la pantalla de bienvenida. Funciona aunque Gemma todavía no esté descargada. En teléfonos con la versión básica no ofrece ver fotos ni la pantalla.
+
 ### Ajustes: una Ari para cada persona
 
 El botón **Ajustes** (arriba, junto a Memoria y Modelo) tiene:
@@ -417,6 +421,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Ari se presenta (0.20.0): la primera vez, después de preguntar el nombre, Ari cuenta en el chat lo que puede hacer, con ejemplos para probar. Cuando le preguntas "¿qué puedes hacer?" (o "ayuda") lo repite, aunque Gemma no esté cargada; en voz dice una versión corta. La bienvenida tiene el botón "¿Qué puedes hacer?". Solo menciona lo que el teléfono puede hacer.
 - Primer uso más fácil (0.19.0): la primera vez sin modelo, después de preguntar el nombre, Ari muestra sola qué Gemma le conviene al teléfono (con tamaño, espacio y "solo por Wi-Fi") y ofrece "Descargar ahora", "Más tarde" o "Ya tengo el archivo". Solo pregunta una vez; nada se descarga sin tocar el botón.
 - Corrección (0.18.1): tras una respuesta muy larga, Ari se quedaba en "Error de respuesta: Status Code: 13" y fallaban todos los mensajes. Ahora, si Gemma falla antes de escribir, Ari empieza una plática nueva y lo intenta otra vez; si vuelve a fallar en la GPU, ofrece cambiar a la CPU. Y en teléfonos potentes Gemma tiene el doble de memoria de plática (8192 tokens).
 - Gemma recuerda mejor (0.18.0): la personalidad de Ari, tus recuerdos, tu libreta y los últimos 20 mensajes van en las "instrucciones de sistema" de la conversación, así Gemma no los olvida a media plática. Si cambias un recuerdo o el tono, la siguiente pregunta empieza una conversación nueva que ya lo trae. Idea de otra sesión de Claude.

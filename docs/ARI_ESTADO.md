@@ -403,3 +403,10 @@ Reportado por el usuario (captura vista por otra sesión, en 0.17.0): después d
 Pedido del usuario (vía otra sesión): que quien reciba Ari vea sola la recomendación de modelo.
 - `offerModelOnce()`: sin modelo y sin descarga en curso, una sola vez (prefs `ari_descarga/ofrecida`): diálogo con `ModelChoice.recommend` y botones "Descargar ahora" (o "Descargar de todos modos" si `tooWeak`), "Más tarde" (aviso en la barra de estado) y "Ya tengo el archivo". Se llama después del nombre en el primer uso, o al abrir en instalaciones que aún no tienen modelo.
 
+## Ari se presenta (versión 0.20.0)
+
+Pedido del usuario: "Para que las personas conozcan y sepan qué Ari puede hacer por ellos. Debe decirles".
+- `AriAbilities` (pruebas en `AriAbilitiesTest`): `asks(text)` reconoce "¿qué puedes hacer?", "ayuda", "¿para qué sirves?"; `intro(nombre, Phone(vision, voices))` arma la lista con ejemplos reales de los agentes; `spoken()` es la versión corta para voz.
+- MainActivity: `introduce()` responde localmente (sin Gemma) antes del CEO; `introduceOnce()` después del nombre en el primer uso (prefs `ari_descarga/presentada`), antes de la oferta del modelo.
+- ChatView: botón "¿Qué puedes hacer?" en la bienvenida (`onSuggestion`).
+
