@@ -1234,7 +1234,12 @@ class MainActivity : Activity() {
     }
 
     /** Envía [text] a Gemma; la respuesta aparece en el chat a medida que se escribe. */
-    private fun askGemma(text: String, attachment: Attachment? = null, savedAs: String = text) {
+    private fun askGemma(
+        text: String,
+        attachment: Attachment? = null,
+        savedAs: String = text,
+        retried: Boolean = false
+    ) {
         val activeConversation = conversation
         if (!modelReady || activeConversation == null) {
             chat.appendAri("El modelo aún no está listo.")
@@ -1325,6 +1330,17 @@ class MainActivity : Activity() {
                     runOnUiThread {
                         if (isDestroyed) return@runOnUiThread
                         liveOverlay.removeCallbacks(filler)
+                        // La memoria de la plática se llenó: Ari empieza una conversación nueva
+                        // (con tus recuerdos y los últimos mensajes) y vuelve a intentar una vez.
+                        if (!retried && response.isEmpty() && isContextFull(throwable)) {
+                            chat.finishAri()
+                            chat.addNote("La plática ya era muy larga para la memoria de Gemma. Empiezo una nueva; tus recuerdos siguen aquí.")
+                            freshConversation {
+                                chat.startAri()
+                                askGemma(text, attachment, savedAs, retried = true)
+                            }
+                            return@runOnUiThread
+                        }
                         attachment?.delete()
                         saveResponse(response)
                         busy = false
@@ -1359,6 +1375,35 @@ class MainActivity : Activity() {
             status.text = "Error de respuesta: ${e.message ?: e.javaClass.simpleName}"
             chat.appendAri("_No pude generar la respuesta._")
             chat.finishAri()
+        }
+    }
+
+    private fun isContextFull(error: Throwable): Boolean {
+        val message = generateSequence(error) { it.cause }.mapNotNull { it.message }.joinToString(" ").lowercase()
+        return "too long" in message || "maximum number of tokens" in message
+    }
+
+    /** Cierra la conversación con Gemma y abre otra; Gemma vuelve a recibir quién es Ari y tus recuerdos. */
+    private fun freshConversation(then: () -> Unit) {
+        executor.execute {
+            val current = engine
+            val oldConversation = conversation
+            conversation = null
+            runCatching { oldConversation?.close() }
+            conversation = current?.let { runCatching { it.createConversation() }.getOrNull() }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                historyPending = true
+                memoriesPending = true
+                if (conversation == null) {
+                    busy = false
+                    sendButton.isEnabled = true
+                    modelReady = false
+                    status.text = "No pude abrir una conversación nueva. Toca Modelo para volver a cargar a Gemma."
+                } else {
+                    then()
+                }
+            }
         }
     }
 

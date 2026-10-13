@@ -212,6 +212,14 @@ Android tiene varias "puertas" para entrar directo a una parte de una app:
 
 Un detalle: Android abre los accesos directos **cerrando primero la app** (borra su "tarea", la pila de pantallas abiertas). Eso obligaría a Ari a cargar otra vez a Gemma, que pesa 3.4 GB. Por eso el acceso directo abre primero una **pantalla puente** invisible, en su propia tarea, que solo le avisa a Ari "abre el modo live" y se cierra al instante.
 
+### La memoria de corto plazo de Gemma: la ventana de contexto
+
+Gemma no lee letras sino **tokens**: pedacitos de palabra (en español, una palabra son uno o dos tokens). En cada plática, Gemma va guardando todo lo que se han dicho en su **ventana de contexto**, como una pizarra. En el teléfono esa pizarra tiene lugar para unos 4 000 tokens, unas 2 500 palabras entre lo que tú dices, lo que ella contesta, su personalidad y tus recuerdos.
+
+- Cuando la pizarra se llena, Gemma ya no puede seguir. Ari la borra y empieza una plática nueva, pero antes le vuelve a escribir quién es, tus recuerdos y los últimos mensajes. Así no pierde el hilo de lo importante.
+- Por eso un documento muy largo no cabe completo: Ari solo le pasa unas 1 000 palabras (unas 3 páginas).
+- Una pizarra más grande gastaría mucha más memoria del teléfono; es un equilibrio entre recordar más y no trabar el celular.
+
 ### Ari ve imágenes: modelos multimodales
 
 Un modelo **multimodal** entiende más de un tipo de cosa: texto, imágenes y hasta audio. Gemma 4 lo es. Por dentro tiene una parte extra, el **codificador de visión**, que convierte una foto en algo que el modelo puede "leer", como si la describiera con sus propios números. Por eso Ari carga a Gemma con la "vista" encendida: usa algo más de memoria, pero puede decirte qué hay en una foto, leer una receta o un recibo.
@@ -381,6 +389,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Acceso directo (shortcut)**: la lista que sale al mantener presionado el icono de una app.
 - **Ajustes rápidos**: los botones del panel que bajas desde arriba de la pantalla.
 - **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
+- **Token**: un pedacito de palabra; es la unidad con la que lee y escribe un modelo de IA.
+- **Ventana de contexto**: cuántos tokens puede tener en mente un modelo a la vez, como el tamaño de su pizarra.
 - **Multimodal**: un modelo de IA que entiende varios tipos de cosas, como texto, imágenes y audio.
 - **Codificador de visión**: la parte del modelo que convierte una imagen en algo que puede "leer".
 - **Proveedor de contenido (content provider)**: la "ventanilla" por la que una app presta un archivo a otra, con permiso temporal.

@@ -220,8 +220,11 @@ object AttachmentReader {
 
 /** Sacar el texto de los documentos. Sin Android, para poder probarlo. */
 object DocumentText {
-    /** Lo que cabe cómodo en la memoria de Gemma junto con la plática (unas 4 000 palabras). */
-    const val MAX_CHARS = 24_000
+    /**
+     * Lo que cabe cómodo en la memoria de Gemma (por defecto unos 4 096 "pedazos de palabra")
+     * junto con su personalidad, tus recuerdos, los últimos mensajes y la respuesta: unas 1 000 palabras.
+     */
+    const val MAX_CHARS = 6_000
     const val MAX_BYTES = 512 * 1024
 
     /** El texto de un .docx vive en word/document.xml, dentro de un zip. */

@@ -31,7 +31,15 @@ class LiveSessionService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_TALK -> controller?.onTalkRequested()
+            ACTION_TALK -> {
+                // Si el modo live ya terminó (notificación vieja), no se queda nada encendido.
+                val live = controller
+                if (live == null || !running) {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+                live.onTalkRequested()
+            }
             ACTION_END -> {
                 controller?.onEndRequested()
                 stopSelf()

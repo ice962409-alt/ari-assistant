@@ -74,7 +74,7 @@ También puedes **compartir con Ari desde otras apps**: en la Galería, WhatsApp
 El adjunto aparece arriba del campo de texto; tócalo para quitarlo. Escribe qué quieres saber ("¿qué dice esta receta?", "resume este contrato", "¿qué planta es?") y toca enviar. Si no escribes nada, Ari describe la imagen o resume el documento.
 
 - Las **imágenes** y las **páginas de un PDF** (hasta 4) se las muestra a Gemma para que las "vea", incluidas tablas, letras y dibujos.
-- De un **Word o texto**, Ari lee el texto (hasta unas 4 000 palabras; si es más largo, solo el principio).
+- De un **Word o texto**, Ari lee el texto (hasta unas 1 000 palabras, unas 3 páginas; si es más largo, solo el principio).
 - Todo se queda en el teléfono. Ari hace una copia temporal y la borra al terminar de responder. En el historial solo queda el nombre del archivo.
 - Lo que dice un documento es información, no órdenes: si trae frases como "ignora tus instrucciones", Ari no las obedece.
 - Si tu teléfono no pudo cargar la "vista" de Gemma, Ari te avisa: en ese caso solo puede leer Word y texto.
@@ -333,6 +333,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Pláticas largas sin errores (0.12.2): cuando la memoria de la conversación de Gemma se llena, Ari empieza una conversación nueva sola, con tus recuerdos y los últimos mensajes, y vuelve a intentar. Antes había que cerrar la app.
 - Tomar foto y compartir con Ari (0.12.1): "+" → Tomar foto, y "Compartir → Ari" desde la Galería, WhatsApp, Archivos o el navegador.
 - Adjuntar imágenes y documentos (0.12.0): botón + para mandarle a Ari fotos, PDF, Word y archivos de texto; Gemma ve las imágenes y las páginas del PDF. Todo en el teléfono.
 - Ari en segundo plano (0.11.0): en el modo live, Ari te sigue escuchando aunque salgas de la app o abra otra por ti, con una notificación fija (Hablar y Terminar). Si suena música no escucha; si no te oye, se pausa y a los 5 minutos termina sola.

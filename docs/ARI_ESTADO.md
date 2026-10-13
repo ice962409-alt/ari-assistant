@@ -309,3 +309,10 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `CaptureProvider` (no exportado, `grantUriPermissions`): presta `content://com.ari.assistant.camara/foto-<uuid>.jpg` a la cámara con `ACTION_IMAGE_CAPTURE` + `EXTRA_OUTPUT`. Solo acepta nombres `foto-…jpg` (sin rutas). Ari no declara CAMERA, así que no pide permiso. `pendingPhoto` se guarda en `onSaveInstanceState` por si Android cierra a Ari mientras la cámara está abierta. Tras leerla, se borra el original.
 - `ShareActivity` (exportada, ACTION_SEND con image/*, text/*, PDF, docx, JSON): copia el adjunto mientras tiene el permiso temporal (`AttachmentReader.read` o `fromText`), lo deja en memoria (`take()`) y abre MainActivity con `ACTION_SHARED`, que lo muestra con `showAttachment`. Nada se envía solo.
 
+## Pláticas largas (versión 0.12.2)
+
+- LiteRT-LM toma el límite de tokens de los metadatos del modelo (o 4096) y la `Conversation` acumula toda la plática; al pasarse, `Prefill` falla con "Input token ids are too long". Antes, Ari quedaba fallando hasta recargar.
+- Ahora `askGemma(..., retried)`: si el error es de contexto lleno (`isContextFull`) y no llegó nada de respuesta, `freshConversation` cierra la conversación, abre otra (historyPending/memoriesPending = true) y reintenta una vez.
+- `DocumentText.MAX_CHARS` bajó a 6 000 caracteres (unas 1 000 palabras) para caber en 4096 tokens con la personalidad, recuerdos e historial.
+- `LiveSessionService`: "Hablar" en una notificación vieja ya no deja el servicio encendido.
+
