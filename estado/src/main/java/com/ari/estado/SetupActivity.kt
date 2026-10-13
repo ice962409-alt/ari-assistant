@@ -23,6 +23,7 @@ class SetupActivity : Activity() {
 
     private lateinit var status: TextView
     private lateinit var tokenInput: EditText
+    private lateinit var tokenInfo: TextView
 
     private val bg = Color.rgb(22, 24, 28)
     private val green = Color.rgb(158, 216, 238)
@@ -74,12 +75,16 @@ class SetupActivity : Activity() {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
         column.addView(tokenInput, spaced())
+        tokenInfo = text("", 13f, muted)
+        column.addView(tokenInfo)
+        showTokenInfo()
         column.addView(button("Guardar y probar") { saveAndTest() })
         column.addView(button("Borrar la llave") {
             TokenVault.clear(this)
             RefreshJob.cancelAll(this)
             StatusWidget.renderAll(this)
             status.text = "Llave borrada. El widget dejó de consultar."
+            showTokenInfo()
         })
 
         status = text("", 15f, green)
@@ -116,7 +121,8 @@ class SetupActivity : Activity() {
     }
 
     private fun saveAndTest() {
-        val token = tokenInput.text.toString().trim()
+        // Una llave de GitHub no lleva espacios ni saltos de línea: se quitan por si se colaron al copiar.
+        val token = tokenInput.text.toString().replace(Regex("\\s"), "")
         if (token.isEmpty()) {
             status.text = if (TokenVault.hasToken(this)) "Probando la llave guardada…" else "Primero pega la llave."
             if (!TokenVault.hasToken(this)) return
@@ -125,6 +131,7 @@ class SetupActivity : Activity() {
             tokenInput.text.clear()
             tokenInput.hint = "Llave guardada (pega otra para cambiarla)"
             status.text = "Llave guardada. Probando…"
+            showTokenInfo()
         }
 
         Thread {
@@ -146,6 +153,24 @@ class SetupActivity : Activity() {
                 StatusWidget.renderAll(this)
             }
         }.start()
+    }
+
+    /**
+     * Muestra solo el inicio de la llave guardada y cuántos caracteres tiene,
+     * para comprobar que se pegó completa sin dejarla a la vista.
+     */
+    private fun showTokenInfo() {
+        val token = TokenVault.load(this)
+        tokenInfo.text = when {
+            token == null -> ""
+            !token.startsWith("github_pat_") && !token.startsWith("ghp_") ->
+                "La llave guardada empieza con \"${token.take(4)}…\" (${token.length} caracteres). " +
+                    "Una llave de GitHub empieza con github_pat_: quizá se copió otra cosa."
+            token.length < 40 ->
+                "Llave guardada: ${token.take(15)}… (${token.length} caracteres). Parece incompleta: " +
+                    "una llave de GitHub tiene unos 93. Cópiala con el botón de copiar."
+            else -> "Llave guardada: ${token.take(15)}… (${token.length} caracteres)."
+        }
     }
 
     private fun text(value: String, size: Float, color: Int) = TextView(this).apply {

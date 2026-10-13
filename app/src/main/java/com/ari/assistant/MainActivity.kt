@@ -79,6 +79,9 @@ class MainActivity : Activity() {
     private var voiceMode = false
     private var silentAttempts = 0
 
+    // Contraseña del respaldo mientras el usuario elige el archivo. Se borra al usarla.
+    private var backupPassword: CharArray? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -327,6 +330,16 @@ class MainActivity : Activity() {
         data: Intent?
     ) {
         super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == EXPORT_BACKUP || requestCode == IMPORT_BACKUP) {
+            val uri = data?.data
+            if (resultCode != RESULT_OK || uri == null) {
+                forgetBackupPassword()
+                return
+            }
+            if (requestCode == EXPORT_BACKUP) exportBackup(uri) else askImportPassword(uri)
+            return
+        }
 
         if (requestCode != PICK_MODEL ||
             resultCode != RESULT_OK
@@ -952,6 +965,7 @@ class MainActivity : Activity() {
             .setTitle("Recuerdos de Ari")
             .setPositiveButton("Agregar") { _, _ -> showAddMemoryDialog() }
             .setNegativeButton("Cerrar", null)
+            .setNeutralButton("Respaldo") { _, _ -> showBackupDialog() }
 
         if (memories.isEmpty()) {
             builder.setMessage("Aún no hay recuerdos. Agrega uno o usa /recuerda <texto>.")
@@ -1002,8 +1016,167 @@ class MainActivity : Activity() {
             .show()
     }
 
+    /** Respaldo cifrado: llevar a Ari a otro teléfono o guardar una copia. */
+    private fun showBackupDialog() {
+        val options = arrayOf("Guardar un respaldo cifrado", "Recuperar desde un respaldo")
+        AlertDialog.Builder(this)
+            .setTitle("Respaldo de Ari")
+            .setItems(options) { _, which -> if (which == 0) askExportPassword() else pickBackupToImport() }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun passwordField(hint: String) = EditText(this).apply {
+        this.hint = hint
+        inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+    }
+
+    private fun askExportPassword() {
+        val first = passwordField("Contraseña (mínimo ${AriBackup.MIN_PASSWORD_LENGTH} caracteres)")
+        val second = passwordField("Repite la contraseña")
+        val fields = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = AriTheme.dp(this@MainActivity, 20f)
+            setPadding(pad, 0, pad, 0)
+            addView(first)
+            addView(second)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Contraseña del respaldo")
+            .setMessage(
+                "El archivo guarda tus recuerdos, el historial, el equipo y las redes aprobadas, cifrados. " +
+                    "Sin esta contraseña nadie puede abrirlo, ni siquiera tú: anótala en un lugar seguro."
+            )
+            .setView(fields)
+            .setPositiveButton("Elegir dónde guardar") { _, _ ->
+                val password = first.text.toString()
+                when {
+                    password.length < AriBackup.MIN_PASSWORD_LENGTH ->
+                        status.text = "La contraseña debe tener al menos ${AriBackup.MIN_PASSWORD_LENGTH} caracteres."
+                    password != second.text.toString() ->
+                        status.text = "Las contraseñas no coinciden. Inténtalo de nuevo."
+                    else -> {
+                        backupPassword = password.toCharArray()
+                        val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "application/octet-stream"
+                            putExtra(Intent.EXTRA_TITLE, "ari-respaldo-$date.${AriBackup.FILE_EXTENSION}")
+                        }
+                        @Suppress("DEPRECATION")
+                        startActivityForResult(intent, EXPORT_BACKUP)
+                    }
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun exportBackup(uri: Uri) {
+        val password = backupPassword ?: return
+        backupPassword = null
+        status.text = "Cifrando el respaldo..."
+        Thread {
+            val message = try {
+                val (bytes, summary) = AriBackup.export(database, getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE), password)
+                val output = contentResolver.openOutputStream(uri, "wt")
+                    ?: throw IllegalStateException("No se pudo abrir el archivo para escribir.")
+                output.use { it.write(bytes) }
+                "Respaldo guardado: ${summary.memories} recuerdos, ${summary.messages} mensajes, " +
+                    "${summary.teams} equipos y ${summary.networks} redes aprobadas."
+            } catch (e: Throwable) {
+                "No se pudo guardar el respaldo: ${e.message}"
+            } finally {
+                password.fill(' ')
+            }
+            runOnUiThread { if (!isDestroyed) chat.addNote(message) }
+        }.start()
+    }
+
+    private fun pickBackupToImport() {
+        if (busy) {
+            status.text = "Espera a que Ari termine de responder para recuperar un respaldo."
+            return
+        }
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, IMPORT_BACKUP)
+    }
+
+    private fun askImportPassword(uri: Uri) {
+        val field = passwordField("Contraseña del respaldo")
+        val box = LinearLayout(this).apply {
+            val pad = AriTheme.dp(this@MainActivity, 20f)
+            setPadding(pad, 0, pad, 0)
+            addView(field, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Recuperar respaldo")
+            .setMessage("Esto reemplaza los recuerdos, el historial, el equipo y las redes aprobadas de ahora por los del archivo.")
+            .setView(box)
+            .setPositiveButton("Recuperar") { _, _ -> importBackup(uri, field.text.toString().toCharArray()) }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun importBackup(uri: Uri, password: CharArray) {
+        if (busy) {
+            password.fill(' ')
+            status.text = "Espera a que Ari termine de responder para recuperar un respaldo."
+            return
+        }
+        status.text = "Abriendo el respaldo..."
+        Thread {
+            val result = try {
+                val input = contentResolver.openInputStream(uri)
+                    ?: throw IllegalStateException("No se pudo abrir el archivo.")
+                Result.success(input.use {
+                    AriBackup.restore(it, database, getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE), password)
+                })
+            } catch (e: Throwable) {
+                Result.failure(e)
+            } finally {
+                password.fill(' ')
+            }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                result.onSuccess { summary ->
+                    // Gemma empieza una conversación nueva con los datos recuperados.
+                    executor.execute {
+                        val current = engine ?: return@execute
+                        val oldConversation = conversation
+                        conversation = null
+                        runCatching { oldConversation?.close() }
+                        // Si no se puede abrir otra, Ari pide volver a cargar el modelo.
+                        conversation = runCatching { current.createConversation() }.getOrNull()
+                    }
+                    historyPending = true
+                    memoriesPending = true
+                    chat.clear()
+                    restoreHistory()
+                    chat.addNote(
+                        "Respaldo recuperado: ${summary.memories} recuerdos, ${summary.messages} mensajes, " +
+                            "${summary.teams} equipos y ${summary.networks} redes aprobadas."
+                    )
+                    AriWidget.refresh(this@MainActivity)
+                }.onFailure { e ->
+                    chat.addNote("No se pudo recuperar el respaldo: ${e.message}")
+                }
+            }
+        }.start()
+    }
+
+    private fun forgetBackupPassword() {
+        backupPassword?.fill(' ')
+        backupPassword = null
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        forgetBackupPassword()
 
         executor.execute { releaseModel() }
         executor.shutdown()
@@ -1016,6 +1189,8 @@ class MainActivity : Activity() {
         private const val PICK_MODEL = 101
         private const val REQUEST_AUDIO = 102
         private const val REQUEST_LOCATION = 103
+        private const val EXPORT_BACKUP = 104
+        private const val IMPORT_BACKUP = 105
         private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
         /** Quién es Ari. Se le da a Gemma al empezar cada conversación. */

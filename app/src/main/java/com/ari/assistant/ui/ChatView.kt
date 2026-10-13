@@ -65,6 +65,15 @@ class ChatView(context: Context) : ScrollView(context) {
         column.addView(box, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
     }
 
+    /** Vacía la conversación, por ejemplo al recuperar un respaldo. */
+    fun clear() {
+        stopThinking()
+        current = null
+        currentText.setLength(0)
+        welcome = null
+        column.removeAllViews()
+    }
+
     fun addUser(text: String) {
         clearWelcome()
         finishAri()

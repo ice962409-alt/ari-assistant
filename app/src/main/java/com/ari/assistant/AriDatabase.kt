@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import org.json.JSONArray
+import org.json.JSONObject
 
 data class ChatMessage(val role: String, val content: String)
 
@@ -177,8 +179,65 @@ class AriDatabase(context: Context) :
         return result
     }
 
+    /** Copia de todas las tablas para el respaldo cifrado (ver [AriBackup]). */
+    fun exportData(): JSONObject = JSONObject().apply {
+        TABLES.forEach { (table, columns) -> put(table, exportTable(table, columns)) }
+    }
+
+    /** Reemplaza todo con lo que trae un respaldo. Si algo falla, no cambia nada. */
+    fun importData(data: JSONObject) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            TABLES.forEach { (table, columns) ->
+                db.delete(table, null, null)
+                val rows = data.optJSONArray(table) ?: JSONArray()
+                for (index in 0 until rows.length()) {
+                    val row = rows.getJSONObject(index)
+                    val values = ContentValues()
+                    columns.forEach { column ->
+                        when (column) {
+                            "success" -> values.put(column, row.optInt(column, 0))
+                            "created_at" -> values.put(column, row.optLong(column, System.currentTimeMillis()))
+                            else -> values.put(column, row.getString(column))
+                        }
+                    }
+                    db.insertOrThrow(table, null, values)
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    private fun exportTable(table: String, columns: List<String>): JSONArray {
+        val rows = JSONArray()
+        readableDatabase.query(table, columns.toTypedArray(), null, null, null, null, "id ASC").use { cursor ->
+            while (cursor.moveToNext()) {
+                val row = JSONObject()
+                columns.forEachIndexed { index, column ->
+                    when (column) {
+                        "success" -> row.put(column, cursor.getInt(index))
+                        "created_at" -> row.put(column, cursor.getLong(index))
+                        else -> row.put(column, cursor.getString(index))
+                    }
+                }
+                rows.put(row)
+            }
+        }
+        return rows
+    }
+
     companion object {
         private const val DATABASE_NAME = "ari.db"
         private const val DATABASE_VERSION = 2
+
+        /** Tablas y columnas que viajan en el respaldo (el id se vuelve a crear). */
+        private val TABLES = listOf(
+            "memories" to listOf("content", "created_at"),
+            "messages" to listOf("role", "content", "created_at"),
+            "agent_tasks" to listOf("agent_id", "request", "reply", "success", "created_at")
+        )
     }
 }
