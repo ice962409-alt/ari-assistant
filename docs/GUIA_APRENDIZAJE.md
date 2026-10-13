@@ -173,6 +173,19 @@ Antes de instalar algo, pregúntate:
 3. **¿Hay imitaciones?** El paquete oficial se llama "graphifyy", con doble "y"; los parecidos pueden ser maliciosos.
 4. **¿Lo necesito ahora?** Graphify sirve para proyectos enormes; Ari tiene unos 10 archivos, así que hoy no aporta.
 
+### Claude Code frente al chat normal de Claude
+
+En la app de Claude hay dos cosas distintas:
+
+- **El chat normal**: conversaciones sueltas. No sabe nada de Ari ni puede tocar el código.
+- **Claude Code** (sección "Code"): sesiones de trabajo conectadas al repositorio de Ari, donde Claude programa, compila y actualiza tu tablero.
+
+Por eso "sigue" se escribe **en la sesión de Claude Code**, no en un chat nuevo. El aviso naranja del widget y la notificación de Ari Estado te llevan directo a esa sesión.
+
+### Cuando una app se cierra sola
+
+Android muestra "la app continúa fallando" cuando hay un error que el programa no supo manejar. Para encontrar la causa sin herramientas de desarrollador, Ari Estado guarda el último error y lo muestra en su pantalla: con una captura de ese texto, Claude puede saber qué pasó. El primer cierre de Ari Estado fue por un **permiso faltante**: desde Android 14, una app que quiere revisar "solo cuando haya red" debe declarar que consulta el estado de la red.
+
 ### El tablero de pendientes
 
 Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te necesita (decisiones, permisos, pruebas) aparece en tu tablero "Pendientes de Ari". Arriba ves si Claude está trabajando o en pausa, una barra con el progreso de su tarea y el paso en el que va. Cuando Claude se detiene, te avisa con una notificación y el tablero dice "En pausa: escribe 'sigue'".
