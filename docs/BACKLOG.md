@@ -26,6 +26,8 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Ari en segundo plano en el modo live (0.11.0), pedido por el usuario. Falta [prueba].
 - [autónomo] Adjuntar imágenes y documentos (0.12.0), pedido por el usuario. Falta [prueba].
 - [autónomo] Tomar foto y "Compartir → Ari" (0.12.1). Falta [prueba].
+- [autónomo] Libreta de personas (0.13.0), pedida por el usuario. Falta [prueba].
+- [autónomo] Siguiente para la libreta: aviso un día antes de cada cumpleaños y verla y editarla en una pantalla (botón Memoria).
 - [autónomo] Siguiente para adjuntos: audios (Gemma 4 también entiende audio) y varias imágenes a la vez.
 - [decisión] Burbuja flotante con la carita de Ari sobre otras apps (necesita el permiso "mostrar sobre otras apps"). Proponer después de la prueba de 0.11.0.
 - [autónomo] Investigación de control total (docs/CONTROL_APPS.md) y acciones de música, YouTube, SMS, correo y calendario (0.9.0).

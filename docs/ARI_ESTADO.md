@@ -330,3 +330,12 @@ Correcciones de la revisión (10 hallazgos):
 - El subtítulo del modo live limpia solo los últimos 600 caracteres por pedazo (antes, toda la respuesta cada vez).
 - `DocumentText.prompt` desarma "<<<" y ">>>" dentro del documento (prueba nueva).
 
+## Libreta de personas (versión 0.13.0)
+
+Pedido del usuario: "Ari puede conocer a personas nuevas a través de chats" → eligió "que recuerde a quien le menciono".
+- `agents/PeopleParser.kt` (puro, probado en `PeopleAgentTest`): "mi <relación> [Nombre] <verbo> …", "mi <relación> se llama X", "X es mi <relación>", "te presento a X, mi <relación>", "X cumple el 5 de mayo", "qué sabes de X", "olvida a X", "a quién conoces", "quién cumple años". Ignora frases con pregunta, "pero", "qué hago", etc., o de más de 18 palabras (van a Gemma).
+- `agents/PeopleAgent.kt`: junta datos de la misma persona (por nombre o, en relaciones únicas como mamá/jefe, por relación; la ficha "Mamá" se vuelve "Rosa"). Hasta 10 datos por persona. Preguntar/olvidar solo si la persona existe (si no, sigue la memoria o Gemma).
+- Contratado antes del agente del teléfono y del de memoria ("recuerda que mi primo…" y "olvida a Luis" son de la libreta).
+- `AriDatabase` versión 4: tabla `people` (name, relation, facts por línea, birthday "MM-DD"); entra en el respaldo (`TABLES`).
+- `buildPrompt` agrega hasta 25 personas (160 caracteres cada una) junto con los recuerdos.
+

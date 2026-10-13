@@ -89,6 +89,21 @@ Ari guarda recuerdos sobre ti y se los pasa a Gemma como contexto.
 
 El botón **Memoria** también deja ver, agregar y borrar recuerdos. Para borrar uno, tócalo.
 
+### Las personas de tu vida
+
+Ari tiene una **libreta de personas**: recuerda a quien le mencionas y se lo pasa a Gemma, para que sepa de quién le hablas. Escríbelo o díselo en voz:
+
+- "mi primo Luis es dentista", "mi mamá trabaja en un hospital", "mi novia Ana vive en Puebla"
+- "mi mamá se llama Rosa" (si antes le hablaste de "mi mamá", ahora sabe que es Rosa)
+- "Ana es mi jefa", "te presento a Pedro, mi vecino"
+- "Luis cumple el 5 de mayo"
+- **"qué sabes de Luis"** o **"quién es Luis"**: lo que Ari sabe de esa persona.
+- **"a quién conoces"**: tu libreta completa.
+- **"quién cumple años"**: los próximos cumpleaños, con cuántos días faltan.
+- **"olvida a Luis"**: lo borra de la libreta.
+
+Ari solo anota frases cortas que afirman algo. Si le cuentas algo y le pides ayuda ("mi jefe es muy pesado, ¿qué hago?"), te contesta Gemma, que ya sabe quién es tu jefe. La libreta se queda en el teléfono, va en el respaldo cifrado y nunca se le pasa al equipo de la laptop.
+
 ### Respaldo cifrado (llevar a Ari a otro teléfono o guardar una copia)
 
 En el botón **Memoria** → **Respaldo** hay dos opciones:
@@ -333,6 +348,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Libreta de personas (0.13.0): Ari recuerda a quien le mencionas ("mi primo Luis es dentista", "Luis cumple el 5 de mayo"), te cuenta lo que sabe ("qué sabes de Luis"), lista a quién conoce y los próximos cumpleaños. Gemma también la recibe.
 - Revisión de código de todo lo nuevo (0.12.3): 10 correcciones antes de tu prueba. Entre ellas, que una foto compartida con Ari cerrada ya no se borra al abrir, que el modo live no se traba si la voz del teléfono falla, que otra app no puede usar "Compartir → Ari" para que Ari lea sus propios archivos privados, que abrir y cerrar el modo live muy rápido ya no puede cerrar la app, y que la pantalla se puede apagar cuando el modo live se pausa solo.
 - Pláticas largas sin errores (0.12.2): cuando la memoria de la conversación de Gemma se llena, Ari empieza una conversación nueva sola, con tus recuerdos y los últimos mensajes, y vuelve a intentar. Antes había que cerrar la app.
 - Tomar foto y compartir con Ari (0.12.1): "+" → Tomar foto, y "Compartir → Ari" desde la Galería, WhatsApp, Archivos o el navegador.
@@ -364,7 +380,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
   - Etapa 1, hecha en 0.9.0: más acciones seguras con intents.
   - Etapa 2: usar AppFunctions, la vía oficial de Android para que los asistentes usen funciones de otras apps, cuando deje de estar reservada a apps del sistema.
   - Etapa 3, solo si tú lo decides: rutinas con pasos fijos que tú defines, con Accesibilidad, en una versión aparte para tu teléfono, nunca en apps de bancos ni contraseñas. Google Play prohíbe que un asistente use Accesibilidad para actuar solo.
-- Más avisos de Ari: saludo de la mañana o aviso si el equipo de la laptop no responde.
+- Más avisos de Ari: saludo de la mañana, aviso un día antes del cumpleaños de alguien de tu libreta, o aviso si el equipo de la laptop no responde.
 - Siguientes fases del CEO:
   - Que Gemma ayude a decidir qué agente atiende cada mensaje.
   - Que Ari ponga a prueba a cada modelo para darle un puesto según lo que de verdad sabe hacer, no solo por su nombre.
@@ -377,7 +393,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 ## 7. Archivos principales del código
 
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.
-- **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
+- **AriDatabase.kt**: base de datos SQLite con los mensajes, los recuerdos, los recordatorios y la libreta de personas.
+- **agents/PeopleAgent.kt** y **agents/PeopleParser.kt**: la libreta de personas.
 - **Profile.kt**: tu nombre, el tono de Ari y su personalidad.
 - **ReminderNotifier.kt** y **agents/ReminderAgent.kt**, **agents/ReminderParser.kt**: los recordatorios (entender la frase, programar la alarma y mostrar la notificación).
 - **AndroidPhone.kt**, **agents/PhoneAgent.kt** y **agents/PhoneCommands.kt**: abrir apps y preparar acciones en el teléfono.

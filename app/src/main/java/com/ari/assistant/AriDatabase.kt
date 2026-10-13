@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.ari.assistant.agents.MemoryStore
 import com.ari.assistant.agents.Reminder
+import com.ari.assistant.agents.PeopleStore
+import com.ari.assistant.agents.Person
 import com.ari.assistant.agents.ReminderStore
 import org.json.JSONArray
 import org.json.JSONObject
@@ -25,7 +27,7 @@ data class AgentTaskRecord(
 )
 
 class AriDatabase(context: Context) :
-    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), MemoryStore, ReminderStore {
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), MemoryStore, ReminderStore, PeopleStore {
 
     init {
         // WAL: las lecturas no esperan a las escrituras de otros hilos (los
@@ -55,11 +57,68 @@ class AriDatabase(context: Context) :
         )
         createAgentTasksTable(db)
         createRemindersTable(db)
+        createPeopleTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createAgentTasksTable(db)
         if (oldVersion < 3) createRemindersTable(db)
+        if (oldVersion < 4) createPeopleTable(db)
+    }
+
+    /** La libreta de personas (versión 4). facts: una por línea; birthday: "MM-DD" o vacío. */
+    private fun createPeopleTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE people (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                relation TEXT NOT NULL DEFAULT '',
+                facts TEXT NOT NULL DEFAULT '',
+                birthday TEXT NOT NULL DEFAULT '',
+                created_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+
+    override fun people(): List<Person> {
+        val result = mutableListOf<Person>()
+        readableDatabase.query(
+            "people", arrayOf("id", "name", "relation", "facts", "birthday"), null, null, null, null, "id ASC"
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                result.add(
+                    Person(
+                        id = cursor.getLong(0),
+                        name = cursor.getString(1),
+                        relation = cursor.getString(2),
+                        facts = cursor.getString(3).split("\n").filter { it.isNotBlank() },
+                        birthday = cursor.getString(4).ifEmpty { null }
+                    )
+                )
+            }
+        }
+        return result
+    }
+
+    override fun savePerson(person: Person): Long {
+        val values = ContentValues().apply {
+            put("name", person.name)
+            put("relation", person.relation)
+            put("facts", person.facts.joinToString("\n") { it.replace("\n", " ") })
+            put("birthday", person.birthday.orEmpty())
+        }
+        if (person.id != 0L) {
+            writableDatabase.update("people", values, "id = ?", arrayOf(person.id.toString()))
+            return person.id
+        }
+        values.put("created_at", System.currentTimeMillis())
+        return writableDatabase.insert("people", null, values)
+    }
+
+    override fun deletePerson(id: Long) {
+        writableDatabase.delete("people", "id = ?", arrayOf(id.toString()))
     }
 
     /** Recordatorios (versión 3). done: 0 pendiente, 1 avisado, 2 cancelado. */
@@ -305,14 +364,15 @@ class AriDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "ari.db"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
 
         /** Tablas y columnas que viajan en el respaldo (el id se vuelve a crear). */
         private val TABLES = listOf(
             "memories" to listOf("content", "created_at"),
             "messages" to listOf("role", "content", "created_at"),
             "agent_tasks" to listOf("agent_id", "request", "reply", "success", "created_at"),
-            "reminders" to listOf("text", "due_at", "done", "created_at")
+            "reminders" to listOf("text", "due_at", "done", "created_at"),
+            "people" to listOf("name", "relation", "facts", "birthday", "created_at")
         )
     }
 }

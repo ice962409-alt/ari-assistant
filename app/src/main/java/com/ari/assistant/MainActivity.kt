@@ -23,6 +23,7 @@ import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.ari.assistant.agents.NetworkGuard
+import com.ari.assistant.agents.PeopleAgent
 import com.ari.assistant.agents.PhoneAgent
 import com.ari.assistant.agents.ReminderAgent
 import com.ari.assistant.agents.TeamAgent
@@ -145,6 +146,8 @@ class MainActivity : Activity() {
         reminders = ReminderAgent(database, reminderAlarms)
         // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
         ceo.hire(reminders)
+        // Antes que el teléfono y la memoria: "mi mamá se llama Rosa" u "olvida a Luis" son de la libreta.
+        ceo.hire(PeopleAgent(database, { memoriesPending = true }))
         phoneAgent = PhoneAgent(AndroidPhone(this))
         ceo.hire(phoneAgent)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
@@ -1599,6 +1602,15 @@ class MainActivity : Activity() {
                 memories.forEach { context.append("- ${it.content}\n") }
                 context.append("\n")
             }
+            // La libreta de personas, para que Gemma sepa quién es "Luis" o "mi mamá".
+            val people = database.people()
+            if (people.isNotEmpty()) {
+                context.append("Personas que el usuario te ha presentado:\n")
+                people.takeLast(MAX_PEOPLE_IN_PROMPT).forEach {
+                    context.append("- ${PeopleAgent.summary(it).take(PERSON_PROMPT_CHARS)}\n")
+                }
+                context.append("\n")
+            }
         }
 
         if (historyPending) {
@@ -2180,6 +2192,9 @@ class MainActivity : Activity() {
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val FILLER_DELAY_MS = 1800L
+        // Que la libreta no llene la memoria de Gemma (ver la ventana de contexto en la guía).
+        private const val MAX_PEOPLE_IN_PROMPT = 25
+        private const val PERSON_PROMPT_CHARS = 160
         private const val BACKGROUND_LISTEN_DELAY_MS = 1200L
         private const val STANDBY_TIMEOUT_MS = 5 * 60_000L
         private val THINKING_FILLERS = listOf("A ver…", "Mmm, déjame ver.", "A ver, a ver.", "Déjame pensarlo.")

@@ -173,6 +173,12 @@ Una app tiene un **hilo principal** que dibuja la pantalla y atiende tus toques.
 
 La base de datos usa además el modo **WAL** ("registro de escritura anticipada"): escribe los cambios en una libreta aparte y los pasa al archivo principal después. Así leer y escribir al mismo tiempo no se estorban.
 
+### Tablas y migraciones: cómo crece la memoria de Ari
+
+La base de datos de Ari es como un archivero con cajones, que se llaman **tablas**: uno para los mensajes, otro para los recuerdos, otro para los recordatorios y, desde la 0.13.0, uno para las **personas**. Cada persona es una fila con su nombre, su relación contigo ("primo"), lo que sabe de ella y su cumpleaños.
+
+Cuando una versión nueva necesita un cajón nuevo, no se puede tirar el archivero y empezar de cero: perderías todo. Por eso la base de datos lleva un **número de versión**, y al instalar Ari encima, ella ve "tengo la versión 3 y necesito la 4" y solo agrega el cajón que falta. A ese paso se le llama **migración**. Así nunca se borran tus mensajes ni tus recuerdos al actualizar.
+
 ### Alarmas y notificaciones: cómo Ari te avisa estando cerrada
 
 Una app cerrada no puede "estar pendiente" de la hora: Android la detiene para ahorrar batería. Por eso Ari le pide al sistema una **alarma** (con el **AlarmManager**, el reloj despertador de Android): "despiértame el martes a las 9". A esa hora Android despierta a Ari solo un instante, ella muestra la **notificación** y vuelve a dormir. No hace falta internet ni que Gemma esté cargada.
@@ -375,6 +381,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Prueba automática**: un programa que revisa que otra parte del código funcione bien, en cada compilación.
 - **Hilo**: una línea de trabajo dentro de una app; el principal dibuja la pantalla.
 - **Interfaz (en programación)**: la lista de lo que una pieza necesita de otra, sin decir cómo se hace.
+- **Tabla**: un "cajón" de la base de datos con filas del mismo tipo, como las personas o los recuerdos.
+- **Migración**: el paso que agrega lo nuevo a la base de datos al actualizar la app, sin borrar lo que ya había.
 - **WAL**: un modo de la base de datos que permite leer y escribir a la vez sin estorbarse.
 - **Play Protect**: el revisor de seguridad de Google en Android.
 - **Instalar por fuera (sideloading)**: instalar una app sin pasar por Google Play.
