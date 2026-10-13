@@ -172,7 +172,8 @@ class MainActivity : Activity() {
         val options = arrayOf(
             "Tu nombre: $name",
             "Tono de Ari: ${profile.tone.title}",
-            "Respaldo de la memoria"
+            "Respaldo de la memoria",
+            "Acerca de Ari y licencias"
         )
         AlertDialog.Builder(this)
             .setTitle("Ajustes")
@@ -180,10 +181,49 @@ class MainActivity : Activity() {
                 when (which) {
                     0 -> askUserName(firstTime = false)
                     1 -> chooseTone()
-                    else -> showBackupDialog()
+                    2 -> showBackupDialog()
+                    else -> showAbout()
                 }
             }
             .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    /** Versión, privacidad y licencias (Google Play pide mostrar las de terceros). */
+    private fun showAbout() {
+        val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
+        val text = "Ari $version\n\n" +
+            "Privacidad: tus conversaciones, recuerdos y respaldos se quedan en tu teléfono. " +
+            "Ari no tiene cuentas, no usa publicidad ni envía tus datos a internet. Solo habla con " +
+            "los equipos de tu red local que tú apruebas, y a ellos no les pasa tus recuerdos.\n\n" +
+            "Componentes de terceros:\n" +
+            "• Gemma 4, de Google: Apache License 2.0.\n" +
+            "• LiteRT-LM, de Google: Apache License 2.0."
+        AlertDialog.Builder(this)
+            .setTitle("Acerca de Ari")
+            .setMessage(text)
+            .setPositiveButton("Cerrar", null)
+            .setNeutralButton("Ver licencia") { _, _ -> showLicense() }
+            .show()
+    }
+
+    private fun showLicense() {
+        val license = runCatching {
+            resources.openRawResource(R.raw.apache_2_0).bufferedReader().use { it.readText() }
+        }.getOrDefault("No se pudo leer la licencia.")
+        val view = ScrollView(this).apply {
+            val pad = dp(20f)
+            addView(TextView(this@MainActivity).apply {
+                this.text = license
+                textSize = 11f
+                setTextIsSelectable(true)
+                setPadding(pad, dp(8f), pad, dp(8f))
+            })
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Apache License 2.0")
+            .setView(view)
+            .setPositiveButton("Cerrar", null)
             .show()
     }
 

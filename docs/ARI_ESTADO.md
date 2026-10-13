@@ -225,3 +225,10 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Exportar: `openOutputStream(uri, "wt")` con respaldo a `"w"` (Drive no siempre acepta "wt").
 - `ChatView.prependHistory` ajusta el scroll con un `OnLayoutChangeListener` de una vez (antes `post`, que podía correr antes de medir).
 - Play Protect bloquea la instalación por "desarrollador desconocido" (APK de depuración por fuera de Play). Solución del usuario: Más detalles → Instalar de todas formas. Definitiva: publicar en Google Play.
+
+## Preparación para Google Play (versión 0.4.2)
+
+- Ajustes → "Acerca de Ari y licencias": versión, resumen de privacidad y licencias; botón con el texto oficial de Apache 2.0 (`res/raw/apache_2_0.txt`, sha256 cfc7749b…).
+- Gemma 4 es Apache 2.0 (Google Open Source Blog, marzo de 2026); LiteRT-LM también.
+- `docs/GOOGLE_PLAY.md` (pasos) y `docs/POLITICA_PRIVACIDAD.md` (borrador con datos por completar).
+- Verificación de desarrolladores: vigente desde el 1 de octubre de 2026 en Brasil, Indonesia, Singapur y Tailandia; global en 2027. Existe cuenta de distribución limitada (hasta 20 dispositivos).

@@ -33,6 +33,7 @@ El botón **Ajustes** (arriba, junto a Memoria y Modelo) tiene:
 - **Tu nombre**: cómo te llama Ari.
 - **Tono de Ari**: "Franca, con alguna grosería", "Franca, sin groserías" o "Profesional". El cambio se nota desde tu próximo mensaje.
 - **Respaldo de la memoria**: el mismo de Memoria → Respaldo. Si hace una semana que no guardas uno, Ari te lo recuerda al abrir.
+- **Acerca de Ari y licencias**: la versión, un resumen de privacidad y las licencias de Gemma 4 y LiteRT-LM (Apache 2.0).
 
 Cada persona que instala Ari tiene la suya: su nombre, su tono, sus recuerdos. Solo en tu teléfono Ari sabe que tú la creaste y que es la CEO de tu empresa; en una instalación nueva es la asistente personal de quien la usa y empieza con el tono "Franca, sin groserías". El respaldo cifrado también guarda tu nombre y tu tono.
 
@@ -253,6 +254,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Preparación para Google Play (0.4.2): sección Acerca de Ari y licencias, borrador de la política de privacidad y guía de publicación (docs/GOOGLE_PLAY.md).
 - Recordatorio de respaldo (0.4.1): si tienes recuerdos y hace una semana que no guardas un respaldo, Ari te lo dice al abrir. Guardar el respaldo en Drive ya funciona aunque Drive no acepte reescribir archivos, y "Ver mensajes anteriores" ya no te mueve de donde estabas leyendo.
 
 ## 5. Plan hacia el lanzamiento
@@ -262,7 +264,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **Primer uso sencillo**: que la app guíe la descarga del modelo, sin buscar el archivo a mano.
 - **Una Ari para cada usuario**: hecho en 0.4.0 (nombre y tono por persona).
 - **Seguridad y nube privada**: repositorio privado, la laptop con Linux como casa principal de Ari, túnel cifrado (Tailscale), respaldos automáticos (laptop, teléfono y copia cifrada en Drive) y poder mudar a Ari a otra PC.
-- **Requisitos de Google Play**: firma oficial, política de privacidad, justificación de permisos y revisión de la licencia de Gemma.
+- **Requisitos de Google Play**: licencia revisada (Gemma 4 es Apache 2.0 y ya se muestra en la app), borrador de política de privacidad y permisos justificados. Falta la cuenta de desarrollador, la firma oficial y publicar la política. Pasos en docs/GOOGLE_PLAY.md.
 
 ## 6. Ideas pendientes
 

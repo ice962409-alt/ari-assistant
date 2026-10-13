@@ -28,5 +28,5 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [permiso] Nube privada: túnel cifrado con Tailscale entre teléfono y laptop.
 - [autónomo] Respaldos automáticos 3-2-1: laptop, teléfono y copia cifrada en Drive.
 - [autónomo] Programa de Ari para Linux (casa principal en la laptop).
-- [decisión] Requisitos de Google Play: política de privacidad, licencia de Gemma, firma oficial.
+- [permiso] Google Play: cuenta de desarrollador y firma oficial (en el tablero). Licencia, política (borrador) y permisos ya preparados: docs/GOOGLE_PLAY.md.
 - [decisión] Nombre de la empresa, cuando Ari esté bien diseñada.
