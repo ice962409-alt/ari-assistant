@@ -80,6 +80,7 @@ class AriOrbView(context: Context) : View(context) {
     private val oval = RectF()
     private val path = Path()
     private var shaderSize = 0f
+    private var shaderColors = -1
     private val sides = floatArrayOf(-1f, 1f)
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
@@ -115,17 +116,20 @@ class AriOrbView(context: Context) : View(context) {
             Mood.THINKING -> 0.3f + (sin(t * 3f) + 1f) * 0.1f
             else -> 0.25f + (sin(t * 2f) + 1f) * 0.05f
         }
-        if (shaderSize != size) {
+        if (shaderSize != size || shaderColors != AriTheme.colorVersion) {
             shaderSize = size
+            shaderColors = AriTheme.colorVersion
+            ring.color = AriTheme.ice
+            dot.color = AriTheme.ice
             glow.shader = RadialGradient(
                 cx, cy, size * 0.5f,
-                intArrayOf(Color.argb(150, 158, 216, 238), Color.argb(0, 158, 216, 238)),
+                intArrayOf(withAlpha(AriTheme.ice, 150), withAlpha(AriTheme.ice, 0)),
                 floatArrayOf(0.45f, 1f), Shader.TileMode.CLAMP
             )
             // El degradado del cuerpo se calcula una vez; al respirar se escala el lienzo, no se rehace.
             body.shader = RadialGradient(
                 cx - radius * 0.35f, cy - radius * 0.4f, radius * 1.6f,
-                intArrayOf(Color.rgb(222, 246, 253), AriTheme.ice, AriTheme.iceDeep),
+                intArrayOf(AriTheme.iceLight, AriTheme.ice, AriTheme.iceDeep),
                 floatArrayOf(0f, 0.45f, 1f), Shader.TileMode.CLAMP
             )
             // Sombra suave abajo a la derecha: le da volumen, como una canica.
@@ -161,7 +165,7 @@ class AriOrbView(context: Context) : View(context) {
         for (i in 0 until 2) {
             canvas.save()
             canvas.rotate(Math.toDegrees((spin + i * PI).toDouble()).toFloat(), cx, cy)
-            swirl.color = if (i == 0) Color.argb(34, 255, 255, 255) else Color.argb(30, 95, 184, 218)
+            swirl.color = if (i == 0) Color.argb(34, 255, 255, 255) else withAlpha(AriTheme.iceDeep, 30)
             oval.set(cx - radius * 0.95f, cy - radius * 0.28f, cx + radius * 0.35f, cy + radius * 0.12f)
             canvas.drawOval(oval, swirl)
             canvas.restore()
@@ -285,4 +289,7 @@ class AriOrbView(context: Context) : View(context) {
         path.close()
         canvas.drawPath(path, sparkle)
     }
+
+    private fun withAlpha(color: Int, alpha: Int): Int =
+        Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color))
 }

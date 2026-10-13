@@ -410,3 +410,11 @@ Pedido del usuario: "Para que las personas conozcan y sepan qué Ari puede hacer
 - MainActivity: `introduce()` responde localmente (sin Gemma) antes del CEO; `introduceOnce()` después del nombre en el primer uso (prefs `ari_descarga/presentada`), antes de la oferta del modelo.
 - ChatView: botón "¿Qué puedes hacer?" en la bienvenida (`onSuggestion`).
 
+## Color de Ari (versión 0.21.0)
+
+Pedido del usuario: "Se puede incluir cambiar el color de Ari".
+- `AriColors` (pruebas en `AriColorsTest`): 6 paletas (hielo, rosa, lila, menta, durazno, dorado) con claro, principal y orilla; `requested(text)` entiende "ponte rosa", "cambia tu color a lila", "píntate de verde".
+- `AriTheme.ice/iceDeep/iceLight` ahora cambian con `setColors` (y `colorVersion`); `AriOrbView` rehace sus degradados cuando cambia la versión.
+- MainActivity: `applyColor` (prefs `ari_color/color`), Ajustes → Color de Ari, respuesta local al pedirlo.
+- Widget: si el color no es hielo, cada carita se dibuja en un bitmap de 128 px con el tono girado (ColorMatrix de rotación de tono + saturación).
+

@@ -17,8 +17,24 @@ object AriTheme {
     val border = Color.parseColor("#2F353D")
     val text = Color.parseColor("#E8EEF2")
     val muted = Color.parseColor("#9AA6B2")
-    val ice = Color.parseColor("#9ED8EE")
-    val iceDeep = Color.parseColor("#5FB8DA")
+    // El color de Ari (hielo, si no eliges otro en Ajustes → Color de Ari).
+    var iceLight = Color.parseColor("#DEF6FD")
+        private set
+    var ice = Color.parseColor("#9ED8EE")
+        private set
+    var iceDeep = Color.parseColor("#5FB8DA")
+        private set
+    /** Sube cada vez que cambia el color, para que la esfera rehaga sus degradados. */
+    var colorVersion = 0
+        private set
+
+    fun setColors(light: Int, main: Int, deep: Int) {
+        if (light == iceLight && main == ice && deep == iceDeep) return
+        iceLight = light
+        ice = main
+        iceDeep = deep
+        colorVersion++
+    }
     val onIce = Color.parseColor("#0B1A22")
     val codeBackground = Color.parseColor("#262A31")
     val warning = Color.parseColor("#F2B8A0")

@@ -76,13 +76,53 @@ class AriWidget : AppWidgetProvider() {
         /** Vuelve a dibujar todos los widgets de Ari, por ejemplo al salir de la app. */
         fun refresh(context: Context) = render(context, happy = false)
 
+        /**
+         * La carita del widget en el color que elegiste: se dibuja y se le gira el tono
+         * (de hielo al color nuevo). Pequeña, para no pasar el límite de los widgets.
+         */
+        private fun tintedFace(context: Context, res: Int, palette: AriColors.Palette): android.graphics.Bitmap? {
+            val drawable = context.getDrawable(res) ?: return null
+            val size = 128
+            val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bitmap)
+            val from = FloatArray(3).also { android.graphics.Color.colorToHSV(AriColors.DEFAULT.main, it) }
+            val to = FloatArray(3).also { android.graphics.Color.colorToHSV(palette.main, it) }
+            val matrix = hueRotation(to[0] - from[0])
+            // Un poco más o menos de color, según el elegido.
+            matrix.postConcat(android.graphics.ColorMatrix().apply { setSaturation((to[1] / from[1]).coerceIn(0.6f, 1.6f)) })
+            drawable.setBounds(0, 0, size, size)
+            drawable.colorFilter = android.graphics.ColorMatrixColorFilter(matrix)
+            drawable.draw(canvas)
+            drawable.colorFilter = null
+            return bitmap
+        }
+
+        /** Gira el tono de los colores [degrees] grados (como la rueda de colores). */
+        private fun hueRotation(degrees: Float): android.graphics.ColorMatrix {
+            val angle = Math.toRadians(degrees.toDouble())
+            val c = kotlin.math.cos(angle).toFloat()
+            val s = kotlin.math.sin(angle).toFloat()
+            val lr = 0.213f
+            val lg = 0.715f
+            val lb = 0.072f
+            return android.graphics.ColorMatrix(floatArrayOf(
+                lr + c * (1 - lr) + s * (-lr), lg + c * (-lg) + s * (-lg), lb + c * (-lb) + s * (1 - lb), 0f, 0f,
+                lr + c * (-lr) + s * 0.143f, lg + c * (1 - lg) + s * 0.140f, lb + c * (-lb) + s * (-0.283f), 0f, 0f,
+                lr + c * (-lr) + s * (-(1 - lr)), lg + c * (-lg) + s * lg, lb + c * (1 - lb) + s * lb, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f
+            ))
+        }
+
         private fun buildViews(context: Context, happy: Boolean = false): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_ari)
             // El modelo elegido a mano o el descargado desde la app.
             val modelReady = File(context.filesDir, "gemma-model.litertlm").let { it.exists() && it.length() > 0 } ||
                 runCatching { ModelDownload(context).downloadedFile() != null }.getOrDefault(false)
+            val palette = AriColors.byId(context.getSharedPreferences("ari_color", Context.MODE_PRIVATE).getString("color", null))
             FACES.forEachIndexed { index, id ->
-                views.setImageViewResource(id, if (happy) R.drawable.ari_face_happy else NORMAL_FACES[index])
+                val face = if (happy) R.drawable.ari_face_happy else NORMAL_FACES[index]
+                val tinted = if (palette == AriColors.DEFAULT) null else runCatching { tintedFace(context, face, palette) }.getOrNull()
+                if (tinted != null) views.setImageViewBitmap(id, tinted) else views.setImageViewResource(id, face)
             }
             val memories = countMemories(context)
             val team = countTeam(context)

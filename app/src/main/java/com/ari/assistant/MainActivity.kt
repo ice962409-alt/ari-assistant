@@ -107,6 +107,9 @@ class MainActivity : Activity() {
     private lateinit var modelDownload: ModelDownload
     private lateinit var phoneAgent: PhoneAgent
 
+    // El puntito de color junto a "Ari" (cambia con el color de Ari).
+    private lateinit var headerDot: android.view.View
+
     // true si Gemma cargó con la memoria de plática grande (más historial cabe).
     @Volatile
     private var largeContext = false
@@ -188,6 +191,7 @@ class MainActivity : Activity() {
         guard = NetworkGuard(this, agentSettings)
         team = TeamAgent(agentSettings, guard)
         ceo.hire(team)
+        applyColor(AriColors.byId(getSharedPreferences(COLOR_PREFS, MODE_PRIVATE).getString(KEY_COLOR, null)), save = false)
         buildInterface()
         offerFailureReport()
         voice = VoiceController(this, voiceListener)
@@ -309,6 +313,32 @@ class MainActivity : Activity() {
             .show()
     }
 
+    private var currentColor = AriColors.DEFAULT
+
+    /** Cambia el color de Ari: su esfera, el puntito de arriba, el botón de enviar y los detalles. */
+    private fun applyColor(palette: AriColors.Palette, save: Boolean = true) {
+        currentColor = palette
+        AriTheme.setColors(palette.light, palette.main, palette.deep)
+        if (save) getSharedPreferences(COLOR_PREFS, MODE_PRIVATE).edit().putString(KEY_COLOR, palette.id).apply()
+        if (::headerDot.isInitialized) headerDot.background = AriTheme.circle(AriTheme.ice)
+        if (::sendButton.isInitialized) sendButton.background = AriTheme.circle(AriTheme.ice)
+        if (::chat.isInitialized) chat.invalidate()
+        // El widget toma el color al actualizarse.
+        if (save) AriWidget.refresh(this)
+    }
+
+    private fun chooseColor() {
+        val names = AriColors.ALL.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Color de Ari")
+            .setSingleChoiceItems(names, AriColors.ALL.indexOf(currentColor)) { dialog, which ->
+                applyColor(AriColors.ALL[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
     private fun phoneAbilities() = AriAbilities.Phone(
         vision = if (modelReady) visionReady else !ModelChoice.basic(totalRam()),
         voices = voiceIdentity.supported && !voice.ownAudioUnsupported
@@ -376,6 +406,7 @@ class MainActivity : Activity() {
             "Respaldo de la memoria",
             "Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}",
             "Reconocer voces",
+            "Color de Ari: ${currentColor.name}",
             "Reportar un problema",
             "Acerca de Ari y licencias"
         )
@@ -388,7 +419,8 @@ class MainActivity : Activity() {
                     2 -> showBackupDialog()
                     3 -> chooseEngine()
                     4 -> showVoicesDialog()
-                    5 -> askProblemReport()
+                    5 -> chooseColor()
+                    6 -> askProblemReport()
                     else -> showAbout()
                 }
             }
@@ -822,9 +854,10 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(16f), dp(12f), dp(8f), dp(12f))
         }
-        header.addView(android.view.View(this).apply {
+        headerDot = android.view.View(this).apply {
             background = AriTheme.circle(AriTheme.ice)
-        }, LinearLayout.LayoutParams(dp(10f), dp(10f)).apply { rightMargin = dp(10f) })
+        }
+        header.addView(headerDot, LinearLayout.LayoutParams(dp(10f), dp(10f)).apply { rightMargin = dp(10f) })
 
         val titles = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         titles.addView(TextView(this).apply {
@@ -1588,6 +1621,14 @@ class MainActivity : Activity() {
         }
 
         if (busy) return
+
+        AriColors.requested(text)?.let { palette ->
+            input.text.clear()
+            applyColor(palette)
+            val reply = if (palette == AriColors.DEFAULT) "¡Listo! Volví a mi color hielo." else "¡Listo! Ahora soy color ${palette.name.lowercase()}. ¿Te gusta?"
+            answerLocally(text, reply)
+            return
+        }
 
         if (AriAbilities.asks(text)) {
             input.text.clear()
@@ -2929,6 +2970,8 @@ class MainActivity : Activity() {
         private const val MODEL_OFFER_PREFS = "ari_descarga"
         private const val KEY_MODEL_OFFERED = "ofrecida"
         private const val KEY_INTRODUCED = "presentada"
+        private const val COLOR_PREFS = "ari_color"
+        private const val KEY_COLOR = "color"
         private const val LARGE_CONTEXT_TOKENS = 8192
         private const val VOICE_PREFS = "ari_voces"
         private const val KEY_VOICES_ON = "activo"
