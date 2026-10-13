@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Icono de notificación: el anillo de Ari en un solo color (Android lo pinta). -->
+<!-- La carita de Ari en un solo color, con ojos y boca recortados.
+     Para las notificaciones y el botón de ajustes rápidos (Android la pinta). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -8,5 +9,5 @@
     <path
         android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M12,2A10,10 0,1 0,22 12,10 10,0 0,0 12,2ZM12,4.5A7.5,7.5 0,1 1,4.5 12,7.5 7.5,0 0,1 12,4.5ZM12,9A3,3 0,1 0,15 12,3 3,0 0,0 12,9Z" />
+        android:pathData="M12,2A10,10 0,1 0,22 12,10 10,0 0,0 12,2ZM8.1,10.9a1.1,1.8 0,1 0,2.2 0a1.1,1.8 0,1 0,-2.2 0ZM13.7,10.9a1.1,1.8 0,1 0,2.2 0a1.1,1.8 0,1 0,-2.2 0ZM8.8,14.1Q12,17.6 15.2,14.1Q12,15.7 8.8,14.1Z" />
 </vector>

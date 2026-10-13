@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_description">Ari en tu pantalla: tócala para platicar con ella en modo live.</string>
+    <string name="shortcut_live_short">Hablar</string>
+    <string name="shortcut_live_long">Hablar con Ari</string>
+    <string name="tile_live">Hablar con Ari</string>
 </resources>

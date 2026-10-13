@@ -36,8 +36,8 @@ android {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 14
-        versionName = "0.10.1"
+        versionCode = 15
+        versionName = "0.10.2"
     }
 }
 

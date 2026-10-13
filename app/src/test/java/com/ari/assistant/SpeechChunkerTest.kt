@@ -31,4 +31,26 @@ class SpeechChunkerTest {
         val buffer = StringBuilder("Primero compra pan\nDespués ve al banco\n")
         assertEquals(listOf("Primero compra pan", "Después ve al banco"), SpeechChunker.take(buffer))
     }
+
+    @Test
+    fun fraseLargaSeCortaEnLaComa() {
+        val buffer = StringBuilder("Si sales temprano mañana por la mañana, llévate una chamarra porque va a hacer fr")
+        assertEquals(listOf("Si sales temprano mañana por la mañana,"), SpeechChunker.take(buffer))
+        assertEquals("llévate una chamarra porque va a hacer fr", buffer.toString())
+    }
+
+    @Test
+    fun fraseCortaConComaEspera() {
+        val buffer = StringBuilder("Mira, ")
+        assertEquals(emptyList<String>(), SpeechChunker.take(buffer))
+        assertEquals("Mira, ", buffer.toString())
+    }
+
+    @Test
+    fun comaMuyAlPrincipioNoCorta() {
+        val text = "Oye, déjame revisar con calma todo lo que tienes pendiente para esta semana"
+        val buffer = StringBuilder(text)
+        assertEquals(emptyList<String>(), SpeechChunker.take(buffer))
+        assertEquals(text, buffer.toString())
+    }
 }

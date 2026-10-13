@@ -10,6 +10,12 @@ object SpeechChunker {
     /** Una frase muy corta ("Sí.") se junta con la siguiente para que no suene entrecortado. */
     private const val MIN_LENGTH = 12
 
+    /** Si una frase se alarga más que esto sin punto, Ari la corta en la última coma para no hacerte esperar. */
+    private const val SOFT_LENGTH = 70
+
+    /** Una pausa en coma solo si lo que va antes ya suena a frase. */
+    private const val SOFT_MIN = 25
+
     // Fin de frase: . ! ? … : ; o salto de línea, seguido de espacio.
     private val END = Regex("(?<=[.!?…:;])\\s+|\\n+")
 
@@ -28,9 +34,16 @@ object SpeechChunker {
                 pending.append(' ')
             }
         }
-        val rest = pending.append(buffer, start, buffer.length).toString()
+        var rest = pending.append(buffer, start, buffer.length).toString().trimStart()
+        if (rest.length > SOFT_LENGTH) {
+            val comma = rest.lastIndexOf(", ")
+            if (comma >= SOFT_MIN) {
+                sentences.add(rest.substring(0, comma + 1).trim())
+                rest = rest.substring(comma + 2).trimStart()
+            }
+        }
         buffer.setLength(0)
-        buffer.append(rest.trimStart())
+        buffer.append(rest)
         return sentences
     }
 

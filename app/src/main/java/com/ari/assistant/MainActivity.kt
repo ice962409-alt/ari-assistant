@@ -13,6 +13,7 @@ import android.text.InputType
 import android.view.Gravity
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -550,6 +551,8 @@ class MainActivity : Activity() {
 
     private fun openLive() {
         liveOverlay.visibility = android.view.View.VISIBLE
+        // Mientras platican, la pantalla no se apaga (si se apagara, Ari dejaría de escucharte).
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         liveOrb.mood = AriOrbView.Mood.IDLE
         liveCaption.text = if (modelReady) "" else "Todavía no cargo a Gemma: puedo hacer recordatorios, abrir apps y más, pero para platicar toca Modelo."
         liveStatus.text = "Toca a Ari para hablar"
@@ -562,6 +565,18 @@ class MainActivity : Activity() {
     private fun closeLive() {
         if (voiceMode) stopVoiceMode("Modo live terminado.")
         liveOverlay.visibility = android.view.View.GONE
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    /** Atrás en el modo live lo cierra, en vez de salir de Ari. */
+    @Deprecated("Se sigue usando: Ari no activa el gesto atrás predictivo.")
+    override fun onBackPressed() {
+        if (liveVisible) {
+            closeLive()
+        } else {
+            @Suppress("DEPRECATION")
+            super.onBackPressed()
+        }
     }
 
     /** Tocar a Ari: si habla, se calla y te escucha (como interrumpir a alguien); si no, empieza. */
@@ -1018,9 +1033,18 @@ class MainActivity : Activity() {
         val speakLive = voiceMode
         val prompt = buildPrompt(text).let { if (speakLive) "$VOICE_STYLE\n\n$it" else it }
         val speech = StringBuilder()
+        var spoke = false
+        // Si Gemma tarda en empezar, Ari dice "a ver…" como haría una persona.
+        val filler = Runnable {
+            if (speakLive && voiceMode && busy && !spoke) {
+                spoke = true
+                voice.streamSentence(THINKING_FILLERS.random())
+            }
+        }
         if (speakLive) {
             voice.beginStream()
             setLive(AriOrbView.Mood.THINKING, "Pensando…")
+            liveOverlay.postDelayed(filler, FILLER_DELAY_MS)
         }
         status.text = "Ari está pensando..."
         busy = true
@@ -1037,7 +1061,10 @@ class MainActivity : Activity() {
                         chat.appendAri(chunk)
                         if (speakLive && voiceMode) {
                             speech.append(chunk)
-                            SpeechChunker.take(speech).forEach { voice.streamSentence(it) }
+                            SpeechChunker.take(speech).forEach {
+                                spoke = true
+                                voice.streamSentence(it)
+                            }
                             liveCaption.text = VoiceController.cleanForSpeech(response.toString()).takeLast(260)
                         }
                     }
@@ -1046,6 +1073,7 @@ class MainActivity : Activity() {
                 override fun onDone() {
                     runOnUiThread {
                         if (isDestroyed) return@runOnUiThread
+                        liveOverlay.removeCallbacks(filler)
                         saveResponse(response)
                         chat.finishAri()
                         busy = false
@@ -1068,6 +1096,7 @@ class MainActivity : Activity() {
                 override fun onError(throwable: Throwable) {
                     runOnUiThread {
                         if (isDestroyed) return@runOnUiThread
+                        liveOverlay.removeCallbacks(filler)
                         saveResponse(response)
                         busy = false
                         status.text =
@@ -1087,6 +1116,7 @@ class MainActivity : Activity() {
             activeConversation.sendMessageAsync(prompt, callback)
         } catch (e: Throwable) {
             // El contexto no llegó a Gemma: se vuelve a enviar con el siguiente mensaje.
+            liveOverlay.removeCallbacks(filler)
             historyPending = hadHistoryPending
             memoriesPending = hadMemoriesPending
             busy = false
@@ -1480,6 +1510,8 @@ class MainActivity : Activity() {
             if (!voiceMode) return
             status.text = "Escuchando... habla ahora."
             setLive(AriOrbView.Mood.LISTENING, "Te escucho…", "")
+            // Un toquecito para que sepas que es tu turno sin mirar la pantalla.
+            if (liveVisible) liveOrb.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
         }
 
         override fun onPartialSpeech(text: String) {
@@ -1784,6 +1816,8 @@ class MainActivity : Activity() {
         private const val AGENT_SETTINGS = "ari_agentes"
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
+        private const val FILLER_DELAY_MS = 1800L
+        private val THINKING_FILLERS = listOf("A ver…", "Mmm, déjame ver.", "A ver, a ver.", "Déjame pensarlo.")
         const val ACTION_LIVE = "com.ari.assistant.LIVE"
 
         /** Para la voz: respuestas cortas y naturales, como en una plática. */
