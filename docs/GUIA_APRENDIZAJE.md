@@ -212,6 +212,22 @@ Android tiene varias "puertas" para entrar directo a una parte de una app:
 
 Un detalle: Android abre los accesos directos **cerrando primero la app** (borra su "tarea", la pila de pantallas abiertas). Eso obligaría a Ari a cargar otra vez a Gemma, que pesa 3.4 GB. Por eso el acceso directo abre primero una **pantalla puente** invisible, en su propia tarea, que solo le avisa a Ari "abre el modo live" y se cierra al instante.
 
+### Reconocer voces: la huella de voz
+
+Entender **qué** dices (reconocimiento de voz) y saber **quién** lo dice (reconocimiento de hablante) son dos cosas distintas. Lo primero ya lo hace Android; lo segundo necesita otro modelo de IA, pequeño (unos 25 MB), que puede correr dentro del teléfono sin internet.
+
+Cómo funciona:
+
+1. **Registrar tu voz**: lees en voz alta unas frases durante unos 30 segundos. El modelo convierte tu voz en una lista de unos 200 números, tu **huella de voz** (en inglés, *embedding* o *voiceprint*). No se guarda la grabación, solo esos números.
+2. **Reconocerte**: cada vez que hablas, el modelo saca los números de esa frase y los compara con las huellas guardadas. Si se parecen lo suficiente, sabe que eres tú. Si no se parecen a ninguna, eres alguien nuevo y Ari puede preguntar "¿quién eres?".
+3. **El umbral**: es qué tan parecidas tienen que ser dos huellas para decir "es la misma persona". Si es muy estricto, a veces no te reconoce (con gripa o con ruido); si es muy flojo, podría confundirte con otra persona. A ese error se le llama **falso positivo**.
+
+Lo que hay que cuidar:
+
+- La huella de voz es un **dato biométrico**, como la huella digital o la cara. Es muy personal, así que se guarda cifrada, solo en el teléfono, y nunca sale de ahí.
+- Para guardar la voz de otra persona hace falta su **permiso**.
+- No es tan segura como una contraseña: una grabación de tu voz podría engañarla. Por eso sirve para saludar a cada quien y separar sus recuerdos, pero no para dejar que alguien haga cosas importantes solo con la voz.
+
 ### Intents: cómo una app le pide algo a otra
 
 En Android, las apps no se tocan entre sí directamente: se mandan **intents**, que son como notas de encargo. Ari no sabe usar WhatsApp por dentro; le manda a Android la nota "abre WhatsApp con este chat y este mensaje", y WhatsApp hace el resto. Lo mismo para "marca este número" (lo abre el teléfono), "pon una alarma a las 7" (la crea el reloj) o "busca esto" (lo abre el navegador).
@@ -345,5 +361,10 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Acceso directo (shortcut)**: la lista que sale al mantener presionado el icono de una app.
 - **Ajustes rápidos**: los botones del panel que bajas desde arriba de la pantalla.
 - **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
+- **Reconocimiento de hablante**: saber quién está hablando, no lo que dice.
+- **Huella de voz (embedding de voz)**: la lista de números que resume cómo suena la voz de una persona.
+- **Dato biométrico**: un dato del cuerpo que identifica a una persona, como la huella digital, la cara o la voz.
+- **Umbral**: el límite a partir del cual dos cosas se consideran "iguales".
+- **Falso positivo**: cuando un sistema dice que sí por error, por ejemplo confundir a otra persona contigo.
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.

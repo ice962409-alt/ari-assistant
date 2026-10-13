@@ -339,6 +339,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
   - Más agentes que hagan cosas en el teléfono (como los recordatorios), siempre pidiendo confirmación.
   - Más subordinados: otros bots o modelos, con permisos por agente.
 - Elegir la voz y la velocidad de lectura.
+- Que Ari reconozca voces: registrar tu voz y la de otras personas para saber quién le habla, saludar a cada quien y no contarle tus recuerdos a otros. Todo en el teléfono y cifrado. Plan en docs/RECONOCER_VOCES.md; esperando tu decisión en el tablero.
 
 ## 7. Archivos principales del código
 

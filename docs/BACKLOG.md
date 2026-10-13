@@ -28,6 +28,7 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Revisar AppFunctions cada cierto tiempo (etapa 2 del control de apps).
 
 ## Esperando al usuario
+- [decisión] Que Ari reconozca voces (huella de voz local, cifrada; recuerdos separados por persona). Plan en docs/RECONOCER_VOCES.md; pregunta en el tablero.
 - [decisión] Diseño definitivo de la caricatura de Ari (hoy es un círculo con carita provisional).
 - [decisión] Etapa 3 del control de apps: rutinas con Accesibilidad (en el tablero).
 - [prueba] APK más reciente (en el tablero).
