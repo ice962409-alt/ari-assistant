@@ -77,13 +77,16 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un erro
 - https://github.com/javierhedzd-ops/ari-assistant/pull/2
 - Se hizo en paralelo al PR #3 y quedó duplicado. Sus mejoras se rehicieron sobre la versión actual en un PR nuevo.
 
-### PR nuevo — Más contexto para Gemma y estabilidad (abierto)
+### PR #5 — Más contexto para Gemma y estabilidad (abierto, pendiente de probar y fusionar)
+
+- https://github.com/javierhedzd-ops/ari-assistant/pull/5
 
 - Gemma recibe los recuerdos y los últimos 20 mensajes como contexto de toda la conversación, no solo en el primer mensaje.
 - Los cambios en los recuerdos se aplican desde el siguiente mensaje.
 - Girar el teléfono ya no recarga el modelo.
 - Al elegir otro modelo, se libera el anterior de la memoria.
 - GitHub Actions compila también las ramas de trabajo y los PR.
+- Compila correctamente. Falta probarlo en el teléfono.
 
 ## 5. Ideas pendientes
 

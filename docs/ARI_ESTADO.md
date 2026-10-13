@@ -97,7 +97,7 @@ Pendiente de verificar:
 - Fuente: `docs/ARI_DOCUMENTACION.md`. Carpeta de Drive: "Ari - Documentación de Claude". El procedimiento está en `CLAUDE.md`.
 
 ## Mejoras de contexto y estabilidad (Claude, rama ccr-3d48bcea-ddppo3)
-- Sustituye al PR #2, que se cerró sin fusionar porque duplicaba la memoria del PR #3. Se rehízo sobre `main` (con modo voz) conservando sus mejoras.
+- PR #5. Sustituye al PR #2, que se cerró sin fusionar porque duplicaba la memoria del PR #3. Se rehízo sobre `main` (con modo voz) conservando sus mejoras.
 - Contexto para Gemma con `ConversationConfig`, en vez de añadirlo al texto del primer mensaje:
   - `systemInstruction`: instrucciones de Ari (tomadas de `core/assistant.py`) + todos los recuerdos.
   - `initialMessages`: últimos 20 mensajes guardados (máx. 4000 caracteres en total, 1200 por mensaje), empezando por un mensaje del usuario y terminando en una respuesta de Ari.
@@ -107,4 +107,4 @@ Pendiente de verificar:
 - Al elegir otro modelo se cierra el anterior antes de copiar el archivo; no se puede cambiar de modelo mientras Ari responde.
 - `.github/workflows/android.yml`: compila también en push a cualquier rama y en PRs a `main`.
 - Eliminado `build-apk.yml` de la raíz (YAML inválido, fuera de `.github/workflows`, nunca se ejecutaba).
-- Pendiente: verificación en GitHub Actions y prueba en el dispositivo.
+- Compila correctamente en Actions (runs 38476176135 y 38476201819). Pendiente: prueba en el dispositivo.
