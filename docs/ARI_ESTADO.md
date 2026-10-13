@@ -262,3 +262,9 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 
 - `PhoneAction.DialContact(name)` ("llama a mamá", hasta 3 palabras) y `WhatsAppContact(name, text)` ("manda un WhatsApp a Juan que diga …"). `PhoneCommands.pickContact` usa la misma búsqueda que las apps (igual, empieza con, contiene, todas las palabras), sin acentos; un contacto con varios números aparece una vez (gana el principal: IS_SUPER_PRIMARY, IS_PRIMARY).
 - `PhoneLauncher.contacts()` devuelve null sin permiso: `PhoneAgent.needsContactsPermission = true` y `MainActivity` pide READ_CONTACTS (REQUEST_CONTACTS = 108); al aceptarlo repite la orden con `sendMessage()`.
+
+## Control de apps: investigación y acciones nuevas (versión 0.9.0)
+
+- Investigación en `docs/CONTROL_APPS.md`: la política de Google Play prohíbe usar Accesibilidad para que una app planee y ejecute acciones de forma autónoma (salvo herramientas de accesibilidad; sí permite automatización con guion fijo escrito por una persona). AppFunctions (Android 16+) está en vista previa y por ahora solo para apps privilegiadas. Plan: etapa 1 (intents, hecha), etapa 2 (AppFunctions cuando abra), etapa 3 (rutinas del usuario con Accesibilidad, versión aparte, solo si el usuario lo decide; tablero `control-etapas`).
+- Acciones nuevas en `PhoneCommands`: `Sms`/`SmsContact`, `Email`, `PlayMusic` (MEDIA_PLAY_FROM_SEARCH con paquete opcional), `YouTube`, `CalendarEvent` (ACTION_INSERT; fecha con `ReminderParser.parse(…, order = CALENDAR)`).
+- WhatsApp y SMS comparten `message()`: sin número ni "que diga" devuelven null para que Gemma redacte. Correo igual sin dirección ni "que diga".

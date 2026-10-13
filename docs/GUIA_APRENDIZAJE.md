@@ -208,6 +208,14 @@ Para que una app toque botones y escriba **dentro** de otras apps, Android tiene
 
 Por eso Ari empieza solo con intents, y el control total queda como decisión tuya, con límites claros si se hace.
 
+Además, **Google Play prohíbe** que un asistente use Accesibilidad para planear y ejecutar acciones por su cuenta. Solo lo permite a las apps hechas para personas con discapacidad, o para rutinas con pasos fijos escritos por una persona.
+
+### AppFunctions: la forma nueva y segura
+
+Android está creando **AppFunctions**: cada app ofrece a los asistentes una lista de funciones concretas que se pueden usar ("crear nota", "agregar a la lista del súper", "reproducir canción"), como un menú. El asistente pide una función y la app decide qué deja hacer, sin que nadie vea la pantalla. Es como pedir en una ventanilla en vez de entrar a la cocina.
+
+Hoy está en prueba, solo en Android 16 o superior, y por ahora solo la usan apps del sistema como Gemini. Cuando se abra a otros asistentes, Ari la usará.
+
 ### Permisos de Android
 
 Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono, la ubicación, las notificaciones y los contactos. Así, si dices que no, el resto de Ari sigue funcionando: sin el permiso de contactos, por ejemplo, puedes llamar diciendo el número.
@@ -310,4 +318,6 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Accesibilidad**: el permiso que deja a una app ver y controlar la pantalla; muy poderoso y delicado.
 - **Inyección de instrucciones**: cuando un texto intenta engañar a una IA para que haga algo que su dueño no pidió.
 - **Gestor de descargas (DownloadManager)**: el servicio de Android que baja archivos grandes, aunque la app esté cerrada.
+- **AppFunctions**: funciones que una app ofrece a los asistentes de IA para que las usen de forma segura.
+- **SMS**: los mensajes de texto normales del teléfono.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
