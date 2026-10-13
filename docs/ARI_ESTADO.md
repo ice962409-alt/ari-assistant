@@ -5,7 +5,7 @@ Ari es un asistente Android local que utiliza Gemma 4 E4B-it mediante LiteRT-LM.
 
 ## Entorno confirmado por el usuario
 - Repositorio previsto: javierhedzd-ops/ari-assistant
-- Rama de trabajo reportada: main
+- Rama principal: main
 - Package Android: com.ari.assistant
 - Lenguaje: Kotlin
 - compileSdk: 36
@@ -55,3 +55,31 @@ Ari es un asistente Android local que utiliza Gemma 4 E4B-it mediante LiteRT-LM.
 - La integración GitHub de ChatGPT devolvió 404 al intentar acceder al repositorio, aunque el usuario confirmó que puede verlo desde Android.
 - Este documento es un punto de partida; debe verificarse contra el contenido real del repositorio.
 - Próximo paso: confirmar el archivo en GitHub y después revisar el MainActivity.kt actual antes de implementar SQLite.
+
+## Actualización: memoria local en SQLite (Claude)
+
+### Qué se modificó
+- Nuevo `AriDatabase.kt` (SQLiteOpenHelper, base `ari.db` en almacenamiento privado):
+  - Tabla `messages(id, role, text, created_at)`: historial del chat (`role` = `user` o `model`).
+  - Tabla `memories(id, text UNIQUE, created_at)`: recuerdos explícitos.
+- `MainActivity.kt`:
+  - Restaura los últimos 200 mensajes en pantalla al abrir la app.
+  - Guarda cada mensaje del usuario al enviarlo y la respuesta de Ari al terminar (`onDone`).
+  - Carga automáticamente `filesDir/gemma-model.litertlm` al iniciar si existe, en segundo plano; si falla, muestra el error y deja usar el selector.
+  - La conversación se crea con `ConversationConfig`: `systemInstruction` = instrucciones de Ari + lista de recuerdos; `initialMessages` = últimos 20 mensajes (máx. 4000 caracteres en total, 1200 por mensaje).
+  - Comandos locales (no pasan por el modelo y funcionan sin modelo cargado): `/recuerda <texto>`, `/memoria` (o `/memorias`), `/olvida <texto>` (borra los recuerdos que contienen el texto).
+  - Botón "Recuerdos": lista los recuerdos, permite agregar uno nuevo y borrar uno tocándolo (con confirmación).
+  - Al cambiar los recuerdos se recrea la conversación para que Gemma los vea; si está respondiendo, se hace al terminar.
+  - Al elegir otro modelo se libera el anterior antes de copiar el archivo. No se puede cambiar de modelo mientras Ari responde.
+- `AndroidManifest.xml`: `configChanges` en la actividad para que girar la pantalla no reinicie la actividad ni recargue el modelo.
+- `.github/workflows/android.yml`: compila en push a cualquier rama y en pull requests a main.
+- Eliminado `build-apk.yml` de la raíz (YAML inválido y fuera de `.github/workflows`, nunca se ejecutaba).
+
+### Estado de verificación
+- La compilación se verifica únicamente en GitHub Actions (el entorno de Claude no tiene acceso al Android SDK). Ver el resultado del workflow en la rama de trabajo antes de dar el cambio por bueno.
+- Pendiente de prueba en el dispositivo: restauración del historial, carga automática, comandos y ventana de recuerdos.
+
+### Notas
+- `core/assistant.py` y `memory/memory.py` son un prototipo en Python que la app Android no usa; las instrucciones del sistema de Ari se tomaron de ahí.
+- La búsqueda de `/olvida` no distingue mayúsculas solo en letras sin acento (comportamiento de `LIKE` en SQLite).
+- Aún no hay opción para borrar el historial del chat.
