@@ -126,6 +126,12 @@ Android solo deja instalar una versión nueva **encima** de la anterior si las d
 
 Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono y la ubicación.
 
+### Por qué el widget no muestra el progreso de Claude
+
+El widget vive en tu teléfono y Claude trabaja en un servidor en la nube. Son dos lugares distintos, sin conexión directa. Para que el widget mostrara el progreso, la app tendría que conectarse a internet y guardar dentro una contraseña de tu cuenta, para leerlo aunque el repositorio sea privado. Eso abriría una puerta que hoy está cerrada a propósito. Por eso el progreso vive en el tablero, que se abre con tu sesión de claude.ai, y el widget solo te lleva ahí.
+
+La lección: **cada conexión nueva es una puerta**. Antes de abrirla, pregúntate qué datos pasarían por ella y quién más podría usarla.
+
 ## 7. Herramientas para trabajar con Claude
 
 ### Skills y plugins
