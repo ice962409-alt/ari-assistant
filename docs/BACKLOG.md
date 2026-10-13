@@ -13,16 +13,14 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 
 ## Hecho recientemente
 - [autónomo] Respaldo cifrado de la memoria de Ari (0.3.0). Falta [prueba] en el teléfono.
-- [autónomo] Estabilidad, segunda ronda: pruebas automáticas, guardado en segundo plano, WAL.
+- [autónomo] Estabilidad, segunda ronda: pruebas automáticas, guardado en segundo plano, WAL e historial por partes.
 
 ## Siguiente
 - [autónomo] Una Ari para cada usuario: nombre del usuario y personalidad configurables en el primer uso. Espera la decisión sobre la personalidad.
-- [autónomo] Estabilidad, tercera ronda: historial largo sin lentitud (cargar por partes).
 
 ## Esperando al usuario
 - [decisión] Personalidad: qué significa "sin censura" (en el tablero). El cambio automático fue bloqueado por el sistema de permisos; se espera la opción del usuario.
 - [decisión] Primer uso guiado: descargar el modelo exige que Ari se conecte a internet una vez (hoy no puede). Preguntar antes de empezar.
-- [permiso] Hacer privado el repositorio de GitHub (en el tablero).
 - [prueba] APK de estabilidad (en el tablero).
 - [prueba] Laptop con Linux y equipo de modelos (en el tablero).
 

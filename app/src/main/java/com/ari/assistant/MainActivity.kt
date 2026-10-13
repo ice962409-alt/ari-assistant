@@ -293,14 +293,30 @@ class MainActivity : Activity() {
         setOnClickListener { onClick() }
     }
 
+    /** Muestra los últimos mensajes guardados; los anteriores, por partes, si los pides. */
     private fun restoreHistory() {
-        val history = database.recentMessages(HISTORY_DISPLAY_LIMIT)
+        val history = database.recentMessages(HISTORY_PAGE)
         if (history.isEmpty()) {
             chat.showWelcome()
             return
         }
         history.forEach { message ->
             if (message.role == ROLE_USER) chat.addUser(message.content) else chat.addAri(message.content)
+        }
+        offerOlderHistory(history)
+    }
+
+    private fun offerOlderHistory(page: List<ChatMessage>) {
+        if (page.size < HISTORY_PAGE) {
+            chat.hideOlderButton()
+            return
+        }
+        val oldestId = page.first().id
+        chat.showOlderButton {
+            val older = database.messagesBefore(oldestId, HISTORY_PAGE)
+            chat.hideOlderButton()
+            chat.prependHistory(older.map { (it.role == ROLE_USER) to it.content })
+            offerOlderHistory(older)
         }
     }
 
@@ -1237,7 +1253,7 @@ class MainActivity : Activity() {
         private const val MODEL_FILE_NAME = "gemma-model.litertlm"
         private const val ROLE_USER = "user"
         private const val ROLE_ARI = "ari"
-        private const val HISTORY_DISPLAY_LIMIT = 100
+        private const val HISTORY_PAGE = 30
         private const val HISTORY_CONTEXT_LIMIT = 8
         private const val HISTORY_CONTEXT_CHARS = 300
     }

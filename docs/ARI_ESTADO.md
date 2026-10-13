@@ -62,7 +62,7 @@ El usuario confirmó que el APK anterior se instala y que Gemma responde.
 Cambios implementados:
 - Nuevo `AriDatabase.kt` (SQLiteOpenHelper, base `ari.db`) con tablas `messages` y `memories`.
 - Cada mensaje del usuario y cada respuesta de Ari se guardan en SQLite.
-- Al abrir la app se muestran los últimos 100 mensajes guardados.
+- Al abrir la app se muestran los últimos 30 mensajes guardados (antes 100); "Ver mensajes anteriores" carga 30 más con `messagesBefore`.
 - Si existe `filesDir/gemma-model.litertlm`, el modelo se carga automáticamente en segundo plano; si falla, se muestra el error y se puede volver a seleccionar.
 - Comandos locales (funcionan aunque el modelo no haya cargado): `/recuerda <texto>`, `/memoria`, `/olvida <texto>` (borra los recuerdos que contienen el texto, sin distinguir mayúsculas).
 - Botón "Memoria": lista los recuerdos, permite agregar uno nuevo y borrar uno tocándolo (con confirmación).

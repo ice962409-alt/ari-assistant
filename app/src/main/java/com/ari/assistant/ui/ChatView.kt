@@ -25,6 +25,7 @@ class ChatView(context: Context) : ScrollView(context) {
     }
 
     private var welcome: View? = null
+    private var olderButton: View? = null
     private var current: TextView? = null
     private val currentText = StringBuilder()
     private var thinking: ValueAnimator? = null
@@ -71,12 +72,18 @@ class ChatView(context: Context) : ScrollView(context) {
         current = null
         currentText.setLength(0)
         welcome = null
+        olderButton = null
         column.removeAllViews()
     }
 
     fun addUser(text: String) {
         clearWelcome()
         finishAri()
+        column.addView(userRow(text), spaced(top = 14f))
+        scrollToEnd()
+    }
+
+    private fun userRow(text: String): View {
         val bubble = TextView(context).apply {
             this.text = text
             textSize = 16f
@@ -93,8 +100,7 @@ class ChatView(context: Context) : ScrollView(context) {
             ViewGroup.LayoutParams.WRAP_CONTENT,
             Gravity.END
         ))
-        column.addView(row, spaced(top = 14f))
-        scrollToEnd()
+        return row
     }
 
     /** Empieza un mensaje de Ari; [who] es el agente que responde, si no es ella. */
@@ -102,6 +108,16 @@ class ChatView(context: Context) : ScrollView(context) {
         clearWelcome()
         finishAri()
 
+        column.addView(ariLabel(who), spaced(top = 18f))
+        val body = ariBody()
+        column.addView(body, spaced(top = 6f))
+        current = body
+        currentText.setLength(0)
+        startThinking(body)
+        scrollToEnd()
+    }
+
+    private fun ariLabel(who: String?): View {
         val label = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -115,19 +131,53 @@ class ChatView(context: Context) : ScrollView(context) {
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(AriTheme.ice)
         })
-        column.addView(label, spaced(top = 18f))
+        return label
+    }
 
-        val body = TextView(context).apply {
-            textSize = 16f
-            setTextColor(AriTheme.text)
-            setLineSpacing(0f, 1.25f)
-            setTextIsSelectable(true)
+    private fun ariBody() = TextView(context).apply {
+        textSize = 16f
+        setTextColor(AriTheme.text)
+        setLineSpacing(0f, 1.25f)
+        setTextIsSelectable(true)
+    }
+
+    /**
+     * Botón "Ver mensajes anteriores" arriba de la conversación. Así Ari abre
+     * rápido aunque haya miles de mensajes: solo dibuja los últimos.
+     */
+    fun showOlderButton(onClick: () -> Unit) {
+        if (olderButton != null) return
+        val button = TextView(context).apply {
+            text = "Ver mensajes anteriores"
+            textSize = 14f
+            setTextColor(AriTheme.ice)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(12f), 0, dp(12f))
+            setOnClickListener { onClick() }
         }
-        column.addView(body, spaced(top = 6f))
-        current = body
-        currentText.setLength(0)
-        startThinking(body)
-        scrollToEnd()
+        olderButton = button
+        column.addView(button, 0, spaced(top = 0f))
+    }
+
+    fun hideOlderButton() {
+        olderButton?.let { column.removeView(it) }
+        olderButton = null
+    }
+
+    /** Agrega arriba mensajes más antiguos sin mover lo que estás leyendo. */
+    fun prependHistory(messages: List<Pair<Boolean, String>>) {
+        if (messages.isEmpty()) return
+        val heightBefore = column.height
+        var index = if (olderButton != null) 1 else 0
+        messages.forEach { (fromUser, text) ->
+            if (fromUser) {
+                column.addView(userRow(text), index++, spaced(top = 14f))
+            } else {
+                column.addView(ariLabel(null), index++, spaced(top = 18f))
+                column.addView(ariBody().apply { this.text = Markdown.render(text) }, index++, spaced(top = 6f))
+            }
+        }
+        column.post { scrollBy(0, column.height - heightBefore) }
     }
 
     /** Agrega texto al mensaje de Ari en curso (la respuesta que se va escribiendo). */

@@ -39,7 +39,7 @@ El icono de la app es un anillo color hielo con un punto al centro y un pequeño
 
 ### Chat por texto
 
-Escribe y toca el botón de enviar. Las conversaciones se guardan, y al abrir la app aparecen los últimos 100 mensajes.
+Escribe y toca el botón de enviar. Las conversaciones se guardan. Al abrir la app aparecen los últimos 30 mensajes, y arriba está "Ver mensajes anteriores" para cargar más, de 30 en 30. Así Ari abre rápido aunque tenga muchos mensajes.
 
 ### Memoria
 
@@ -236,7 +236,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - App Ari Estado: widget "Claude trabajando" con la tarea, barra de progreso y avisos cuando Claude se detiene, leído del repositorio privado Ari-estado con una llave de solo lectura.
 - Respaldo cifrado de la memoria: guardar y recuperar recuerdos, historial, equipo y redes aprobadas en un archivo con contraseña (versión 0.3.0). Base de los respaldos y de la mudanza a otra PC.
 - Ari Estado 0.1.2: muestra el inicio y la longitud de la llave guardada y quita espacios que se cuelen al pegarla.
-- Estabilidad, segunda ronda: 17 pruebas automáticas que se ejecutan en cada compilación (reglas de los agentes, puestos de los modelos, direcciones privadas y cifrado del respaldo); los mensajes se guardan en segundo plano; la base de datos es más rápida (modo WAL); y el primer mensaje tras cargar el modelo ya no le llega repetido a Gemma.
+- Estabilidad, segunda ronda: 17 pruebas automáticas que se ejecutan en cada compilación (reglas de los agentes, puestos de los modelos, direcciones privadas y cifrado del respaldo); los mensajes se guardan en segundo plano; la base de datos es más rápida (modo WAL); el primer mensaje tras cargar el modelo ya no le llega repetido a Gemma; y el historial se carga por partes para que la app abra rápido.
 - Compila correctamente y las pruebas pasan; falta probarlo en el teléfono.
 
 ## 5. Plan hacia el lanzamiento

@@ -8,7 +8,7 @@ import com.ari.assistant.agents.MemoryStore
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class ChatMessage(val role: String, val content: String)
+data class ChatMessage(val role: String, val content: String, val id: Long = 0)
 
 data class Memory(val id: Long, val content: String)
 
@@ -81,20 +81,23 @@ class AriDatabase(context: Context) :
     }
 
     /** Devuelve los últimos [limit] mensajes en orden cronológico. */
-    fun recentMessages(limit: Int): List<ChatMessage> {
+    fun recentMessages(limit: Int): List<ChatMessage> = messagesBefore(Long.MAX_VALUE, limit)
+
+    /** Los [limit] mensajes anteriores al mensaje [beforeId], en orden cronológico. */
+    fun messagesBefore(beforeId: Long, limit: Int): List<ChatMessage> {
         val result = mutableListOf<ChatMessage>()
         readableDatabase.query(
             "messages",
-            arrayOf("role", "content"),
-            null,
-            null,
+            arrayOf("role", "content", "id"),
+            "id < ?",
+            arrayOf(beforeId.toString()),
             null,
             null,
             "id DESC",
             limit.toString()
         ).use { cursor ->
             while (cursor.moveToNext()) {
-                result.add(ChatMessage(cursor.getString(0), cursor.getString(1)))
+                result.add(ChatMessage(cursor.getString(0), cursor.getString(1), cursor.getLong(2)))
             }
         }
         return result.asReversed()
