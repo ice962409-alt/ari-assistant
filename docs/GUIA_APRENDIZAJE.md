@@ -142,6 +142,18 @@ Ari aparece así porque la instalas directamente desde GitHub (a esto se le llam
 - No desactives Play Protect: te protege de apps que sí son peligrosas.
 - La solución definitiva es publicar Ari en Google Play con una cuenta de desarrollador y su firma oficial. Es uno de los requisitos del lanzamiento.
 
+### Verificación de desarrolladores
+
+Google está pidiendo que toda app para Android tenga un **desarrollador verificado**, es decir, una persona o empresa que demostró quién es. Desde el 1 de octubre de 2026 ya se exige en Brasil, Indonesia, Singapur y Tailandia, y Google planea extenderlo a todo el mundo en 2027. Para proyectos pequeños existe una cuenta de **distribución limitada**: deja compartir una app con hasta 20 teléfonos sin identificación oficial ni pago.
+
+### Licencias de software
+
+Una **licencia** dice qué puedes hacer con el trabajo de otros. Ari usa piezas de Google: el modelo **Gemma 4** y el motor **LiteRT-LM**. Las dos tienen licencia **Apache 2.0**, que es muy permisiva: deja usarlas gratis, incluso para vender un producto, con una condición principal: **incluir el texto de la licencia**. Por eso Ari lo muestra en Ajustes → Acerca de Ari y licencias.
+
+### Política de privacidad
+
+Google Play pide que cada app publique una **política de privacidad**: un texto público que explica qué datos usa, dónde los guarda y con quién los comparte. La de Ari es sencilla porque todo se queda en el teléfono, y eso es una ventaja para venderla: "tu asistente no le cuenta nada a nadie".
+
 ### Iconos adaptativos y pantallas "borde a borde"
 
 - Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es un anillo hielo sobre fondo oscuro.
@@ -253,4 +265,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **WAL**: un modo de la base de datos que permite leer y escribir a la vez sin estorbarse.
 - **Play Protect**: el revisor de seguridad de Google en Android.
 - **Instalar por fuera (sideloading)**: instalar una app sin pasar por Google Play.
+- **Licencia Apache 2.0**: un permiso para usar software gratis, también en productos comerciales, incluyendo su texto.
+- **Política de privacidad**: el texto público que explica qué hace una app con tus datos.
+- **Desarrollador verificado**: quien demostró su identidad ante Google para distribuir apps.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
