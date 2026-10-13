@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Para hablar con el modelo de la laptop en la red Wi-Fi local. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Android 11+ solo deja ver los servicios de voz declarados aquí. -->
     <queries>

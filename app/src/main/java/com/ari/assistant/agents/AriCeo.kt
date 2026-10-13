@@ -1,7 +1,10 @@
 package com.ari.assistant.agents
 
+import android.os.Handler
+import android.os.Looper
 import com.ari.assistant.AriDatabase
 import com.ari.assistant.AgentTaskRecord
+import java.util.concurrent.Executors
 
 /**
  * Ari como CEO: recibe cada mensaje, decide qué agente debe atenderlo,
@@ -13,6 +16,11 @@ class AriCeo(private val database: AriDatabase) {
     data class Delegation(val agent: Agent, val task: AgentTask)
 
     private val team = linkedMapOf<String, Agent>()
+
+    // Los agentes trabajan uno a la vez fuera del hilo principal; el
+    // resultado se entrega de vuelta en el hilo principal.
+    private val worker = Executors.newSingleThreadExecutor()
+    private val mainThread = Handler(Looper.getMainLooper())
 
     fun hire(agent: Agent) {
         require(agent.id !in team) { "Ya hay un agente con id ${agent.id}" }
@@ -33,25 +41,29 @@ class AriCeo(private val database: AriDatabase) {
         return null
     }
 
-    /** Encarga [message] a un agente concreto, aunque no sea el que elegiría el CEO. */
-    fun delegateTo(agent: Agent, message: String): AgentResult {
-        val task = agent.match(message, normalizeForAgents(message))
-            ?: return AgentResult(
-                "${agent.name} no entendió la tarea. Prueba con: ${agent.examples.first()}",
-                success = false
-            )
-        return run(Delegation(agent, task))
+    /**
+     * Prepara la tarea [message] para un agente concreto, aunque no sea el que
+     * elegiría el CEO. Devuelve null si el agente no la entiende.
+     */
+    fun prepare(agent: Agent, message: String): Delegation? =
+        agent.matchDelegated(message, normalizeForAgents(message))?.let { Delegation(agent, it) }
+
+    /** Ejecuta la delegación en segundo plano y entrega el resultado en el hilo principal. */
+    fun run(delegation: Delegation, onResult: (AgentResult) -> Unit) {
+        val (agent, task) = delegation
+        worker.execute {
+            val result = try {
+                agent.execute(task)
+            } catch (e: Exception) {
+                AgentResult("${agent.name} tuvo un error: ${e.message}", success = false)
+            }
+            database.addAgentTask(agent.id, task.request, result.reply, result.success)
+            mainThread.post { onResult(result) }
+        }
     }
 
-    fun run(delegation: Delegation): AgentResult {
-        val (agent, task) = delegation
-        val result = try {
-            agent.execute(task)
-        } catch (e: Exception) {
-            AgentResult("${agent.name} tuvo un error: ${e.message}", success = false)
-        }
-        database.addAgentTask(agent.id, task.request, result.reply, result.success)
-        return result
+    fun shutdown() {
+        worker.shutdownNow()
     }
 
     fun recentTasks(limit: Int): List<AgentTaskRecord> = database.recentAgentTasks(limit)

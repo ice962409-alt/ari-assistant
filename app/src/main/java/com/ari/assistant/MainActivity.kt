@@ -18,6 +18,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
+import com.ari.assistant.agents.LaptopAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
@@ -44,6 +45,7 @@ class MainActivity : Activity() {
     // Ari dirige a sus agentes: cada mensaje pasa primero por el CEO, y solo
     // si ningún agente sabe atenderlo se envía a Gemma.
     private lateinit var ceo: AriCeo
+    private lateinit var laptop: LaptopAgent
 
     // El modelo no conoce el historial guardado ni los recuerdos hasta que
     // se los enviamos; estos indicadores marcan qué falta por enviarle.
@@ -77,10 +79,30 @@ class MainActivity : Activity() {
         ceo = AriCeo(database)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
         ceo.hire(ClockAgent())
+        laptop = LaptopAgent(getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)) {
+            database.memories().joinToString("\n") { "- ${it.content}" }
+        }
+        ceo.hire(laptop)
         buildInterface()
         voice = VoiceController(this, voiceListener)
         restoreHistory()
         loadSavedModel()
+        recruitLaptop()
+    }
+
+    /** Autonomía del CEO: si aún no tiene subordinado, busca la laptop en la red. */
+    private fun recruitLaptop() {
+        if (laptop.isConnected) return
+
+        ceo.run(AriCeo.Delegation(laptop, laptop.discoveryTask())) { result ->
+            if (isDestroyed || !result.success) return@run
+            if (busy) {
+                status.text = result.reply
+            } else {
+                database.addMessage(ROLE_ARI, result.reply)
+                appendChat("\n\nAri: ${result.reply}")
+            }
+        }
     }
 
     private fun buildInterface() {
@@ -334,6 +356,14 @@ class MainActivity : Activity() {
         if (text.isEmpty()) return
 
         if (text.startsWith("/")) {
+            if (isAgentCommand(text)) {
+                if (busy) return
+                agentCommand(text)?.let { delegation ->
+                    delegate(text, delegation)
+                    return
+                }
+            }
+
             input.text.clear()
             val reply = handleCommand(text)
             if (voiceMode) voice.speak(reply)
@@ -343,12 +373,7 @@ class MainActivity : Activity() {
         if (busy) return
 
         ceo.route(text)?.let { delegation ->
-            input.text.clear()
-            val result = ceo.run(delegation)
-            database.addMessage(ROLE_USER, text)
-            database.addMessage(ROLE_ARI, result.reply)
-            appendChat("\n\nTú: $text\n\nAri (${delegation.agent.name}): ${result.reply}")
-            if (voiceMode) voice.speak(result.reply)
+            delegate(text, delegation)
             return
         }
 
@@ -411,6 +436,45 @@ class MainActivity : Activity() {
                 }
             }
         )
+    }
+
+    private fun isAgentCommand(text: String): Boolean =
+        text.substringBefore(" ").lowercase() in AGENT_COMMANDS
+
+    /** Traduce /delega y /laptop en una delegación, o null si no se entiende. */
+    private fun agentCommand(text: String): AriCeo.Delegation? {
+        if (text.substringBefore(" ").lowercase() != "/delega") return ceo.route(text)
+
+        val argument = text.substringAfter(" ", "").trim()
+        val agent = ceo.agent(argument.substringBefore(" ")) ?: return null
+        val request = argument.substringAfter(" ", "").trim()
+        if (request.isEmpty()) return null
+        return ceo.prepare(agent, request)
+    }
+
+    /** Ari delega en un agente; el agente trabaja en segundo plano. */
+    private fun delegate(text: String, delegation: AriCeo.Delegation) {
+        val agent = delegation.agent
+        input.text.clear()
+        database.addMessage(ROLE_USER, text)
+        appendChat("\n\nTú: $text\n\nAri (${agent.name}): ")
+        status.text = "${agent.name} está trabajando..."
+        busy = true
+        sendButton.isEnabled = false
+
+        ceo.run(delegation) { result ->
+            if (isDestroyed) return@run
+            busy = false
+            sendButton.isEnabled = true
+            database.addMessage(ROLE_ARI, result.reply)
+            appendChat(result.reply)
+            if (voiceMode) {
+                status.text = "Ari está hablando..."
+                voice.speak(result.reply)
+            } else {
+                status.text = if (modelReady) "Gemma listo." else "Listo."
+            }
+        }
     }
 
     private fun saveResponse(response: StringBuilder) {
@@ -504,17 +568,19 @@ class MainActivity : Activity() {
                 val agentId = argument.substringBefore(" ")
                 val request = argument.substringAfter(" ", "").trim()
                 val agent = ceo.agent(agentId)
+                // Si la delegación era válida ya se ejecutó en sendMessage;
+                // aquí solo se explica por qué no se pudo.
                 when {
                     argument.isEmpty() || request.isEmpty() ->
                         "Escribe el agente y la tarea, por ejemplo: /delega reloj qué hora es."
                     agent == null ->
                         "No tengo un agente llamado \"$agentId\". Usa /agentes para ver el equipo."
-                    else -> "${agent.name}: ${ceo.delegateTo(agent, request).reply}"
+                    else -> "${agent.name} no entendió la tarea. Prueba con: ${agent.examples.first()}"
                 }
             }
 
             else -> "No conozco ese comando. Usa /recuerda <texto>, /memoria, /olvida <texto>, " +
-                "/agentes o /delega <agente> <tarea>."
+                "/agentes, /delega <agente> <tarea> o /laptop."
         }
 
         appendChat("\n\nTú: $command\n\nAri: $reply")
@@ -697,12 +763,15 @@ class MainActivity : Activity() {
 
         executor.shutdown()
         voice.release()
+        ceo.shutdown()
         database.close()
     }
 
     companion object {
         private const val PICK_MODEL = 101
         private const val REQUEST_AUDIO = 102
+        private const val AGENT_SETTINGS = "ari_agentes"
+        private val AGENT_COMMANDS = setOf("/delega", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val VOICE_START_LABEL = "🎤 Voz"
         private const val VOICE_STOP_LABEL = "⏹ Detener"

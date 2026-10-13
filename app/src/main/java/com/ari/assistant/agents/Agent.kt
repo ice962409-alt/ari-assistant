@@ -32,7 +32,17 @@ interface Agent {
      */
     fun match(message: String, normalized: String): AgentTask?
 
-    /** Ejecuta la tarea. Se llama en el hilo principal y debe ser rápido. */
+    /**
+     * Como [match], pero para tareas que el usuario encargó a este agente
+     * por su nombre (/delega). Un agente puede aceptar aquí más cosas.
+     */
+    fun matchDelegated(message: String, normalized: String): AgentTask? =
+        match(message, normalized)
+
+    /**
+     * Ejecuta la tarea. El CEO la llama en un hilo en segundo plano, así que
+     * puede tardar (por ejemplo, esperar a un modelo en otra computadora).
+     */
     fun execute(task: AgentTask): AgentResult
 }
 

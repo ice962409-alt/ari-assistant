@@ -115,3 +115,13 @@ Siguientes fases propuestas:
 1. Enrutamiento con Gemma cuando las reglas no basten (comprobar antes si LiteRT-LM permite una segunda conversación por motor).
 2. Agentes con acciones en el teléfono (recordatorios, alarmas), pidiendo confirmación al usuario.
 3. Bots externos (HTTP), con permisos explícitos por agente y sin credenciales en el repositorio.
+
+## Primer subordinado: modelo de IA en la laptop (en desarrollo)
+- Petición del usuario: que Ari, como CEO, consiga un subordinado lo antes posible y con autonomía. El subordinado será otro modelo de IA corriendo en una laptop.
+- `LaptopAgent`: habla con servidores compatibles con la API de OpenAI (`/v1/models` y `/v1/chat/completions`), como Ollama (puerto 11434) o LM Studio (puerto 1234).
+- Autonomía: al abrir Ari, si no tiene laptop guardada, recorre la subred /24 de la Wi-Fi buscando esos puertos y se conecta al primer servidor que responda. La dirección y el modelo se guardan en SharedPreferences (`ari_agentes`).
+- Uso: "laptop, <pregunta>", "pregúntale a la laptop …", `/delega laptop <pregunta>`, "busca la laptop", `/laptop` (estado), `/laptop http://IP:PUERTO`, "desconecta la laptop".
+- A la laptop se le pasan los recuerdos del usuario como contexto.
+- `AriCeo` ahora ejecuta los agentes en un hilo en segundo plano y entrega el resultado en el hilo principal.
+- Permiso `INTERNET` añadido.
+- **Pendiente de decisión del usuario:** Android bloquea HTTP sin cifrar. Hace falta `usesCleartextTraffic` (o HTTPS en la laptop) para que funcione. Propuesta: permitirlo y limitar el agente a direcciones de red privada. Hasta entonces, las conexiones a la laptop fallarán en el teléfono.
