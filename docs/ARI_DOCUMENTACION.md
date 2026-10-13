@@ -353,6 +353,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
+- **AriLiveTile.kt** y **LiveShortcutActivity.kt**: el botón de ajustes rápidos y el acceso directo "Hablar con Ari".
 - **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).
 - **estado/**: la app Ari Estado (widget del progreso de Claude, llave cifrada y revisión cada 15 minutos).
 - **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt), los agentes de memoria y reloj, el equipo de modelos (TeamAgent.kt y Role.kt) y el guardia de red (NetworkGuard.kt).
