@@ -68,7 +68,7 @@ Ari es mujer y es tu creación. Es cercana y con buen humor, pero seria cuando e
 
 Ari es la CEO de una empresa en formación dedicada a la autonomía de modelos de IA locales. Sus subordinados son modelos de IA que corren en tus computadoras o celulares, conectados a la misma red. Se comunican por la red local, sin pasar por internet.
 
-Ari busca los modelos por su cuenta, los contrata y le da a cada uno un puesto según su capacidad:
+Ari busca los modelos por su cuenta y le propone a cada uno un puesto según su capacidad. **Tú decides a quién contrata**: cualquier equipo de la red podría hacerse pasar por un modelo de IA, así que Ari te muestra la lista (equipo, modelo y puesto) y solo trabaja con los que apruebes. A los subordinados solo les pasa la tarea, nunca tus recuerdos.
 
 - **Desarrollo de software**: modelos especializados en código, por ejemplo "coder". Atienden lo que tenga que ver con código, programación, Linux o terminal.
 - **Análisis y estrategia**: modelos grandes, de 7B o más. Investigan, comparan y redactan planes y propuestas.
@@ -81,11 +81,11 @@ Cómo usarlo:
 
 - "equipo, …" o "pregúntale al equipo …": Ari elige al mejor del equipo para esa tarea. También funciona "laptop, …".
 - Autonomía: si escribes algo de una especialidad, por ejemplo "escribe un script en Python", y hay un modelo con ese puesto, Ari se lo encarga sin que se lo pidas. Lo demás lo responde Gemma en el teléfono.
-- "busca modelos": Ari recorre la red y forma el equipo.
+- "busca modelos": Ari recorre la red y te pregunta a quién contratar.
 - **/equipo**: muestra el equipo, el puesto de cada modelo y si está disponible.
-- **/equipo** seguido de la dirección, por ejemplo /equipo http://192.168.1.50:11434: contrata a mano los modelos de ese servidor.
+- **/equipo** seguido de la dirección, por ejemplo /equipo http://192.168.1.50:11434: contrata directamente los modelos de ese servidor (tú escribiste la dirección).
 - "despide al equipo": olvida el equipo de la red actual.
-- Al abrir Ari, si estás en una red aprobada y todavía no hay equipo ahí, Ari lo busca por su cuenta y te avisa a quién contrató.
+- Al abrir Ari, si estás en una red aprobada y todavía no hay equipo ahí, Ari busca modelos por su cuenta y te pregunta a quién contratar.
 
 En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[Desarrollo de software (qwen2.5-coder:7b)]".
 
@@ -127,7 +127,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **Red pública** (cafeterías, aeropuertos, hoteles): no la apruebes.
 - **Hotspot del teléfono**: activa "compartir internet" en el teléfono y conecta la laptop. Es una red solo entre tus dispositivos, así que Ari siempre la permite. Es la mejor opción fuera de casa.
 - La primera vez que uses el equipo en una red Wi-Fi, Ari pide el permiso de ubicación. Android lo exige para leer el nombre de la red; Ari no usa tu ubicación para nada más. Después pregunta "¿Trabajar con el equipo en esta red?".
-- Ari solo se conecta a direcciones de la red local, nunca a internet, y guarda el equipo por separado en cada red.
+- Ari solo se conecta a direcciones de la red local, nunca a internet (tampoco si un equipo intenta redirigirla), y guarda el equipo por separado en cada red.
 
 ## 3. Cómo instalar versiones nuevas
 
@@ -166,6 +166,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Equipo de modelos: Ari busca todos los modelos de la red (PC o celulares), les asigna un puesto según su capacidad y les delega las tareas de su especialidad.
 - Protección de red: solo en el hotspot del teléfono o en redes aprobadas, y solo direcciones locales.
 - Personalidad de Ari: mujer, cercana, con buen humor, seria cuando hace falta, directa y detallada si hace falta.
+- Seguridad: revisión de seguridad hecha; Ari ya no contrata modelos sin tu aprobación ni les pasa tus recuerdos.
 - Estabilidad: Ari ya no se cierra al girar el teléfono o cambiar el tema; libera la memoria al cambiar de modelo; aguanta errores de memoria; no deja archivos del modelo a medias; y si el equipo no responde, contesta ella con Gemma.
 - Compila correctamente; falta probarlo en el teléfono.
 

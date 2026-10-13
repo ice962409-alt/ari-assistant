@@ -154,3 +154,7 @@ Siguientes fases propuestas:
 - Los callbacks de Gemma y de los agentes no tocan la interfaz ni la base de datos si la Activity ya se destruyó.
 - `sendMessageAsync` protegido con try/catch.
 - Respaldo con Gemma: si Ari delegó por su cuenta (`AgentTask.automatic`) y el equipo falla, contesta ella con Gemma.
+
+### Revisión de seguridad (security-review)
+- Hallazgo: `TeamAgent.discover()` contrataba a cualquier servidor de la red sin confirmación y `systemPrompt` le enviaba todos los recuerdos del usuario; cualquier equipo de una red aprobada podía hacerse pasar por subordinado y recibirlos.
+- Corrección: los modelos encontrados quedan como candidatos (`candidates|<red>`) y `MainActivity.offerCandidates()` pregunta al usuario a quién contratar; `/equipo http://...` (dirección escrita por el usuario) contrata directo. Los subordinados ya no reciben recuerdos. `instanceFollowRedirects = false` en las peticiones.

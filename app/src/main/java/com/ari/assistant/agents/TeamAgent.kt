@@ -23,15 +23,18 @@ data class Subordinate(val url: String, val model: String, val role: Role) {
  * la misma red, servidos con Ollama, LM Studio, llama.cpp o cualquier
  * servidor compatible con la API de OpenAI.
  *
- * Ari los busca por su cuenta, asigna a cada uno un puesto según su capacidad
- * ([Role.assign]) y les delega las tareas de su especialidad. El equipo se
- * guarda por red: la misma dirección en otra red puede ser otro equipo.
+ * Ari los busca por su cuenta y asigna a cada uno un puesto según su
+ * capacidad ([Role.assign]), pero solo trabajan para ella los que el usuario
+ * aprueba: cualquier equipo de la red podría hacerse pasar por un servidor de
+ * modelos. Los encontrados quedan como candidatos hasta que el usuario decide.
+ *
+ * A los subordinados solo se les manda la pregunta, nunca los recuerdos del
+ * usuario. El equipo se guarda por red: la misma dirección en otra red puede
+ * ser otro equipo.
  */
 class TeamAgent(
     private val settings: SharedPreferences,
-    private val guard: NetworkGuard,
-    /** Lo que Ari sabe del usuario (sus recuerdos), para dar contexto al equipo. */
-    private val userContext: () -> String
+    private val guard: NetworkGuard
 ) : Agent {
 
     override val id = "equipo"
@@ -46,9 +49,27 @@ class TeamAgent(
 
     fun hasTeam(network: NetworkGuard.Network): Boolean = team(network).isNotEmpty()
 
-    fun team(network: NetworkGuard.Network): List<Subordinate> {
+    fun team(network: NetworkGuard.Network): List<Subordinate> = load(KEY_TEAM, network)
+
+    /** Modelos encontrados en la red que esperan la aprobación del usuario. */
+    fun candidates(network: NetworkGuard.Network): List<Subordinate> = load(KEY_CANDIDATES, network)
+
+    /** Contrata a los candidatos elegidos por el usuario y descarta al resto. */
+    fun hireCandidates(network: NetworkGuard.Network, chosen: List<Subordinate>) {
+        val team = (team(network) + chosen)
+            .distinctBy { it.url to it.model }
+            .take(MAX_TEAM)
+        store(KEY_TEAM, network, team)
+        store(KEY_CANDIDATES, network, emptyList())
+    }
+
+    fun rejectCandidates(network: NetworkGuard.Network) {
+        store(KEY_CANDIDATES, network, emptyList())
+    }
+
+    private fun load(prefix: String, network: NetworkGuard.Network): List<Subordinate> {
         val key = guard.key(network) ?: return emptyList()
-        val saved = settings.getString("$KEY_TEAM|$key", null) ?: return emptyList()
+        val saved = settings.getString("$prefix|$key", null) ?: return emptyList()
         return try {
             val array = JSONArray(saved)
             (0 until array.length()).mapNotNull { index ->
@@ -111,7 +132,8 @@ class TeamAgent(
             ACTION_ADD -> add(network, task.argument)
             ACTION_STATUS -> status(network)
             ACTION_FORGET -> {
-                save(network, emptyList())
+                store(KEY_TEAM, network, emptyList())
+                store(KEY_CANDIDATES, network, emptyList())
                 AgentResult("Listo, despedí al equipo de esta red. Di \"busca modelos\" para volver a formarlo.")
             }
             ACTION_ASK -> ask(network, task.argument)
@@ -136,9 +158,14 @@ class TeamAgent(
 
     private fun ask(network: NetworkGuard.Network, question: String): AgentResult {
         if (!hasTeam(network)) {
-            // Autonomía: si aún no tiene equipo en esta red, lo forma antes de preguntar.
-            val formed = discover(network)
-            if (!formed.success) return formed
+            // Autonomía: si aún no tiene equipo en esta red, busca candidatos;
+            // la pregunta espera a que el usuario apruebe a alguien.
+            val found = discover(network)
+            if (!found.success) return found
+            return AgentResult(
+                "Todavía no tengo equipo aquí. ${found.reply} Cuando apruebes a alguien, vuelve a pedírmelo.",
+                success = false
+            )
         }
 
         val member = choose(team(network), question)
@@ -180,19 +207,13 @@ class TeamAgent(
         return Role.GENERAL_PREFERENCE.firstNotNullOfOrNull { role -> team.firstOrNull { it.role == role } }
     }
 
-    private fun systemPrompt(member: Subordinate): String {
-        val context = userContext()
-        return buildString {
-            append("Trabajas para Ari, la CEO de una empresa en formación dedicada a la autonomía de ")
-            append("modelos de IA locales. Ari te dio el puesto de ${member.role.title}: ${member.role.duty} ")
-            append("Ari te delega tareas en nombre de su creador; respóndelas en español, ")
-            append("de forma clara y directa, siempre pensando en los intereses de la empresa.")
-            if (context.isNotBlank()) {
-                append("\n\nLo que Ari sabe de su creador:\n")
-                append(context)
-            }
-        }
-    }
+    // Sin recuerdos del usuario: un subordinado solo necesita la tarea.
+    private fun systemPrompt(member: Subordinate): String =
+        "Trabajas para Ari, la CEO de una empresa en formación dedicada a la autonomía de " +
+            "modelos de IA locales. Ari te dio el puesto de ${member.role.title}: ${member.role.duty} " +
+            "Ari te delega tareas en nombre de su creador; respóndelas en español, " +
+            "de forma clara y directa, siempre pensando en los intereses de la empresa."
+
 
     private fun add(network: NetworkGuard.Network, url: String): AgentResult {
         val host = runCatching { URL(url).host }.getOrNull().orEmpty()
@@ -211,12 +232,13 @@ class TeamAgent(
             return AgentResult("El servidor de $url responde, pero no tiene modelos para conversar.", success = false)
         }
 
+        // El usuario escribió esta dirección, así que se contrata directamente.
         val team = (team(network).filter { it.url != url } + hired).take(MAX_TEAM)
-        save(network, team)
+        store(KEY_TEAM, network, team)
         return AgentResult(describeHiring(hired))
     }
 
-    /** Recorre la red buscando servidores de modelos y forma el equipo con todos. */
+    /** Recorre la red buscando servidores de modelos y los deja como candidatos. */
     private fun discover(network: NetworkGuard.Network): AgentResult {
         val candidates = guard.subnets(network).flatMap { prefix ->
             (1..254).flatMap { host -> KNOWN_PORTS.map { port -> "$prefix.$host" to port } }
@@ -248,8 +270,15 @@ class TeamAgent(
             )
         }
 
-        save(network, hired)
-        return AgentResult(describeHiring(hired))
+        val known = team(network).map { it.url to it.model }.toSet()
+        val fresh = hired.filter { (it.url to it.model) !in known }
+        if (fresh.isEmpty()) {
+            return AgentResult("No encontré modelos nuevos; tu equipo de esta red sigue igual.")
+        }
+
+        store(KEY_CANDIDATES, network, fresh)
+        val count = if (fresh.size == 1) "1 modelo" else "${fresh.size} modelos"
+        return AgentResult("Encontré $count en la red. Elige a quién contrato.")
     }
 
     private fun describeHiring(hired: List<Subordinate>): String {
@@ -269,13 +298,13 @@ class TeamAgent(
         null
     }
 
-    private fun save(network: NetworkGuard.Network, team: List<Subordinate>) {
+    private fun store(prefix: String, network: NetworkGuard.Network, members: List<Subordinate>) {
         val key = guard.key(network) ?: return
         val array = JSONArray()
-        team.forEach {
+        members.forEach {
             array.put(JSONObject().put("url", it.url).put("model", it.model).put("role", it.role.name))
         }
-        settings.edit().putString("$KEY_TEAM|$key", array.toString()).apply()
+        settings.edit().putString("$prefix|$key", array.toString()).apply()
     }
 
     private fun isPortOpen(host: String, port: Int): Boolean = try {
@@ -291,6 +320,8 @@ class TeamAgent(
         try {
             connection.connectTimeout = CONNECT_TIMEOUT_MS * 4
             connection.readTimeout = readTimeoutMs
+            // Un equipo de la red no puede redirigir a Ari fuera de ella.
+            connection.instanceFollowRedirects = false
             if (body != null) {
                 connection.requestMethod = "POST"
                 connection.doOutput = true
@@ -313,6 +344,7 @@ class TeamAgent(
         private const val ACTION_FORGET = "despedir"
 
         private const val KEY_TEAM = "team"
+        private const val KEY_CANDIDATES = "candidates"
         private const val MAX_TEAM = 12
 
         /** 11434: Ollama. 1234: LM Studio. 8080: servidor de llama.cpp. */

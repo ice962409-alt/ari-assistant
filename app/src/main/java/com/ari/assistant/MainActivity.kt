@@ -90,9 +90,7 @@ class MainActivity : Activity() {
         ceo.hire(ClockAgent())
         val agentSettings = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
         guard = NetworkGuard(this, agentSettings)
-        team = TeamAgent(agentSettings, guard) {
-            database.memories().joinToString("\n") { "- ${it.content}" }
-        }
+        team = TeamAgent(agentSettings, guard)
         ceo.hire(team)
         buildInterface()
         voice = VoiceController(this, voiceListener)
@@ -102,8 +100,8 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Autonomía del CEO: si aún no tiene equipo en esta red, busca modelos y
-     * los contrata. Solo en redes aprobadas y sin pedir nada al usuario.
+     * Autonomía del CEO: si aún no tiene equipo en esta red, busca modelos.
+     * Solo en redes aprobadas; contratarlos lo decide el usuario.
      */
     private fun recruitTeam() {
         val network = guard.current()
@@ -117,7 +115,36 @@ class MainActivity : Activity() {
                 database.addMessage(ROLE_ARI, result.reply)
                 appendChat("\n\nAri: ${result.reply}")
             }
+            offerCandidates()
         }
+    }
+
+    /** Si Ari encontró modelos nuevos, pregunta al usuario a quién contratar. */
+    private fun offerCandidates() {
+        val network = guard.current()
+        val found = team.candidates(network)
+        if (found.isEmpty() || isFinishing || isDestroyed) return
+
+        val labels = found.map { "${it.role.title}: ${it.model}\n${it.url}" }.toTypedArray()
+        val checked = BooleanArray(found.size)
+        AlertDialog.Builder(this)
+            .setTitle("¿A quién contrato? Elige solo equipos que reconozcas")
+            .setMultiChoiceItems(labels, checked) { _, index, isChecked -> checked[index] = isChecked }
+            .setPositiveButton("Contratar") { _, _ ->
+                val chosen = found.filterIndexed { index, _ -> checked[index] }
+                team.hireCandidates(network, chosen)
+                val reply = if (chosen.isEmpty()) {
+                    "No contraté a nadie."
+                } else {
+                    "Contraté a ${chosen.joinToString { it.label }}. " +
+                        "Solo reciben las tareas que les paso, nunca tus recuerdos."
+                }
+                database.addMessage(ROLE_ARI, reply)
+                appendChat("\n\nAri: $reply")
+            }
+            .setNegativeButton("A nadie") { _, _ -> team.rejectCandidates(network) }
+            .setCancelable(false)
+            .show()
     }
 
     private fun buildInterface() {
@@ -646,6 +673,7 @@ class MainActivity : Activity() {
             } else {
                 status.text = "Ari está lista."
             }
+            if (agent === team) offerCandidates()
         }
     }
 
