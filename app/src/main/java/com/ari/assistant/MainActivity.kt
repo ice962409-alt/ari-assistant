@@ -165,8 +165,22 @@ class MainActivity : Activity() {
     private var backupPassword: CharArray? = null
 
 
+    // true si esta copia no es la original: la pantalla no se arma y nada más se ejecuta.
+    private var tampered = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Una copia modificada (firmada con otra clave) no abre: podría estar alterada para robar datos.
+        if (!AppIntegrity.isOfficial(this)) {
+            tampered = true
+            AlertDialog.Builder(this)
+                .setTitle("Esta copia de Ari no es la original")
+                .setMessage("Alguien modificó esta app. Por tu seguridad no la abro. Desinstálala y pide la original a quien te la pasó.")
+                .setPositiveButton("Cerrar") { _, _ -> finish() }
+                .setCancelable(false)
+                .show()
+            return
+        }
         pendingPhoto = savedInstanceState?.getString(KEY_PHOTO)
         database = AriDatabase(this)
         AriChat.controller = chatController
@@ -1261,6 +1275,7 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        if (tampered) return
         setIntent(intent)
         handleLaunch(intent)
     }
@@ -1465,6 +1480,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        if (tampered) return
         inForeground = true
         // Ya estás aquí: el chat de notificaciones se limpia (todo está en la pantalla de Ari).
         AriChat.clear(this)
@@ -1475,6 +1491,7 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
+        if (tampered) return
         downloadWatcher.removeCallbacks(checkDownload)
     }
 
@@ -2825,6 +2842,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        if (tampered) return
         inForeground = false
         // En modo live, Ari se queda contigo aunque salgas (con su notificación).
         if (voiceMode && !LiveSessionService.running) stopVoiceMode("Modo voz detenido.")
@@ -3058,6 +3076,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (tampered) return
         forgetBackupPassword()
         LiveSessionService.controller = null
         LiveSessionService.stop(this)

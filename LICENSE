@@ -1,0 +1,17 @@
+Ari - Asistente personal
+Copyright (c) 2026 javierhedzd-ops. Todos los derechos reservados.
+
+Este software y su código fuente son privados y confidenciales. No es código abierto.
+Nadie puede copiarlo, modificarlo, distribuirlo, publicarlo, sublicenciarlo, venderlo,
+descompilarlo ni hacer ingeniería inversa, total o parcialmente, sin el permiso previo
+y por escrito del titular.
+
+Quien reciba la app Ari (APK) del titular solo puede instalarla y usarla para uso
+personal. No puede modificarla ni volver a distribuirla.
+
+Componentes de terceros incluidos en la app, que conservan sus propias licencias
+(se muestran en Ari, en Ajustes -> Acerca de Ari y licencias):
+- Gemma 4 y LiteRT-LM, de Google: Apache License 2.0.
+- sherpa-onnx, de k2-fsa: Apache License 2.0.
+- Modelo de voz CAM++, de WeSpeaker: Apache License 2.0.
+- ONNX Runtime, de Microsoft: MIT License.

@@ -159,6 +159,14 @@ Google Play pide que cada app publique una **política de privacidad**: un texto
 - Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es su carita color hielo sobre fondo oscuro, y en iconos temáticos se pinta de un solo color con los ojos y la boca recortados.
 - Desde Android 15, las apps se dibujan **de borde a borde**, también detrás de la barra de estado y del teclado. Por eso la app calcula esos márgenes ("insets") para que la barra superior y el campo de texto nunca queden tapados.
 
+### Proteger una app: código cerrado, revuelto y firmado
+
+- **Código abierto o cerrado**: el código abierto se publica para que cualquiera lo lea y lo reuse. Ari es **cerrada**: el repositorio es privado y la licencia reserva todos los derechos.
+- **Una APK se puede "abrir"**: con herramientas gratuitas cualquiera puede ver lo que hay dentro de una app (descompilar). Por eso se **revuelve** (ofusca) el código con R8: cambia nombres como "AriTutor" por "a.b" y quita lo que no se usa. Funciona igual, pero entenderlo cuesta muchísimo más.
+- **Versión de depuración vs. de entrega**: la de depuración (debug) deja que una computadora conectada mire dentro de la app y sus datos, y sirve para programar. La de entrega (release) lo bloquea. Es la que se instala.
+- **Firma digital**: cada APK va firmada con una clave secreta, como un sello de lacre. Si alguien cambia algo, el sello se rompe y tiene que poner el suyo. Ari revisa su propio sello al abrir (comparando su **huella**, un código único del certificado) y, si no es el suyo, no abre.
+- La clave de firma es un secreto: quien la tenga puede publicar "Aris oficiales". Por eso el repositorio debe seguir privado.
+
 ### Ari tutora: cómo se le da un "papel" a un modelo
 
 Cuando le pides a Ari que sea tu maestra, Ari agrega a las **instrucciones de sistema** de Gemma un papel nuevo: "ahora eres tutora de inglés; enseña una idea a la vez, haz una pregunta y corrige con cariño". Al modelo no se le cambia nada por dentro: solo se le dan otras reglas para esa conversación.
@@ -514,6 +522,9 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Falso positivo**: cuando un sistema dice que sí por error, por ejemplo confundir a otra persona contigo.
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
+- **Ofuscar**: revolver el código de una app para que sea difícil de leer sin cambiar lo que hace.
+- **Descompilar**: convertir una app instalable de vuelta en algo parecido a su código.
+- **Firma digital**: el sello que demuestra quién hizo una app y que nadie la cambió.
 - **Protocolo**: las reglas que dos programas siguen para entenderse.
 - **Suplantación**: hacerse pasar por otra persona, por ejemplo poniendo su nombre en un mensaje.
 - **Sabor (product flavor)**: una versión de la app compilada del mismo código, con piezas o permisos distintos.

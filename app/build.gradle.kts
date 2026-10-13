@@ -22,7 +22,7 @@ android {
 
     // Clave de depuración fija para que cada APK de GitHub Actions tenga la
     // misma firma y se pueda instalar encima del anterior sin desinstalar.
-    // Es solo para depuración; nunca usarla para publicar.
+    // Para Google Play, la tienda volverá a firmar con su propia clave (Play App Signing).
     signingConfigs {
         getByName("debug") {
             storeFile = file("debug.keystore")
@@ -32,12 +32,23 @@ android {
         }
     }
 
+    // Versión de entrega: código encogido y revuelto (R8), sin modo de depuración (nadie puede
+    // leer los datos de Ari con un cable) y firmada con la misma clave para instalarse encima.
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 37
-        versionName = "0.25.0"
+        versionCode = 38
+        versionName = "0.26.0"
         // Solo teléfonos de 64 bits (como el POCO): las librerías de voz pesan menos en el APK.
         ndk {
             abiFilters += listOf("arm64-v8a")

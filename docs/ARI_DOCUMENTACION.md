@@ -56,6 +56,15 @@ Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene
 - Detecta también los cierres que vienen del motor (la GPU), las congeladas y la falta de memoria (Android 11 o más nuevo).
 - Los informes llegan a tu Gmail con el asunto "Informe de fallo de Ari". Claude los revisa al empezar cada sesión y los arregla en la siguiente versión.
 
+### Seguridad: Ari no es código abierto
+
+- **Repositorio privado**: solo tú (y Claude con tu permiso) ven el código.
+- **Licencia**: el archivo LICENSE dice "Todos los derechos reservados": nadie puede copiar, modificar, distribuir ni descompilar Ari sin tu permiso por escrito. Quien recibe la APK solo puede usarla.
+- **Código revuelto (R8)**: en las APK de entrega, los nombres del código se cambian por letras sin sentido y se quita lo que no se usa. Sigue funcionando igual, pero leerlo o cambiarlo es mucho más difícil.
+- **Sin modo de depuración**: nadie puede conectar el teléfono a una computadora y sacar los recuerdos o pláticas de Ari.
+- **Copias modificadas**: cada APK oficial va firmada con la clave de Ari. Si alguien la modifica, tiene que firmarla con otra clave; Ari lo nota al abrir, avisa "Esta copia de Ari no es la original" y no abre.
+- Ninguna app es imposible de modificar para un experto con tiempo, pero estas capas lo hacen muy difícil, protegen los datos de quien la usa y dejan claro que está prohibido.
+
 ### Tutora personal
 
 Ari puede ser tu maestra de lo que quieras, en las dos versiones (la tuya y la de otros):
@@ -411,8 +420,9 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 ## 3. Cómo instalar versiones nuevas
 
 1. Cada cambio que llega a main se compila solo en GitHub Actions: https://github.com/javierhedzd-ops/ari-assistant/actions
-2. Abre la ejecución más reciente, que debe tener la palomita verde, y descarga **ari-debug-apk**.
-   - **ari-debug-apk** es tu Ari completa, la CEO, con su equipo de modelos.
+2. Abre la ejecución más reciente, que debe tener la palomita verde, y descarga **ari-apk**.
+   - **ari-apk** es tu Ari completa, la CEO, con su equipo de modelos (versión de entrega, protegida).
+   - **ari-debug-apk** es la misma, pero en versión de depuración: úsala solo si ari-apk fallara.
    - **ari-otros-apk** es la Ari para las demás personas: todo lo demás igual, pero sin el equipo de modelos ni el permiso de ubicación. Es la que les mandas.
 3. Instala el APK encima de la versión anterior. No hace falta desinstalar, y se conservan el modelo, el historial y los recuerdos.
 
@@ -462,10 +472,11 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Ari protegida (0.26.0): las APK que se instalan ahora son "versiones de entrega": el código va revuelto (difícil de leer y modificar), sin modo de depuración (nadie puede sacar los datos de Ari con un cable), y Ari no abre si alguien la modificó y la volvió a firmar. El repositorio es privado y la licencia dice "Todos los derechos reservados". Tu APK ahora se llama ari-apk.
 - Tutora personal (0.25.0), en las dos Ari: "quiero aprender inglés", "sé mi maestra de guitarra". Ari enseña paso a paso, pone ejercicios, corrige con cariño y guarda un resumen de cada clase para seguir después ("sigamos con inglés"). "Terminar clase" para salir.
 - Recados entre Ari (0.24.0): "dile a mi mamá que llego a las 8" y Ari le manda un SMS directo (sin pedirte confirmar, como lo pediste). Si tu mamá tiene Ari, su Ari se lo dice en voz y en su chat; si no, le llega como SMS normal. Sin internet.
 - Ari enseña y ayuda en el día a día (0.23.0): lecciones paso a paso ("enséñame", Ajustes → Aprender a usar Ari, y solas en el primer uso): Ari propone algo útil para probar, nota cuando lo haces, te felicita y pasa a lo siguiente (8 lecciones). En la Ari para otros, Gemma se enfoca en hacerles fácil la vida diaria (en lugar de ser CEO) y da un consejo al día. Bienvenida con "Enséñame a usarte" y "Ayúdame a organizar mi día".
-- Solo tu Ari es la CEO (0.22.0): GitHub compila dos APK. "ari-debug-apk" es la tuya, con el equipo de modelos; "ari-otros-apk" es para las demás personas, sin el equipo (ese código no va dentro) y sin pedir el permiso de ubicación. Su versión dice "-otros".
+- Solo tu Ari es la CEO (0.22.0): GitHub compila dos APK. "ari-apk" (antes "ari-debug-apk") es la tuya, con el equipo de modelos; "ari-otros-apk" es para las demás personas, sin el equipo (ese código no va dentro) y sin pedir el permiso de ubicación. Su versión dice "-otros".
 - Color de Ari (0.21.0): Ajustes → Color de Ari (hielo, rosa, lila, menta, durazno o dorado), o dile "ponte rosa" o "cambia tu color a lila". Cambia su esfera, el botón de enviar, los detalles de la app y la carita del widget.
 - Ari se presenta (0.20.0): la primera vez, después de preguntar el nombre, Ari cuenta en el chat lo que puede hacer, con ejemplos para probar. Cuando le preguntas "¿qué puedes hacer?" (o "ayuda") lo repite, aunque Gemma no esté cargada; en voz dice una versión corta. La bienvenida tiene el botón "¿Qué puedes hacer?". Solo menciona lo que el teléfono puede hacer.
 - Primer uso más fácil (0.19.0): la primera vez sin modelo, después de preguntar el nombre, Ari muestra sola qué Gemma le conviene al teléfono (con tamaño, espacio y "solo por Wi-Fi") y ofrece "Descargar ahora", "Más tarde" o "Ya tengo el archivo". Solo pregunta una vez; nada se descarga sin tocar el botón.

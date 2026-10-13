@@ -426,7 +426,7 @@ Decisión del usuario: "Dos versiones del APK".
 - `src/completa`: `TeamAgent`, `NetworkGuard`, `CeoTeam` (buscar, contratar, red aprobada, permiso de ubicación) y un manifiesto con los permisos de Wi-Fi/ubicación y `usesCleartextTraffic`.
 - `src/otros`: `CeoTeam` vacío (`enabled = false`; con el equipo dice que no trabaja con uno).
 - main: `CeoHost` (lo que CeoTeam usa de MainActivity) y `PrivateAddress` (antes `NetworkGuard.isPrivateAddress`, lo usa el respaldo).
-- Actions: pruebas de ambas versiones; artefactos `ari-debug-apk` (completa) y `ari-otros-apk`.
+- Actions: pruebas de ambas versiones; artefactos `ari-debug-apk` (completa) y `ari-otros-apk` (desde 0.26.0: `ari-apk` y `ari-otros-apk` son release).
 
 ## Ari enseña y ayuda en el día a día (versión 0.23.0)
 
@@ -450,4 +450,13 @@ Pedido del usuario: tutora personal en cualquier tema (ejemplo: inglés), en las
 - `AriTutor` (pruebas en `AriTutorTest`): `startTopic` ("quiero aprender X", "sé mi maestra de X", "dame clases de X", "enséñame X" salvo "enséñame a usarte"), `resumeTopic` ("sigamos con X" si ya hay clases), `stops` ("terminar clase"), `instruction` (va en las instrucciones de sistema), `summaryIn` (línea "RESUMEN DE LA CLASE:").
 - MainActivity: `handleTutor` antes de lecciones y agentes (solo el dueño); prefs `ari_tutora` (clase activa, temas, resumen_<tema>, clases_<tema>). Al empezar o terminar marca `historyPending` para recrear la conversación con o sin la tutora. El resumen se guarda en `onDone`.
 - Pendiente: TTS en el idioma que se aprende.
+
+## Ari protegida, no es código abierto (versión 0.26.0)
+
+Pedido del usuario: que nadie que sepa programar pueda modificarla; no código abierto.
+- `release` con `isMinifyEnabled`/`isShrinkResources` (R8) y `proguard-rules.pro`: se conservan LiteRT-LM y sherpa-onnx (JNI), los nombres de los enum (se guardan en prefs y respaldo) y archivo/línea para los informes. Firmada con la misma clave (`debug.keystore`) para instalarse encima. Release no es depurable.
+- `AppIntegrity`: compara el SHA-256 del certificado de firma con `OFFICIAL_CERT_SHA256`; si no coincide, MainActivity muestra "Esta copia de Ari no es la original" y no se arma (`tampered` corta onResume/onPause/onStop/onDestroy/onNewIntent). `AppIntegrityTest` revisa que la huella sea la de `app/debug.keystore`.
+- Actions: `ari-apk` (completa release), `ari-otros-apk` (otros release), `ari-debug-apk` (respaldo), `ari-mapa` (mapping.txt para leer trazas).
+- `LICENSE`: todos los derechos reservados, con los componentes de terceros y sus licencias.
+- Riesgo: R8 puede romper algo que solo se ve en el teléfono; por eso se guarda también la de depuración.
 

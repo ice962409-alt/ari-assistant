@@ -58,22 +58,37 @@ jobs:
       - name: Pruebas automaticas
         run: ./gradlew :app:testCompletaDebugUnitTest :app:testOtrosDebugUnitTest
 
+      # Las versiones de entrega (release): código revuelto, sin modo de depuración.
       - name: Compilar APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew :app:assembleCompletaRelease :app:assembleOtrosRelease :app:assembleCompletaDebug :estado:assembleDebug
 
-      # La Ari del dueño (la CEO, con su equipo de modelos).
+      # La Ari del dueño (la CEO, con su equipo de modelos), versión de entrega.
       - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ari-apk
+          path: app/build/outputs/apk/completa/release/app-completa-release.apk
+
+      # La Ari para otras personas (sin equipo de modelos), versión de entrega.
+      - name: Guardar APK para otros
+        uses: actions/upload-artifact@v4
+        with:
+          name: ari-otros-apk
+          path: app/build/outputs/apk/otros/release/app-otros-release.apk
+
+      # Por si la versión de entrega fallara en el teléfono: la de depuración del dueño.
+      - name: Guardar APK de depuración
         uses: actions/upload-artifact@v4
         with:
           name: ari-debug-apk
           path: app/build/outputs/apk/completa/debug/app-completa-debug.apk
 
-      # La Ari para otras personas (sin equipo de modelos).
-      - name: Guardar APK para otros
+      # El mapa para leer los informes de fallo de las versiones revueltas.
+      - name: Guardar mapa de nombres
         uses: actions/upload-artifact@v4
         with:
-          name: ari-otros-apk
-          path: app/build/outputs/apk/otros/debug/app-otros-debug.apk
+          name: ari-mapa
+          path: app/build/outputs/mapping/
 
       - name: Guardar APK de Ari Estado
         uses: actions/upload-artifact@v4
