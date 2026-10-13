@@ -588,6 +588,9 @@ class MainActivity : Activity() {
             ModelDownload.Start.Started -> {
                 status.text = "Empezó la descarga de Gemma."
                 chat.addNote("Estoy descargando a Gemma. Te aviso cuando esté lista; puedes cerrar la app mientras.")
+                if (!AlarmReminders.canNotify(this) && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS_QUIET)
+                }
                 watchDownload()
             }
             is ModelDownload.Start.NoSpace -> chat.addNote(ModelDownloadText.noSpace(started.free))
@@ -1566,6 +1569,8 @@ class MainActivity : Activity() {
         private const val EXPORT_BACKUP = 104
         private const val IMPORT_BACKUP = 105
         private const val REQUEST_NOTIFICATIONS = 106
+        // Permiso de notificaciones pedido al descargar el modelo: sin más preguntas después.
+        private const val REQUEST_NOTIFICATIONS_QUIET = 107
         private const val KEY_EXACT_ASKED = "alarmas_exactas_preguntado"
         private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
