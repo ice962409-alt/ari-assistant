@@ -79,3 +79,19 @@ Pendiente de verificar:
 - Se añadió `app/debug.keystore` (clave de depuración pública, contraseña estándar `android`) y `signingConfigs.debug` en `app/build.gradle.kts`. Desde este APK, las siguientes actualizaciones se instalan encima sin desinstalar.
 - Hace falta desinstalar Ari una sola vez para pasar a la firma fija. Esto borra el modelo copiado y hay que volver a seleccionarlo.
 - Esta clave es solo para depuración; una versión de publicación necesitará su propia clave, guardada como secreto y no en el repositorio.
+
+## Estado tras el PR #3
+- PR #3 (memoria persistente y firma de depuración fija) fusionado en `main`; el usuario confirmó que la app instalada funciona.
+
+## Modo voz (en desarrollo)
+- Nuevo `VoiceController.kt`: `SpeechRecognizer` (idioma del sistema, resultados parciales, prefiere sin conexión) y `TextToSpeech` (idioma del sistema, o español si no está disponible).
+- Botón "🎤 Voz" junto a "Enviar": activa un ciclo escuchar → responder con Gemma → leer la respuesta en voz alta → volver a escuchar. "⏹ Detener" lo apaga.
+- Los comandos (`/recuerda`, etc.) también se pueden decir en voz alta y su respuesta se lee.
+- Se pausa tras 3 intentos seguidos sin escuchar nada, ante un error del micrófono o al salir de la app.
+- La respuesta se limpia de Markdown antes de leerla y se divide en frases si es muy larga.
+- Permiso `RECORD_AUDIO` (se pide al tocar Voz por primera vez) y `<queries>` para ver los servicios de voz en Android 11+.
+- Compila correctamente en Actions (run 38352930025). Pendiente: prueba en el dispositivo.
+
+## Documentación en Google Drive
+- El usuario pidió una copia legible de la documentación en su Drive, actualizada siempre que se termine un cambio.
+- Fuente: `docs/ARI_DOCUMENTACION.md`. Carpeta de Drive: "Ari - Documentación de Claude". El procedimiento está en `CLAUDE.md`.
