@@ -104,6 +104,9 @@ class MainActivity : Activity() {
     private lateinit var reminderAlarms: AlarmReminders
     private lateinit var modelDownload: ModelDownload
     private lateinit var phoneAgent: PhoneAgent
+    private lateinit var messageAgent: AriMessageAgent
+    // "Dile a mi mamá que…" esperando los permisos de SMS y contactos.
+    private var pendingMessageRequest: String? = null
 
     // El puntito de color junto a "Ari" (cambia con el color de Ari).
     private lateinit var headerDot: android.view.View
@@ -175,6 +178,9 @@ class MainActivity : Activity() {
         ceo = AriCeo(database)
         reminderAlarms = AlarmReminders(this)
         reminders = ReminderAgent(database, reminderAlarms)
+        // Primero los recados ("dile a mi mamá que…"): su frase es muy precisa.
+        messageAgent = AriMessageAgent(this, AndroidPhone(this)) { profile.userName }
+        ceo.hire(messageAgent)
         // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
         ceo.hire(reminders)
         // Antes que el teléfono y la memoria: "mi mamá se llama Rosa" u "olvida a Luis" son de la libreta.
@@ -186,6 +192,7 @@ class MainActivity : Activity() {
         ceoTeam = CeoTeam(ceoHost, ceo)
         applyColor(AriColors.byId(getSharedPreferences(COLOR_PREFS, MODE_PRIVATE).getString(KEY_COLOR, null)), save = false)
         buildInterface()
+        AriMessenger.listener = messageListener
         offerFailureReport()
         voice = VoiceController(this, voiceListener)
         voiceVault = VoiceVault(this)
@@ -395,6 +402,45 @@ class MainActivity : Activity() {
         chat.addNote("Consejo del día: ${next.title.lowercase()}. ${next.tryThis}")
     }
 
+    // --- Recados entre Ari (por SMS, sin internet) ---
+
+    private val messageListener = object : AriMessenger.Listener {
+        override fun onAriMessage(text: String): Boolean {
+            if (isDestroyed) return false
+            showAriMessage(text)
+            return inForeground
+        }
+    }
+
+    /** Un recado de otra Ari: en el chat y, en modo voz, dicho en voz alta. Es un mensaje, no una orden. */
+    private fun showAriMessage(text: String) {
+        saveMessage(ROLE_ARI, text)
+        chat.addAri(text)
+        if (voiceMode && !busy) voice.speak(text)
+    }
+
+    private fun setupAriMessages() {
+        AlertDialog.Builder(this)
+            .setTitle("Recados entre Ari")
+            .setMessage(
+                "Puedes decirme \"dile a mi mamá que llego a las 8\" y le mando un SMS. Si tu mamá tiene Ari, " +
+                    "su Ari se lo dice; si no, le llega como un SMS normal.\n\n" +
+                    "Para que yo te diga los recados que te manden otras Ari, necesito permiso de recibir SMS. " +
+                    "Solo hago caso a los que empiezan con la marca \"[Ari de …]\"; los demás ni los guardo.\n\n" +
+                    "No usa internet: cuesta lo que un SMS normal."
+            )
+            .setPositiveButton(if (AriMessenger.canReceive(this)) "Ya está activado" else "Activar") { _, _ ->
+                if (!AriMessenger.canReceive(this)) {
+                    requestPermissions(
+                        arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_CONTACTS),
+                        REQUEST_RECEIVE_SMS
+                    )
+                }
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
     private fun phoneAbilities() = AriAbilities.Phone(
         vision = if (modelReady) visionReady else !ModelChoice.basic(totalRam()),
         voices = voiceIdentity.supported && !voice.ownAudioUnsupported
@@ -464,6 +510,7 @@ class MainActivity : Activity() {
             "Reconocer voces",
             "Color de Ari: ${currentColor.name}",
             "Aprender a usar Ari",
+            "Recados de otras Ari: ${if (AriMessenger.canReceive(this)) "activados" else "desactivados"}",
             "Reportar un problema",
             "Acerca de Ari y licencias"
         )
@@ -478,7 +525,8 @@ class MainActivity : Activity() {
                     4 -> showVoicesDialog()
                     5 -> chooseColor()
                     6 -> startLessons()
-                    7 -> askProblemReport()
+                    7 -> setupAriMessages()
+                    8 -> askProblemReport()
                     else -> showAbout()
                 }
             }
@@ -1362,6 +1410,8 @@ class MainActivity : Activity() {
         inForeground = true
         // Ya estás aquí: el chat de notificaciones se limpia (todo está en la pantalla de Ari).
         AriChat.clear(this)
+        // Recados de otras Ari que llegaron con Ari cerrada.
+        AriMessenger.takeKept(this).forEach { showAriMessage(it) }
         if (modelDownload.isRunning()) watchDownload()
     }
 
@@ -2214,6 +2264,14 @@ class MainActivity : Activity() {
             }
             ceoTeam.afterDelegation(agent)
             if (agent === reminders && result.success) prepareReminderPermissions()
+            if (agent === messageAgent && messageAgent.needsPermission) {
+                messageAgent.needsPermission = false
+                pendingMessageRequest = text
+                requestPermissions(
+                    arrayOf(Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_CONTACTS),
+                    REQUEST_SMS
+                )
+            }
             if (agent === phoneAgent && phoneAgent.needsContactsPermission) {
                 phoneAgent.needsContactsPermission = false
                 pendingContactRequest = text
@@ -2377,6 +2435,24 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_SMS) {
+            val request = pendingMessageRequest
+            pendingMessageRequest = null
+            if (AriMessenger.canSend(this) && request != null && !busy) {
+                input.setText(request)
+                sendMessage()
+            } else if (!AriMessenger.canSend(this)) {
+                chat.addNote("Sin permiso de SMS no puedo mandar recados. Puedes activarlo en Ajustes del teléfono → Apps → Ari → Permisos.")
+            }
+            return
+        }
+        if (requestCode == REQUEST_RECEIVE_SMS) {
+            chat.addNote(
+                if (AriMessenger.canReceive(this)) "Listo: cuando otra Ari te mande un recado, te lo digo."
+                else "Sin el permiso de SMS no puedo reconocer los recados de otras Ari."
+            )
+            return
+        }
         if (requestCode == REQUEST_CONTACTS) {
             val request = pendingContactRequest
             pendingContactRequest = null
@@ -2919,6 +2995,7 @@ class MainActivity : Activity() {
         LiveSessionService.controller = null
         LiveSessionService.stop(this)
         if (ScreenGlance.listener === screenListener) ScreenGlance.listener = null
+        if (AriMessenger.listener === messageListener) AriMessenger.listener = null
         if (AriChat.controller === chatController) AriChat.controller = null
         voiceWorker.execute { voiceIdentity.release() }
         voiceWorker.shutdown()
@@ -2943,6 +3020,8 @@ class MainActivity : Activity() {
         // Permiso de notificaciones pedido al descargar el modelo: sin más preguntas después.
         private const val REQUEST_NOTIFICATIONS_QUIET = 107
         private const val REQUEST_CONTACTS = 108
+        private const val REQUEST_SMS = 113
+        private const val REQUEST_RECEIVE_SMS = 114
         private const val PICK_IMAGE = 109
         private const val PICK_DOCUMENT = 110
         private const val TAKE_PHOTO = 111

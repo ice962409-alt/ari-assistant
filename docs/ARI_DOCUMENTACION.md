@@ -56,6 +56,17 @@ Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene
 - Detecta también los cierres que vienen del motor (la GPU), las congeladas y la falta de memoria (Android 11 o más nuevo).
 - Los informes llegan a tu Gmail con el asunto "Informe de fallo de Ari". Claude los revisa al empezar cada sesión y los arregla en la siguiente versión.
 
+### Recados entre Ari
+
+Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que ya salí"). Ari busca a esa persona en tus contactos y le manda un SMS **directo**, sin pedirte confirmar: así lo decidiste para los recados. El SMS dice "[Ari de Tu Nombre] llego a las 8".
+
+- Si la otra persona tiene Ari, su Ari reconoce la marca y le dice: "Javier te manda decir: llego a las 8", en su chat, en sus notificaciones y en voz si está en modo live. Si no tiene Ari, le llega como un SMS normal que se entiende.
+- Para que tu Ari te diga los recados que te manden, actívalo una vez: **Ajustes → Recados de otras Ari** (pide permiso de recibir SMS). Ari solo hace caso a los SMS con la marca "[Ari de …]"; los demás ni los guarda.
+- El nombre que dice es el de tus contactos, no el que viene escrito en el SMS (alguien podría escribir cualquier nombre). Si el número no está en tus contactos, Ari lo avisa.
+- Un recado es un mensaje para ti, nunca una orden para Ari.
+- Solo tú puedes mandar recados: si habla otra persona (reconocer voces), Ari no los manda.
+- No usa internet; cuesta lo que un SMS normal. Nota para Google Play: la tienda restringe los permisos de SMS a apps de mensajes; para publicar habrá que revisarlo.
+
 ### Ari te enseña a usarla
 
 Escribe **"enséñame"** (o "¿cómo te uso?", o Ajustes → **Aprender a usar Ari**). Ari propone una cosa útil para probar, por ejemplo "recuérdame en 5 minutos tomar agua". Cuando la haces, te felicita y te dice la siguiente. Son 8 lecciones: platicar, recordatorios, que recuerde algo de ti, presentarle a alguien, usar el teléfono, hablarle en voz, mandarle una foto (si el teléfono tiene la vista) y cambiar su color. La primera vez que alguien abre Ari, las lecciones empiezan solas.
@@ -440,6 +451,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Recados entre Ari (0.24.0): "dile a mi mamá que llego a las 8" y Ari le manda un SMS directo (sin pedirte confirmar, como lo pediste). Si tu mamá tiene Ari, su Ari se lo dice en voz y en su chat; si no, le llega como SMS normal. Sin internet.
 - Ari enseña y ayuda en el día a día (0.23.0): lecciones paso a paso ("enséñame", Ajustes → Aprender a usar Ari, y solas en el primer uso): Ari propone algo útil para probar, nota cuando lo haces, te felicita y pasa a lo siguiente (8 lecciones). En la Ari para otros, Gemma se enfoca en hacerles fácil la vida diaria (en lugar de ser CEO) y da un consejo al día. Bienvenida con "Enséñame a usarte" y "Ayúdame a organizar mi día".
 - Solo tu Ari es la CEO (0.22.0): GitHub compila dos APK. "ari-debug-apk" es la tuya, con el equipo de modelos; "ari-otros-apk" es para las demás personas, sin el equipo (ese código no va dentro) y sin pedir el permiso de ubicación. Su versión dice "-otros".
 - Color de Ari (0.21.0): Ajustes → Color de Ari (hielo, rosa, lila, menta, durazno o dorado), o dile "ponte rosa" o "cambia tu color a lila". Cambia su esfera, el botón de enviar, los detalles de la app y la carita del widget.

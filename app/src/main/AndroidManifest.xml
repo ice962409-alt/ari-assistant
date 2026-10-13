@@ -12,6 +12,11 @@
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <!-- "Llama a mamá": buscar el número en tus contactos. Se pide la primera vez que lo usas. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- Recados entre Ari ("dile a mi mamá que…"): mandar el SMS y reconocer los que traen
+         la marca "[Ari de …]". Los demás SMS no se guardan ni se usan. Se piden al usarlo. -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <!-- Modo live en segundo plano: Ari te sigue escuchando mientras usas otras apps,
          siempre con una notificación fija para terminar con un toque. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -139,6 +144,16 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <!-- Recados de otras Ari por SMS. Solo Android puede mandarle SMS (BROADCAST_SMS). -->
+        <receiver
+            android:name=".AriSmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Lo que le contestas a Ari desde su chat de notificaciones. -->
         <receiver

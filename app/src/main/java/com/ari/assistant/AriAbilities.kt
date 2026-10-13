@@ -33,6 +33,7 @@ object AriAbilities {
         append("**Recordatorios**: \"recuérdame mañana a las 9 llamar a mamá\" o \"recuérdame en 20 minutos sacar la ropa\".\n\n")
         append("**Usar tu teléfono**: \"llama a mamá\", \"manda un WhatsApp a Juan que diga que voy tarde\", ")
         append("\"pon una alarma a las 7\", \"pon música de Shakira\", \"cómo llego al centro\". Yo lo preparo y tú confirmas el último paso.\n\n")
+        append("**Recados a otras Ari**: \"dile a mi mamá que llego a las 8\". Le mando un SMS y, si tiene Ari, su Ari se lo dice.\n\n")
         append("**Recordar lo que me cuentas**: \"recuerda que no como carne\", \"mi primo Luis es dentista\" y luego \"¿qué sabes de Luis?\".\n\n")
         if (phone.vision) {
             append("**Ver fotos y documentos**: toca + para mandarme una foto, un PDF o un Word, o usa Compartir → Ari desde otra app.\n\n")

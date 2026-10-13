@@ -436,3 +436,11 @@ Pedido del usuario: la Ari para otras personas debe mejorar su vida cotidiana, h
 - `Profile.personality(ceo)`: con `ceo = false` (versión para otros) no habla de ser CEO; se enfoca en la vida diaria y en ofrecer la frase exacta de las funciones.
 - Bienvenida: sugerencias "¿Qué puedes hacer?", "Enséñame a usarte", "Ayúdame a organizar mi día".
 
+## Recados entre Ari por SMS (versión 0.24.0)
+
+Decisión del usuario: "Por SMS, sin internet", y "no es necesario que uno confirme el envío, que Ari lo envíe directo" (excepción a la regla de confirmar el último paso, solo para recados).
+- `AriMessages` (pruebas en `AriMessagesTest`): `request` ("dile/avísale/mándale decir a X que Y"), `encode` ("[Ari de Nombre] texto", máx. 280), `decode`, `announce` (nombre de tus contactos; si no está, lo advierte).
+- `AriMessenger.kt`: `AriMessageAgent` (id "mensajes", primero en el CEO, fuera de GUEST_AGENTS) manda con `SmsManager` a un contacto; `AriSmsReceiver` (exportado con BROADCAST_SMS) solo procesa SMS con la marca; `AriMessenger.deliver` → chat (listener) o bandeja `ari_recados` + chat de notificaciones.
+- Permisos SEND_SMS, RECEIVE_SMS (y READ_CONTACTS), pedidos al usarlo o en Ajustes → Recados de otras Ari. `uses-feature telephony` no obligatorio.
+- Google Play restringe SMS a apps de mensajes predeterminadas: revisar antes de publicar.
+
