@@ -65,7 +65,7 @@ Ari puede delegar preguntas a otro modelo de IA que corra en tu laptop. El telé
 Cómo usarlo:
 
 - "laptop, explícame la fotosíntesis" o "pregúntale a la laptop …": Ari le pasa la pregunta y te lee la respuesta.
-- "busca la laptop": Ari recorre la red y se conecta sola.
+- "busca la laptop": Ari recorre la red y se conecta por su cuenta.
 - **/laptop**: muestra si la laptop está conectada y con qué modelo.
 - **/laptop** seguido de la dirección, por ejemplo /laptop http://192.168.1.50:11434: conecta a mano.
 - "desconecta la laptop": olvida la laptop en la red actual.
