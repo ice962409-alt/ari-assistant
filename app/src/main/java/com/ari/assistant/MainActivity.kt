@@ -910,6 +910,8 @@ class MainActivity : Activity() {
     override fun onPause() {
         super.onPause()
         if (voiceMode) stopVoiceMode("Modo voz detenido.")
+        // Al salir de Ari, el widget muestra los recuerdos y el equipo al día.
+        AriWidget.refresh(this)
     }
 
     private fun addMemory(content: String) {

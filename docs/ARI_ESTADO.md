@@ -173,3 +173,9 @@ Corregido:
 - El diálogo de aprobación ya no dice que se envían recuerdos.
 - Las palabras clave de cada puesto se compilan una sola vez.
 Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En una red con contraseña, otra red con el mismo nombre necesitaría esa contraseña para que el teléfono se conecte solo; la solución completa es el túnel cifrado (Tailscale) previsto en la nube privada.
+
+## Widget de Ari (pantalla de inicio)
+- `AriWidget` (AppWidgetProvider) con `res/layout/widget_ari.xml`: colores de Ari, un `ViewFlipper` que rota 4 mensajes cada 4.5 s con animación (deslizar y aparecer), y dos botones: "Hablar con Ari" (abre la app) y "Pendientes" (abre el tablero en el navegador).
+- Muestra solo datos del teléfono: si el modelo está cargado, cuántos recuerdos hay y cuántos modelos tiene el equipo. Por privacidad no muestra texto de conversaciones ni recuerdos. No se conecta a internet.
+- Se actualiza cada 30 minutos (mínimo de Android) y cada vez que el usuario sale de la app (`onPause`).
+- Aviso de "sesión cerrada": Claude no puede detectar el cierre de su sesión. En su lugar, al terminar o detenerse un bloque de trabajo, manda una notificación y deja `estado/actual` del tablero en "En pausa: escribe 'sigue'".

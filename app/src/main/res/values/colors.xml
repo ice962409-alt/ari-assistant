@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores de Ari, los mismos que usa MainActivity. -->
+    <color name="ari_background">#121218</color>
+    <color name="ari_surface">#23232C</color>
+    <color name="ari_green">#78DCAA</color>
+    <color name="ari_green_dim">#3378DCAA</color>
+    <color name="ari_text">#FFFFFF</color>
+    <color name="ari_muted">#B8BCC4</color>
+</resources>
