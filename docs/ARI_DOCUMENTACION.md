@@ -45,7 +45,7 @@ Ari tiene una interfaz oscura parecida a la de Claude, con **color hielo** como 
 - Mientras piensa ves "Pensando…" animado, y la respuesta aparece a medida que Gemma la escribe.
 - Las respuestas tienen formato: títulos, listas, **negritas**, cursivas y código. Puedes mantener presionado un mensaje para copiarlo.
 - Abajo está el campo para escribir, con el botón del micrófono y el botón circular de enviar.
-- Cuando todavía no hay mensajes, Ari te recibe con tu nombre: "Hola, Javier".
+- Cuando todavía no hay mensajes, Ari te recibe por tu nombre ("Hola, …").
 
 El icono de la app es un anillo color hielo con un punto al centro y un pequeño satélite: Ari y su equipo. Ari Estado tiene el mismo anillo convertido en barra de progreso.
 
