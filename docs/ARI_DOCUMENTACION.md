@@ -119,7 +119,7 @@ Ari abre tus apps y te prepara acciones. Por seguridad, **nunca llama ni envía 
 - **Mapas**: "cómo llego al aeropuerto", "llévame a casa de mi abuela".
 - **Cámara y ajustes**: "abre la cámara", "toma una foto", "abre los ajustes de wifi" (también bluetooth, sonido, pantalla, batería, ubicación y notificaciones).
 
-Funciona escribiendo o con el modo de voz. Al abrir otra app, el modo de voz se detiene.
+Funciona escribiendo o con el modo de voz. En el modo live, Ari sigue contigo aunque abra otra app (ver "Ari en segundo plano").
 
 ### Modo live: platicar con Ari en voz
 
@@ -130,7 +130,16 @@ Funciona escribiendo o con el modo de voz. Al abrir otra app, el modo de voz se 
 5. **Para interrumpirla**, tócala (o toca "Interrumpir"): se calla y te escucha, como cuando le interrumpes a alguien.
 6. Al terminar de hablar, vuelve a escucharte sola, y el teléfono vibra suavecito para avisarte que es tu turno. Mientras platican, la pantalla no se apaga. Para salir, toca el cuadrado, "Escribir" o el botón atrás.
 
-El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un error con el micrófono o si sales de la app. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
+#### Ari en segundo plano
+
+Mientras el modo live está abierto, Ari **te sigue escuchando aunque salgas de la app** o aunque ella misma abra otra por ti ("abre WhatsApp", "pon una alarma"…). Así puedes seguir pidiéndole cosas mientras usas el teléfono.
+
+- Arriba aparece la notificación **"Ari en modo live"** todo el tiempo que te escucha, con los botones **Hablar** y **Terminar**. Android también enciende el puntito verde del micrófono. Si ves la notificación, Ari te puede oír; si no, no.
+- Si la otra app empieza a sonar (música, un video), Ari **no escucha**, para no confundir la canción con tus órdenes. Toca **Hablar** en la notificación cuando quieras decirle algo.
+- Si no te escucha 3 veces seguidas, se pone **en pausa** (deja de escuchar). Si no tocas Hablar en 5 minutos, el modo live termina solo y la notificación desaparece.
+- Ari sigue sin tocar nada dentro de las otras apps: abre y prepara, y tú confirmas.
+
+El modo de voz se detiene solo si no te escucha 3 veces seguidas con Ari en pantalla, si hay un error con el micrófono o si tocas Terminar. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
 
 ### El widget de Ari
 
@@ -306,6 +315,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Ari en segundo plano (0.11.0): en el modo live, Ari te sigue escuchando aunque salgas de la app o abra otra por ti, con una notificación fija (Hablar y Terminar). Si suena música no escucha; si no te oye, se pausa y a los 5 minutos termina sola.
 - Seguridad del modo live (0.10.3): solo el widget, el acceso directo y los ajustes rápidos de Ari pueden abrir el modo live; si otra app lo intenta para encender el micrófono, Ari lo ignora.
 - Modo live más natural (0.10.2): habla desde la primera coma en frases largas, dice "a ver…" si Gemma tarda, vibra cuando es tu turno, la pantalla no se apaga y atrás cierra el modo live. Acceso directo "Hablar con Ari" al mantener presionado el icono, botón en los ajustes rápidos y la carita de Ari en las notificaciones.
 - Ari con cara y voz fluida (0.10.0): modo live a pantalla completa con Ari animada, habla frase por frase mientras Gemma escribe, respuestas cortas en voz, se puede interrumpir, saludo al abrir; widget con su carita que respira, parpadea y saluda; icono nuevo.
@@ -355,6 +365,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
+- **LiveSessionService.kt**: mantiene el modo live en segundo plano, con su notificación.
 - **AriLiveTile.kt** y **LiveShortcutActivity.kt**: el botón de ajustes rápidos y el acceso directo "Hablar con Ari".
 - **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).
 - **estado/**: la app Ari Estado (widget del progreso de Claude, llave cifrada y revisión cada 15 minutos).

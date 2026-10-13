@@ -212,6 +212,14 @@ Android tiene varias "puertas" para entrar directo a una parte de una app:
 
 Un detalle: Android abre los accesos directos **cerrando primero la app** (borra su "tarea", la pila de pantallas abiertas). Eso obligaría a Ari a cargar otra vez a Gemma, que pesa 3.4 GB. Por eso el acceso directo abre primero una **pantalla puente** invisible, en su propia tarea, que solo le avisa a Ari "abre el modo live" y se cierra al instante.
 
+### Seguir escuchando en segundo plano: el servicio en primer plano
+
+Cuando sales de una app, Android la "duerme" para cuidar la batería y tu privacidad: ya no puede usar el micrófono. Para que Ari te siga escuchando mientras usas otras apps, Android pide un **servicio en primer plano**: una parte de la app que sigue trabajando, pero **siempre con una notificación fija** que no se puede esconder. Es como una luz de "grabando": mientras la ves, Ari te puede oír, y con un toque en "Terminar" se apaga.
+
+- Android además prende el **puntito verde** del micrófono arriba de la pantalla, para cualquier app que lo use.
+- El micrófono en segundo plano solo se puede encender **mientras Ari está en pantalla**. Por eso el modo live empieza en Ari, y si Android cierra la app, no vuelve a escuchar sola.
+- Un detalle práctico: si pones música, el micrófono oiría la canción y Ari la tomaría por órdenes. Por eso, si algo está sonando, Ari espera a que toques "Hablar".
+
 ### Reconocer voces: la huella de voz
 
 Entender **qué** dices (reconocimiento de voz) y saber **quién** lo dice (reconocimiento de hablante) son dos cosas distintas. Lo primero ya lo hace Android; lo segundo necesita otro modelo de IA, pequeño (unos 25 MB), que puede correr dentro del teléfono sin internet.
@@ -361,6 +369,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Acceso directo (shortcut)**: la lista que sale al mantener presionado el icono de una app.
 - **Ajustes rápidos**: los botones del panel que bajas desde arriba de la pantalla.
 - **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
+- **Servicio en primer plano**: la parte de una app que sigue trabajando fuera de pantalla, siempre con una notificación fija.
 - **Reconocimiento de hablante**: saber quién está hablando, no lo que dice.
 - **Huella de voz (embedding de voz)**: la lista de números que resume cómo suena la voz de una persona.
 - **Dato biométrico**: un dato del cuerpo que identifica a una persona, como la huella digital, la cara o la voz.

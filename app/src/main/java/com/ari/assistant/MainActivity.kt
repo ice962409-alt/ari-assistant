@@ -1481,6 +1481,9 @@ class MainActivity : Activity() {
         voiceMode = true
         silentAttempts = 0
         voiceButton.text = VOICE_STOP_LABEL
+        // Así Ari te sigue escuchando si sales de la app o ella abre otra por ti.
+        LiveSessionService.controller = liveSessionController
+        LiveSessionService.start(this)
         val greet = greetOnStart
         greetOnStart = false
         if (busy) {
@@ -1498,6 +1501,10 @@ class MainActivity : Activity() {
     private fun stopVoiceMode(message: String) {
         voiceMode = false
         voice.stopAll()
+        downloadWatcher.removeCallbacks(listenInBackground)
+        downloadWatcher.removeCallbacks(endStandby)
+        LiveSessionService.controller = null
+        LiveSessionService.stop(this)
         voiceButton.text = VOICE_START_LABEL
         status.text = message
         setLive(AriOrbView.Mood.IDLE, "Toca a Ari para hablar", message)
@@ -1506,7 +1513,59 @@ class MainActivity : Activity() {
     private fun listen() {
         status.text = "Preparando el micrófono..."
         setLive(AriOrbView.Mood.IDLE, "Un momento…")
-        voice.startListening()
+        downloadWatcher.removeCallbacks(endStandby)
+        if (inForeground) {
+            voice.startListening()
+        } else {
+            // Fuera de Ari espera un momento: si la otra app empezó a sonar (música, un video),
+            // Ari no escucha, para no tomar la canción por órdenes tuyas.
+            downloadWatcher.removeCallbacks(listenInBackground)
+            downloadWatcher.postDelayed(listenInBackground, BACKGROUND_LISTEN_DELAY_MS)
+        }
+    }
+
+    private val listenInBackground = Runnable {
+        if (!voiceMode || busy) return@Runnable
+        val audio = getSystemService(android.media.AudioManager::class.java)
+        if (audio?.isMusicActive == true) {
+            standby("En pausa mientras suena algo. Toca Hablar cuando quieras.")
+        } else {
+            voice.startListening()
+        }
+    }
+
+    /** Ari deja de escuchar pero sigue lista: tocas "Hablar" en la notificación y continúa. */
+    private fun standby(message: String) {
+        voice.stopAll()
+        silentAttempts = 0
+        status.text = message
+        setLive(AriOrbView.Mood.IDLE, "Toca a Ari para hablar", message)
+        LiveSessionService.update(this, message)
+        // Si no vuelves en un rato, el modo live termina solo.
+        downloadWatcher.removeCallbacks(endStandby)
+        downloadWatcher.postDelayed(endStandby, STANDBY_TIMEOUT_MS)
+    }
+
+    private val endStandby = Runnable {
+        if (voiceMode) stopVoiceMode("Modo live terminado: estuvo en pausa un buen rato.")
+    }
+
+    private val liveSessionController = object : LiveSessionService.Controller {
+        override fun onTalkRequested() = runOnUiThread {
+            if (!voiceMode || isDestroyed) return@runOnUiThread
+            voice.stopSpeaking()
+            silentAttempts = 0
+            downloadWatcher.removeCallbacks(endStandby)
+            // Tocaste "Hablar": escucha ya, aunque suene música.
+            if (!busy) {
+                setLive(AriOrbView.Mood.IDLE, "Un momento…")
+                voice.startListening()
+            }
+        }
+
+        override fun onEndRequested() = runOnUiThread {
+            if (!isDestroyed) closeLive()
+        }
     }
 
     private val voiceListener = object : VoiceController.Listener {
@@ -1514,6 +1573,7 @@ class MainActivity : Activity() {
             if (!voiceMode) return
             status.text = "Escuchando... habla ahora."
             setLive(AriOrbView.Mood.LISTENING, "Te escucho…", "")
+            LiveSessionService.update(this@MainActivity, LiveSessionService.TEXT_LISTENING)
             // Un toquecito para que sepas que es tu turno sin mirar la pantalla.
             if (liveVisible) liveOrb.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
         }
@@ -1545,6 +1605,8 @@ class MainActivity : Activity() {
 
             if (noSpeech && ++silentAttempts < MAX_SILENT_ATTEMPTS) {
                 listen()
+            } else if (noSpeech && !inForeground) {
+                standby("En pausa: no te escuché. Toca Hablar para seguir.")
             } else if (noSpeech) {
                 stopVoiceMode("Modo voz pausado: no te escuché. Toca \"$VOICE_START_LABEL\" para seguir.")
             } else {
@@ -1560,7 +1622,8 @@ class MainActivity : Activity() {
     override fun onPause() {
         super.onPause()
         inForeground = false
-        if (voiceMode) stopVoiceMode("Modo voz detenido.")
+        // En modo live, Ari se queda contigo aunque salgas (con su notificación).
+        if (voiceMode && !LiveSessionService.running) stopVoiceMode("Modo voz detenido.")
         // Al salir de Ari, el widget muestra los recuerdos y el equipo al día.
         AriWidget.refresh(this)
     }
@@ -1793,6 +1856,8 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
         forgetBackupPassword()
+        LiveSessionService.controller = null
+        LiveSessionService.stop(this)
 
         executor.execute { releaseModel() }
         executor.shutdown()
@@ -1821,6 +1886,8 @@ class MainActivity : Activity() {
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val FILLER_DELAY_MS = 1800L
+        private const val BACKGROUND_LISTEN_DELAY_MS = 1200L
+        private const val STANDBY_TIMEOUT_MS = 5 * 60_000L
         private val THINKING_FILLERS = listOf("A ver…", "Mmm, déjame ver.", "A ver, a ver.", "Déjame pensarlo.")
         const val ACTION_LIVE = "com.ari.assistant.LIVE"
 

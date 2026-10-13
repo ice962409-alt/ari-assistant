@@ -290,3 +290,10 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 
 - `MainActivity` es exportada (la abre el lanzador), así que cualquier app podía mandarle `ACTION_LIVE` y encender el micrófono. Ahora el widget, el botón de ajustes rápidos y el acceso directo pasan por `LiveShortcutActivity` (no exportada), que deja un boleto en memoria (`consumeTicket`, vence en 10 s). `handleLaunch` solo abre el modo live si hay boleto; si no, la app abre normal.
 
+## Ari en segundo plano (versión 0.11.0)
+
+- `LiveSessionService`: servicio en primer plano tipo `microphone` (permisos FOREGROUND_SERVICE y FOREGROUND_SERVICE_MICROPHONE). Se inicia en `startVoiceMode` (con Ari en pantalla, como exige Android 14) y se detiene en `stopVoiceMode`/`onDestroy`. Notificación fija "Ari en modo live" con acciones Hablar/Terminar (PendingIntent al propio servicio → `Controller` registrado por MainActivity). `START_NOT_STICKY`: si Android mata el proceso, el micrófono no vuelve solo.
+- `onPause` ya no detiene el modo voz si el servicio corre. La lógica de voz y Gemma sigue en MainActivity (detenida pero viva; el servicio mantiene el proceso).
+- Fuera de Ari, `listen()` espera 1.2 s y, si `AudioManager.isMusicActive`, pasa a `standby` (no escucha). Tras 3 silencios fuera de Ari, `standby`; a los 5 min en pausa, termina.
+- Falta probar en el POCO que el reconocedor de Google acepte escuchar con la app en segundo plano.
+
