@@ -96,3 +96,21 @@ Pendiente de verificar:
 ## Documentación en Google Drive
 - El usuario pidió una copia legible de la documentación en su Drive, actualizada siempre que se termine un cambio.
 - Fuente: `docs/ARI_DOCUMENTACION.md`. Carpeta de Drive: "Ari - Documentación de Claude". El procedimiento está en `CLAUDE.md`.
+
+## Ari como CEO de agentes (en desarrollo)
+Objetivo del usuario: que Ari coordine bots y agentes en el futuro. Esta es la primera fase, solo local.
+
+- Paquete `com.ari.assistant.agents`:
+  - `Agent`: contrato común (id, nombre, descripción, ejemplos, `match` y `execute`). Pensado para que también lo implementen bots externos.
+  - `AriCeo`: recibe cada mensaje antes que Gemma, elige el primer agente que sabe atenderlo, ejecuta la tarea y la registra en la bitácora. Si ningún agente lo atiende, responde Gemma.
+  - `MemoryAgent`: frases normales sin "/": "recuerda que…", "anota que…", "guarda que…", "olvida…", "qué recuerdas de mí". "Recuérdame…" no entra, porque suele pedir un aviso.
+  - `ClockAgent`: hora y fecha del teléfono, que Gemma no conoce.
+- Base de datos versión 2: tabla `agent_tasks` (bitácora de delegaciones), con migración desde la versión 1.
+- Comandos nuevos: `/agentes` (equipo y últimas tareas) y `/delega <agente> <tarea>`.
+- Funciona con texto y con voz, y aunque el modelo no haya cargado.
+- Las expresiones de enrutamiento se probaron con jshell (misma sintaxis de regex que Kotlin/Java).
+
+Siguientes fases propuestas:
+1. Enrutamiento con Gemma cuando las reglas no basten (comprobar antes si LiteRT-LM permite una segunda conversación por motor).
+2. Agentes con acciones en el teléfono (recordatorios, alarmas), pidiendo confirmación al usuario.
+3. Bots externos (HTTP), con permisos explícitos por agente y sin credenciales en el repositorio.

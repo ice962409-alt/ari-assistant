@@ -16,6 +16,9 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import com.ari.assistant.agents.AriCeo
+import com.ari.assistant.agents.ClockAgent
+import com.ari.assistant.agents.MemoryAgent
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Engine
@@ -37,6 +40,10 @@ class MainActivity : Activity() {
     private var busy = false
 
     private lateinit var database: AriDatabase
+
+    // Ari dirige a sus agentes: cada mensaje pasa primero por el CEO, y solo
+    // si ningún agente sabe atenderlo se envía a Gemma.
+    private lateinit var ceo: AriCeo
 
     // El modelo no conoce el historial guardado ni los recuerdos hasta que
     // se los enviamos; estos indicadores marcan qué falta por enviarle.
@@ -67,6 +74,9 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         database = AriDatabase(this)
+        ceo = AriCeo(database)
+        ceo.hire(MemoryAgent(database) { memoriesPending = true })
+        ceo.hire(ClockAgent())
         buildInterface()
         voice = VoiceController(this, voiceListener)
         restoreHistory()
@@ -332,6 +342,16 @@ class MainActivity : Activity() {
 
         if (busy) return
 
+        ceo.route(text)?.let { delegation ->
+            input.text.clear()
+            val result = ceo.run(delegation)
+            database.addMessage(ROLE_USER, text)
+            database.addMessage(ROLE_ARI, result.reply)
+            appendChat("\n\nTú: $text\n\nAri (${delegation.agent.name}): ${result.reply}")
+            if (voiceMode) voice.speak(result.reply)
+            return
+        }
+
         val activeConversation = conversation
         if (!modelReady || activeConversation == null) {
             status.text = "El modelo aún no está listo. Selecciona o espera a que cargue."
@@ -478,7 +498,23 @@ class MainActivity : Activity() {
                 }
             }
 
-            else -> "No conozco ese comando. Usa /recuerda <texto>, /memoria o /olvida <texto>."
+            "/agentes" -> ceo.report()
+
+            "/delega" -> {
+                val agentId = argument.substringBefore(" ")
+                val request = argument.substringAfter(" ", "").trim()
+                val agent = ceo.agent(agentId)
+                when {
+                    argument.isEmpty() || request.isEmpty() ->
+                        "Escribe el agente y la tarea, por ejemplo: /delega reloj qué hora es."
+                    agent == null ->
+                        "No tengo un agente llamado \"$agentId\". Usa /agentes para ver el equipo."
+                    else -> "${agent.name}: ${ceo.delegateTo(agent, request).reply}"
+                }
+            }
+
+            else -> "No conozco ese comando. Usa /recuerda <texto>, /memoria, /olvida <texto>, " +
+                "/agentes o /delega <agente> <tarea>."
         }
 
         appendChat("\n\nTú: $command\n\nAri: $reply")

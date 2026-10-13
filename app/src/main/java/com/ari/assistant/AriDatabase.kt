@@ -9,6 +9,13 @@ data class ChatMessage(val role: String, val content: String)
 
 data class Memory(val id: Long, val content: String)
 
+data class AgentTaskRecord(
+    val agentId: String,
+    val request: String,
+    val reply: String,
+    val success: Boolean
+)
+
 class AriDatabase(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -32,10 +39,27 @@ class AriDatabase(context: Context) :
             )
             """.trimIndent()
         )
+        createAgentTasksTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Versión 1: no hay migraciones todavía.
+        if (oldVersion < 2) createAgentTasksTable(db)
+    }
+
+    /** Bitácora de las tareas que el CEO delega en sus agentes (versión 2). */
+    private fun createAgentTasksTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE agent_tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_id TEXT NOT NULL,
+                request TEXT NOT NULL,
+                reply TEXT NOT NULL,
+                success INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
     }
 
     fun addMessage(role: String, content: String) {
@@ -109,8 +133,46 @@ class AriDatabase(context: Context) :
         return matches.size
     }
 
+    fun addAgentTask(agentId: String, request: String, reply: String, success: Boolean) {
+        val values = ContentValues().apply {
+            put("agent_id", agentId)
+            put("request", request)
+            put("reply", reply)
+            put("success", if (success) 1 else 0)
+            put("created_at", System.currentTimeMillis())
+        }
+        writableDatabase.insert("agent_tasks", null, values)
+    }
+
+    /** Devuelve las últimas [limit] tareas de agentes, de la más reciente a la más antigua. */
+    fun recentAgentTasks(limit: Int): List<AgentTaskRecord> {
+        val result = mutableListOf<AgentTaskRecord>()
+        readableDatabase.query(
+            "agent_tasks",
+            arrayOf("agent_id", "request", "reply", "success"),
+            null,
+            null,
+            null,
+            null,
+            "id DESC",
+            limit.toString()
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                result.add(
+                    AgentTaskRecord(
+                        cursor.getString(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getInt(3) == 1
+                    )
+                )
+            }
+        }
+        return result
+    }
+
     companion object {
         private const val DATABASE_NAME = "ari.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
     }
 }
