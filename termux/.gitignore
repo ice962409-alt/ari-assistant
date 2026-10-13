@@ -1,0 +1,10 @@
+*.gguf
+node_modules/
+memory.json
+evolution.json
+ari-activity.log
+.env
+projects/
+apks/
+snippets/
+backup-*/
