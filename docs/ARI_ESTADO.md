@@ -68,6 +68,8 @@ Cambios implementados:
 - Botón "Memoria": lista los recuerdos, permite agregar uno nuevo y borrar uno tocándolo (con confirmación).
 - Contexto para Gemma: en el primer mensaje tras cargar el modelo se envían los recuerdos y los últimos 8 mensajes guardados (máx. 300 caracteres cada uno); después, los recuerdos solo se reenvían cuando cambian.
 
+Verificado:
+- Compilación correcta en GitHub Actions (run 38349873628, workflow_dispatch sobre esta rama).
+
 Pendiente de verificar:
-- Compilación en GitHub Actions de esta rama.
 - Prueba en el dispositivo: persistencia tras cerrar la app, carga automática del modelo, comandos y botón Memoria.
