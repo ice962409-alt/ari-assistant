@@ -140,3 +140,17 @@ Siguientes fases propuestas:
 - Autonomía: los mensajes con palabras de una especialidad (código, Python, Linux; analiza, estrategia, redacta…) se delegan solos al modelo con ese puesto, si existe en la red actual aprobada. Limitación conocida: si ese modelo no responde, no hay respaldo con Gemma todavía.
 - Comandos: /equipo, /equipo buscar, /equipo http://IP:PUERTO, "equipo, …", "busca modelos", "despide al equipo". /laptop y "laptop, …" siguen funcionando como alias.
 - El usuario preguntó si Claude puede hablar con Ari directamente: hoy no (Ari está en el teléfono y Claude en la nube). Idea anotada: canal de reportes vía Drive.
+
+## Objetivo de la empresa: lanzar Ari oficialmente
+- El usuario quiere lanzar Ari pronto; será el primer objetivo de la empresa. El nombre de la empresa se decidirá cuando Ari esté bien diseñada.
+- Seguridad y nube privada (pendiente, a la espera de la laptop con Linux): repositorio privado (lo hace el usuario), la laptop como casa principal de Ari, túnel cifrado con Tailscale/WireGuard, respaldos 3-2-1 (laptop, teléfono, copia cifrada en Drive) y migración a otra PC copiando la memoria de Ari. Primer paso propuesto: exportar e importar la memoria de Ari en un archivo cifrado.
+- Requisitos de lanzamiento a revisar: descarga guiada del modelo en el primer uso, personalización por usuario (hoy la personalidad habla de "tu creador"), firma de publicación, política de privacidad, justificación de permisos en Google Play (ubicación, micrófono) y licencia de Gemma.
+
+### Estabilidad (primera ronda)
+- `configChanges` en MainActivity: girar el teléfono, cambiar el tema o el tamaño de letra ya no recrea la Activity (eso cargaba un segundo Gemma y cerraba la app por falta de memoria).
+- `releaseModel()`: cierra el motor anterior antes de cargar otro y al destruir la Activity.
+- `initializeModel` atrapa `Throwable` (incluye OutOfMemoryError y errores nativos) y avisa si el teléfono tiene menos de 6 GB de RAM.
+- La copia del modelo va a un archivo temporal y se renombra al terminar; no se puede cambiar de modelo mientras Ari responde.
+- Los callbacks de Gemma y de los agentes no tocan la interfaz ni la base de datos si la Activity ya se destruyó.
+- `sendMessageAsync` protegido con try/catch.
+- Respaldo con Gemma: si Ari delegó por su cuenta (`AgentTask.automatic`) y el equipo falla, contesta ella con Gemma.

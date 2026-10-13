@@ -3,7 +3,13 @@ package com.ari.assistant.agents
 import java.text.Normalizer
 
 /** Una tarea concreta que el CEO encarga a un agente. */
-data class AgentTask(val request: String, val action: String, val argument: String = "")
+data class AgentTask(
+    val request: String,
+    val action: String,
+    val argument: String = "",
+    /** true si Ari la delegó por su cuenta (sin que el usuario nombrara al agente). */
+    val automatic: Boolean = false
+)
 
 data class AgentResult(val reply: String, val success: Boolean = true)
 

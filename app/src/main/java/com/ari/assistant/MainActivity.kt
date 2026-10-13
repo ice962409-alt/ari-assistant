@@ -36,8 +36,12 @@ class MainActivity : Activity() {
     private val executor: ExecutorService =
         Executors.newSingleThreadExecutor()
 
+    @Volatile
     private var engine: Engine? = null
+    @Volatile
     private var conversation: Conversation? = null
+    // Se lee y escribe desde el hilo principal y desde el hilo del modelo.
+    @Volatile
     private var modelReady = false
     private var busy = false
 
@@ -264,6 +268,10 @@ class MainActivity : Activity() {
     }
 
     private fun selectModel() {
+        if (busy) {
+            status.text = "Espera a que Ari termine de responder para cambiar el modelo."
+            return
+        }
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
@@ -289,10 +297,15 @@ class MainActivity : Activity() {
 
         status.text = "Preparando el archivo del modelo..."
         selectButton.isEnabled = false
+        // Desde aquí no se envían mensajes a Gemma hasta que cargue el nuevo modelo.
+        modelReady = false
 
         executor.execute {
             try {
                 val modelFile = File(filesDir, MODEL_FILE_NAME)
+                // Se copia a un archivo temporal: si la copia se interrumpe, el
+                // modelo anterior sigue intacto y no queda un archivo a medias.
+                val tempFile = File(filesDir, "$MODEL_FILE_NAME.tmp")
                 val resolver = contentResolver
 
                 val inputStream = resolver.openInputStream(uri)
@@ -301,16 +314,23 @@ class MainActivity : Activity() {
                     )
 
                 inputStream.use { source ->
-                    modelFile.outputStream().buffered().use { destination ->
+                    tempFile.outputStream().buffered().use { destination ->
                         source.copyTo(destination, 1024 * 1024)
                     }
                 }
 
-                if (modelFile.length() == 0L) {
-                    modelFile.delete()
+                if (tempFile.length() == 0L) {
+                    tempFile.delete()
                     throw IllegalStateException(
                         "El archivo seleccionado está vacío."
                     )
+                }
+
+                // Libera el modelo cargado antes de reemplazar su archivo.
+                releaseModel()
+                if (!tempFile.renameTo(modelFile)) {
+                    tempFile.delete()
+                    throw IllegalStateException("No se pudo guardar el modelo.")
                 }
 
                 runOnUiThread {
@@ -319,8 +339,10 @@ class MainActivity : Activity() {
                 }
 
                 initializeModel(modelFile)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                File(filesDir, "$MODEL_FILE_NAME.tmp").delete()
                 runOnUiThread {
+                    if (isDestroyed) return@runOnUiThread
                     status.text =
                         "Error al preparar el modelo: ${e.message}"
                     selectButton.isEnabled = true
@@ -329,7 +351,29 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Cierra el modelo cargado y libera su memoria. Se llama en el hilo del modelo. */
+    private fun releaseModel() {
+        val oldConversation = conversation
+        val oldEngine = engine
+        conversation = null
+        engine = null
+        try {
+            oldConversation?.close()
+        } catch (_: Throwable) {
+        }
+        try {
+            oldEngine?.close()
+        } catch (_: Throwable) {
+        }
+    }
+
     private fun initializeModel(modelFile: File) {
+        if (lowMemoryDevice()) {
+            runOnUiThread {
+                status.text = "Aviso: este teléfono tiene poca memoria RAM; Gemma puede tardar o fallar."
+            }
+        }
+        releaseModel()
         try {
             val newEngine = Engine(
                 EngineConfig(
@@ -347,19 +391,33 @@ class MainActivity : Activity() {
             modelReady = true
 
             runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
                 historyPending = true
                 memoriesPending = true
                 status.text = "Gemma cargado. Ari está lista."
                 appendChat("\n\nAri: ¡Hola! Ya estoy lista. ¿En qué trabajamos hoy?")
                 selectButton.isEnabled = true
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            // Throwable y no Exception: la falta de memoria (OutOfMemoryError) y
+            // los errores de la librería nativa no son Exception y cerrarían la app.
+            releaseModel()
+            modelReady = false
             runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
                 status.text =
-                    "No se pudo iniciar el modelo: ${e.message}"
+                    "No se pudo iniciar el modelo: ${e.message ?: e.javaClass.simpleName}"
                 selectButton.isEnabled = true
             }
         }
+    }
+
+    /** true si el teléfono tiene menos RAM de la recomendada para Gemma. */
+    private fun lowMemoryDevice(): Boolean {
+        val manager = getSystemService(android.app.ActivityManager::class.java) ?: return false
+        val info = android.app.ActivityManager.MemoryInfo()
+        manager.getMemoryInfo(info)
+        return info.totalMem < MIN_RECOMMENDED_RAM
     }
 
     private fun sendMessage() {
@@ -388,8 +446,7 @@ class MainActivity : Activity() {
             return
         }
 
-        val activeConversation = conversation
-        if (!modelReady || activeConversation == null) {
+        if (!modelReady || conversation == null) {
             status.text = "El modelo aún no está listo. Selecciona o espera a que cargue."
             if (voiceMode) {
                 stopVoiceMode(status.text.toString())
@@ -398,23 +455,32 @@ class MainActivity : Activity() {
             return
         }
 
-        val prompt = buildPrompt(text)
-        database.addMessage(ROLE_USER, text)
-
         input.text.clear()
+        database.addMessage(ROLE_USER, text)
         appendChat("\n\nTú: $text\n\nAri: ")
+        askGemma(text)
+    }
+
+    /** Envía [text] a Gemma; la respuesta aparece en el chat a medida que se escribe. */
+    private fun askGemma(text: String) {
+        val activeConversation = conversation
+        if (!modelReady || activeConversation == null) {
+            appendChat("El modelo aún no está listo.")
+            return
+        }
+
+        val prompt = buildPrompt(text)
         status.text = "Ari está pensando..."
         busy = true
         sendButton.isEnabled = false
 
         val response = StringBuilder()
 
-        activeConversation.sendMessageAsync(
-            prompt,
-            object : MessageCallback {
+        val callback = object : MessageCallback {
                 override fun onMessage(message: Message) {
                     val chunk = message.toString()
                     runOnUiThread {
+                        if (isDestroyed) return@runOnUiThread
                         response.append(chunk)
                         appendChat(chunk)
                     }
@@ -422,6 +488,7 @@ class MainActivity : Activity() {
 
                 override fun onDone() {
                     runOnUiThread {
+                        if (isDestroyed) return@runOnUiThread
                         saveResponse(response)
                         busy = false
                         sendButton.isEnabled = true
@@ -436,6 +503,7 @@ class MainActivity : Activity() {
 
                 override fun onError(throwable: Throwable) {
                     runOnUiThread {
+                        if (isDestroyed) return@runOnUiThread
                         saveResponse(response)
                         busy = false
                         status.text =
@@ -446,7 +514,15 @@ class MainActivity : Activity() {
                     }
                 }
             }
-        )
+
+        try {
+            activeConversation.sendMessageAsync(prompt, callback)
+        } catch (e: Throwable) {
+            busy = false
+            sendButton.isEnabled = true
+            status.text = "Error de respuesta: ${e.message ?: e.javaClass.simpleName}"
+            appendChat("[Error al generar la respuesta]")
+        }
     }
 
     private fun isAgentCommand(text: String): Boolean =
@@ -554,6 +630,14 @@ class MainActivity : Activity() {
             if (isDestroyed) return@run
             busy = false
             sendButton.isEnabled = true
+
+            // Si Ari delegó por su cuenta y el equipo falló, contesta ella con Gemma.
+            if (!result.success && delegation.task.automatic && modelReady) {
+                appendChat("(El equipo no respondió; te contesto yo.)\n\nAri: ")
+                askGemma(text)
+                return@run
+            }
+
             database.addMessage(ROLE_ARI, result.reply)
             appendChat(result.reply)
             if (voiceMode) {
@@ -852,18 +936,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
 
-        executor.execute {
-            try {
-                conversation?.close()
-            } catch (_: Exception) {
-            }
-
-            try {
-                engine?.close()
-            } catch (_: Exception) {
-            }
-        }
-
+        executor.execute { releaseModel() }
         executor.shutdown()
         voice.release()
         ceo.shutdown()
@@ -874,6 +947,7 @@ class MainActivity : Activity() {
         private const val PICK_MODEL = 101
         private const val REQUEST_AUDIO = 102
         private const val REQUEST_LOCATION = 103
+        private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
         /** Quién es Ari. Se le da a Gemma al empezar cada conversación. */
         private const val PERSONALITY =

@@ -85,7 +85,7 @@ class TeamAgent(
         val role = Role.requestedBy(normalized) ?: return null
         val network = guard.current()
         if (!guard.isApproved(network) || team(network).none { it.role == role }) return null
-        return AgentTask(message, ACTION_ASK, trimmed)
+        return AgentTask(message, ACTION_ASK, trimmed, automatic = true)
     }
 
     /** Con /delega equipo, cualquier texto es una tarea para el equipo. */

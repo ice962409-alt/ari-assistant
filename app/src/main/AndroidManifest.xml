@@ -23,6 +23,9 @@
     <!-- usesCleartextTraffic: Ollama y LM Studio sirven HTTP sin cifrar. El único
          código de red (LaptopAgent) solo se conecta a direcciones IPv4 privadas
          y solo en el hotspot del teléfono o en redes Wi-Fi aprobadas por el usuario. -->
+    <!-- configChanges: Ari no se reinicia al girar el teléfono, cambiar el tema o
+         el tamaño de letra. Reiniciar volvería a cargar Gemma (3.4 GB) con la copia
+         anterior aún en memoria, y Android cerraría la app por falta de memoria. -->
     <application
         android:allowBackup="false"
         android:label="Ari"
@@ -30,6 +33,7 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|fontScale|density|locale|layoutDirection"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
