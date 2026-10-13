@@ -52,6 +52,7 @@
          el tamaño de letra. Reiniciar volvería a cargar Gemma (3.4 GB) con la copia
          anterior aún en memoria, y Android cerraría la app por falta de memoria. -->
     <application
+        android:name=".AriApp"
         android:allowBackup="false"
         android:label="Ari"
         android:usesCleartextTraffic="true"

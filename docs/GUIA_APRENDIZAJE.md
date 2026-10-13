@@ -236,6 +236,17 @@ Tu teléfono tiene varios cerebros electrónicos:
 
 Ari intenta primero la GPU y, si tu teléfono no puede, usa la CPU. Como la GPU a veces falla de golpe en algunos teléfonos, Ari deja una marca de "estoy probando" antes de usarla: si la app se cierra, la siguiente vez ve la marca y usa la CPU, en vez de quedarse cerrándose.
 
+### Informes de fallos (crash reports)
+
+Cuando una app "truena", el programa se detiene por un error que nadie atrapó. Las apps grandes mandan solas un **informe de fallo** a sus servidores (por ejemplo, con Firebase Crashlytics) con el error y datos del teléfono, para que los programadores lo arreglen.
+
+Ari lo hace de otra forma, porque no usa internet:
+
+- Un "guardián" (`UncaughtExceptionHandler`) atrapa el error justo antes de que Android cierre la app y lo escribe en un archivo del teléfono.
+- Algunos fallos no pasan por ese guardián: los del motor en C++ (como la GPU), las congeladas (**ANR**, "la app no responde") y cuando Android la cierra por falta de memoria. Para esos, desde Android 11 el sistema guarda **por qué se cerró la app** y Ari lo lee al volver a abrir.
+- Al abrir, Ari muestra el informe y la persona decide si lo manda por WhatsApp o correo. Así nada sale del teléfono sin que ella lo vea.
+- El informe incluye la **traza** (stack trace): la lista de funciones que se estaban ejecutando cuando ocurrió el error, como las migas de pan que llevan al lugar exacto del código.
+
 ### Un modelo para cada teléfono: E4B y E2B
 
 Gemma 4 viene en tamaños. La "E" significa "efectivo": E4B trabaja como un modelo de unos 4 mil millones de parámetros y E2B como uno de 2 mil millones. Más parámetros es más listo, pero ocupa más memoria RAM y responde más lento.
@@ -469,6 +480,9 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Falso positivo**: cuando un sistema dice que sí por error, por ejemplo confundir a otra persona contigo.
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
+- **Informe de fallo (crash report)**: el registro de por qué se cerró una app, para poder arreglarla.
+- **Traza (stack trace)**: la lista de funciones que se estaban ejecutando cuando ocurrió un error.
+- **ANR**: "la aplicación no responde"; Android cierra una app que se congela varios segundos.
 - **RAM**: la memoria de trabajo del teléfono; se vacía al apagarlo. El modelo tiene que caber ahí para pensar.
 - **Proyección de medios (MediaProjection)**: la forma en que Android deja que una app vea o grabe la pantalla, siempre con tu permiso.
 - **Inyección de instrucciones**: texto escondido en una página, un documento o la pantalla que intenta darle órdenes a una IA.

@@ -184,6 +184,7 @@ class MainActivity : Activity() {
         team = TeamAgent(agentSettings, guard)
         ceo.hire(team)
         buildInterface()
+        offerFailureReport()
         voice = VoiceController(this, voiceListener)
         voiceVault = VoiceVault(this)
         voiceIdentity = VoiceIdentity(this)
@@ -303,6 +304,7 @@ class MainActivity : Activity() {
             "Respaldo de la memoria",
             "Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}",
             "Reconocer voces",
+            "Reportar un problema",
             "Acerca de Ari y licencias"
         )
         AlertDialog.Builder(this)
@@ -314,10 +316,83 @@ class MainActivity : Activity() {
                     2 -> showBackupDialog()
                     3 -> chooseEngine()
                     4 -> showVoicesDialog()
+                    5 -> askProblemReport()
                     else -> showAbout()
                 }
             }
             .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    /** Si Ari se cerró sola la vez anterior, ofrece mandar el informe a quien te pasó la app. */
+    private fun offerFailureReport() {
+        Thread {
+            FailureReport.checkSystemExit(this)
+            val report = FailureReport.pending(this) ?: return@Thread
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                AlertDialog.Builder(this)
+                    .setTitle("Ari se cerró la última vez")
+                    .setMessage(
+                        "Guardé qué pasó para poder arreglarlo. ¿Se lo mandas a quien te pasó la app? " +
+                            "Solo lleva datos del teléfono y del error: nada de tus pláticas ni recuerdos.\n\n" +
+                            "Tú eliges por dónde (WhatsApp, correo…). Ari no lo manda sola."
+                    )
+                    .setPositiveButton("Ver y mandar") { _, _ -> showReport(report, clearAfter = true) }
+                    .setNegativeButton("Borrar") { _, _ -> FailureReport.clear(this) }
+                    .setNeutralButton("Después", null)
+                    .show()
+            }
+        }.start()
+    }
+
+    private fun showReport(report: String, clearAfter: Boolean) {
+        val view = ScrollView(this).apply {
+            val pad = dp(20f)
+            addView(TextView(this@MainActivity).apply {
+                this.text = report
+                textSize = 11f
+                setTextIsSelectable(true)
+                setPadding(pad, dp(8f), pad, dp(8f))
+            })
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Informe")
+            .setView(view)
+            .setPositiveButton("Mandar") { _, _ ->
+                val share = Intent(Intent.ACTION_SEND)
+                    .setType("text/plain")
+                    .putExtra(Intent.EXTRA_SUBJECT, "Informe de fallo de Ari")
+                    .putExtra(Intent.EXTRA_TEXT, report)
+                try {
+                    startActivity(Intent.createChooser(share, "Mandar el informe"))
+                    if (clearAfter) FailureReport.clear(this)
+                } catch (e: android.content.ActivityNotFoundException) {
+                    status.text = "No encontré una app para mandar el informe."
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    /** Ajustes → Reportar un problema: quien prueba cuenta qué pasó y lo manda. */
+    private fun askProblemReport() {
+        val field = EditText(this).apply {
+            hint = "Qué pasó (por ejemplo: no me contestó al hablarle)"
+            minLines = 3
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Reportar un problema")
+            .setMessage("Se agregan datos del teléfono y el último fallo guardado. Nada de tus pláticas ni recuerdos.")
+            .setView(field)
+            .setPositiveButton("Siguiente") { _, _ ->
+                val note = field.text.toString().trim().take(1000)
+                Thread {
+                    val report = FailureReport.manual(this, note)
+                    runOnUiThread { if (!isDestroyed) showReport(report, clearAfter = true) }
+                }.start()
+            }
+            .setNegativeButton("Cancelar", null)
             .show()
     }
 

@@ -376,3 +376,10 @@ Pedido del usuario: instalar una versión básica en el teléfono de otra person
 - `ModelDownload.start(model)`, `freeSpace()`, `downloadedModel()` (prefs `modelo` y `bajando`). Botón Modelo con el recomendado primero.
 - Actions: paso "Revisar enlaces de los modelos" (no detiene la compilación) muestra el tamaño de ambos archivos.
 
+## Informe de fallos (versión 0.17.0)
+
+Pedido del usuario: que la app de la otra persona (tester) avise cuando falle. Respeta "sin internet": el informe se manda con Compartir, decidido por quien prueba.
+- `FailureReport.kt`: `AriApp` (Application) instala un `UncaughtExceptionHandler` que guarda `files/fallos/ultimo.txt` y deja seguir al de Android. `checkSystemExit` (API 30+) lee `getHistoricalProcessExitReasons`: nativo (GPU), ANR (con traza) y falta de memoria; prefs `ari_fallos/salida_vista`.
+- Texto con versión, teléfono, Android, RAM, versión básica, modelo, estado de la GPU y la traza (mensajes recortados a 300 caracteres, máximo 6000 caracteres). Pruebas en `FailureReportTest`.
+- MainActivity: `offerFailureReport` al abrir; `showReport` (vista previa + ACTION_SEND); Ajustes → Reportar un problema (`askProblemReport`).
+

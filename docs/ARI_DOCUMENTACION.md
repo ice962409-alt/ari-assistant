@@ -45,6 +45,15 @@ En teléfonos con menos de 7 GB de RAM, Ari usa su **versión básica**: no carg
 
 Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene nada tuyo, porque tus recuerdos y pláticas viven solo en tu teléfono.
 
+**Informe de fallos (para quien prueba Ari):**
+
+- Si Ari se cierra sola, guarda qué pasó. La siguiente vez que se abre pregunta: "Ari se cerró la última vez. ¿Se lo mandas a quien te pasó la app?".
+- Con **Ver y mandar**, la persona ve el informe completo y elige por dónde mandarlo (WhatsApp, correo…). Ari no lo manda sola ni usa internet.
+- También puede mandar un reporte cuando quiera: **Ajustes → Reportar un problema**, escribe qué pasó y toca Mandar.
+- El informe lleva solo: versión de Ari, modelo del teléfono, versión de Android, RAM, qué Gemma usa, si la GPU funciona y el error técnico. Nada de pláticas, recuerdos, contactos ni nombres.
+- Detecta también los cierres que vienen del motor (la GPU), las congeladas y la falta de memoria (Android 11 o más nuevo).
+- Cuando te llegue un informe, pégalo en la sesión de Claude Code para que lo arregle.
+
 ### Ajustes: una Ari para cada persona
 
 El botón **Ajustes** (arriba, junto a Memoria y Modelo) tiene:
@@ -408,6 +417,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Informe de fallos (0.17.0): si Ari se cierra sola, al abrir ofrece mandar el informe (solo datos del teléfono y del error) por WhatsApp o correo; y Ajustes → Reportar un problema. Ari no lo manda sola.
 - Ari elige su modelo según el teléfono (0.16.0): mide la RAM y el espacio y recomienda Gemma 4 E4B (3.7 GB) o el ligero E2B (2.6 GB). En teléfonos con menos de 7 GB de RAM usa su versión básica, sin la vista. Así ya se puede instalar en el teléfono de otra persona.
 - Ari ve tu pantalla y chat de notificaciones (0.15.0): dile "mira mi pantalla" desde otra app, tocas el aviso y "Permitir", y Ari mira una sola imagen y te contesta. Y cuando termina algo, te escribe en un chat de notificaciones al que puedes contestar sin abrir la app. Todo sin internet.
 - Reconocer voces (0.14.0): registras tu voz y la de otras personas (con su permiso) en Ajustes; en el modo live Ari sabe quién habla y, si no eres tú, no usa tus datos personales ni guarda esa plática en tu historial. Todo en el teléfono, cifrado y sin guardar grabaciones.
