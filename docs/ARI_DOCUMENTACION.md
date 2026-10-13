@@ -19,10 +19,17 @@ Ari es una asistente personal para Android que funciona con inteligencia artific
 ### Primer uso
 
 1. Instala el APK.
-2. Toca **Modelo** (arriba a la derecha) y elige el archivo gemma-4-E4B-it.litertlm. Ari lo copia a su almacenamiento privado.
-3. Espera el mensaje "Gemma cargado. Ari está lista".
+2. Toca **Modelo** (arriba) → **Descargar Gemma 4**. Ari baja el modelo oficial (unos 3.7 GB) con el gestor de descargas del teléfono:
+   - Solo por Wi-Fi, para no gastar tus datos. Si te desconectas, se pausa y sigue sola.
+   - Necesitas unos 4.2 GB libres.
+   - Verás el avance arriba en Ari y en las notificaciones. Puedes cerrar la app mientras.
+   - Al terminar, Ari carga a Gemma sola.
+3. Si ya tienes el archivo, toca **Modelo** → **Elegir un archivo del teléfono** y elige gemma-4-E4B-it.litertlm.
+4. Espera el mensaje "Gemma cargado. Ari está lista".
 
-Las siguientes veces, el modelo carga solo al abrir la app.
+Las siguientes veces, el modelo carga solo al abrir la app. Descargar el modelo es la **única vez que Ari usa internet**, y solo cuando tú lo pides: tus conversaciones y recuerdos no salen del teléfono.
+
+Si sales de Ari mientras trabaja (una respuesta larga, una tarea del equipo o cargando a Gemma), te avisa con una notificación cuando termina.
 
 La primera vez que abres esta versión, Ari te pregunta **cómo te llamas** para llamarte por tu nombre. Puedes dejarlo para después con "Ahora no".
 
@@ -242,6 +249,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 ### Problemas conocidos
 
 - **Google Play Protect: "Se bloqueó la app para proteger tu dispositivo"**: Play Protect no conoce al desarrollador de Ari porque todavía no está publicada en Google Play. No es un virus. Toca **Más detalles** y luego **Instalar de todas formas**. Desaparecerá del todo cuando Ari esté en Google Play con su firma oficial. No conviene desactivar Play Protect, porque protege todo el teléfono.
+- **La descarga del modelo dice que la página pide iniciar sesión**: descarga el archivo desde el navegador en huggingface.co/litert-community/gemma-4-E4B-it-litert-lm y elígelo con Modelo → Elegir un archivo del teléfono.
 - **"No se instaló la app debido a un conflicto con un paquete"**: la app instalada está firmada con otra clave. Esto ya está resuelto con una clave de depuración fija. Si vuelve a pasar, desinstala Ari una vez e instala de nuevo; tendrás que volver a seleccionar el modelo.
 
 ## 4. Historial de cambios
@@ -283,6 +291,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Descarga de Gemma desde la app (0.7.0): Modelo → Descargar, solo por Wi-Fi, con avance y carga automática al terminar. Aviso con notificación cuando Ari termina algo mientras estás fuera de la app.
 - Ari usa tu teléfono (0.6.0): abre apps, deja marcados números, prepara mensajes de WhatsApp, pone alarmas y temporizadores, busca en Google, abre rutas, la cámara y los ajustes; tú confirmas el último paso.
 - Recordatorios (0.5.0): "recuérdame mañana a las 9 …", "en 20 minutos", "el viernes a las 5 de la tarde"; lista y cancelación; notificación aunque Ari esté cerrada; se reprograman al reiniciar el teléfono.
 - Preparación para Google Play (0.4.2): sección Acerca de Ari y licencias, borrador de la política de privacidad y guía de publicación (docs/GOOGLE_PLAY.md).
@@ -292,16 +301,16 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 - **Estabilidad y optimización**: dos rondas hechas, con pruebas automáticas en cada compilación; seguirá en cada cambio.
 - **Interfaz como la de Claude**: hecha, en color hielo; se pulirán detalles con las pruebas.
-- **Primer uso sencillo**: que la app guíe la descarga del modelo, sin buscar el archivo a mano.
+- **Primer uso sencillo**: hecho en 0.7.0 (Modelo → Descargar Gemma 4).
 - **Una Ari para cada usuario**: hecho en 0.4.0 (nombre y tono por persona).
 - **Seguridad y nube privada**: repositorio privado, la laptop con Linux como casa principal de Ari, túnel cifrado (Tailscale), respaldos automáticos (laptop, teléfono y copia cifrada en Drive) y poder mudar a Ari a otra PC.
 - **Requisitos de Google Play**: licencia revisada (Gemma 4 es Apache 2.0 y ya se muestra en la app), borrador de política de privacidad y permisos justificados. Falta la cuenta de desarrollador, la firma oficial y publicar la política. Pasos en docs/GOOGLE_PLAY.md.
 
 ## 6. Ideas pendientes
 
-- Que Ari toque botones dentro de otras apps (permiso de Accesibilidad): decisión en el tablero por sus riesgos.
+- Que Ari toque botones dentro de otras apps (permiso de Accesibilidad): por ahora solo acciones seguras; Claude sigue buscando una forma segura de hacerlo.
 - Llamar o escribir por el nombre del contacto ("llama a mamá"), con permiso de contactos.
-- Mensajes de Ari sin que le hables: aviso de respaldo, saludo de la mañana o aviso si el equipo no responde (decisión en el tablero).
+- Más avisos de Ari: saludo de la mañana o aviso si el equipo de la laptop no responde.
 - Siguientes fases del CEO:
   - Que Gemma ayude a decidir qué agente atiende cada mensaje.
   - Que Ari ponga a prueba a cada modelo para darle un puesto según lo que de verdad sabe hacer, no solo por su nombre.
@@ -318,6 +327,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **Profile.kt**: tu nombre, el tono de Ari y su personalidad.
 - **ReminderNotifier.kt** y **agents/ReminderAgent.kt**, **agents/ReminderParser.kt**: los recordatorios (entender la frase, programar la alarma y mostrar la notificación).
 - **AndroidPhone.kt**, **agents/PhoneAgent.kt** y **agents/PhoneCommands.kt**: abrir apps y preparar acciones en el teléfono.
+- **ModelDownload.kt**: la descarga del modelo.
 - **AriBackup.kt** y **BackupCrypto.kt**: el respaldo y su cifrado con contraseña.
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.

@@ -18,14 +18,13 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Una Ari para cada usuario: nombre y tono por persona (0.4.0).
 - [autónomo] Recordatorios con notificación (0.5.0). Falta [prueba] en el teléfono.
 - [autónomo] Ari abre apps y prepara acciones (0.6.0). Falta [prueba] en el teléfono.
+- [autónomo] Descarga de Gemma desde la app y aviso de tareas terminadas (0.7.0). Falta [prueba].
 
 ## Siguiente
+- [autónomo] Investigar una forma segura de control total de apps (Accesibilidad limitada a apps elegidas, confirmación en cada paso, sin leer apps sensibles). El usuario la quiere a futuro.
 - [autónomo] Llamar y escribir por nombre de contacto (requiere [permiso] de contactos al usarlo).
 
 ## Esperando al usuario
-- [decisión] Control total de otras apps con Accesibilidad (en el tablero).
-- [decisión] Qué mensajes manda Ari sola, además de los recordatorios (en el tablero).
-- [decisión] Primer uso guiado: descargar el modelo exige que Ari se conecte a internet una vez (hoy no puede). Preguntar antes de empezar.
 - [prueba] APK 0.3.1 con la personalidad nueva (en el tablero).
 - [prueba] Laptop con Linux y equipo de modelos (en el tablero).
 
@@ -33,5 +32,5 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [permiso] Nube privada: túnel cifrado con Tailscale entre teléfono y laptop.
 - [autónomo] Respaldos automáticos 3-2-1: laptop, teléfono y copia cifrada en Drive.
 - [autónomo] Programa de Ari para Linux (casa principal en la laptop).
-- [permiso] Google Play: cuenta de desarrollador y firma oficial (en el tablero). Licencia, política (borrador) y permisos ya preparados: docs/GOOGLE_PLAY.md.
+- [permiso] Google Play: cuenta de desarrollador y firma oficial. El usuario dijo "más adelante": primero probar todo. Licencia, política (borrador) y permisos ya preparados: docs/GOOGLE_PLAY.md.
 - [decisión] Nombre de la empresa, cuando Ari esté bien diseñada.

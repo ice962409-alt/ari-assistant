@@ -248,3 +248,12 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `AndroidPhone.kt`: lanza en el hilo principal (el agente espera con un CountDownLatch); prueba intents alternativos; número a E.164 con el país de la red/SIM.
 - Manifiesto: `<queries>` MAIN/LAUNCHER y paquetes de WhatsApp; permiso `SET_ALARM` (normal).
 - Decisión pendiente (tablero `control-total`): Accesibilidad para tocar botones en otras apps. Riesgos: ve toda la pantalla, inyección de instrucciones, restricción de Google Play.
+
+## Descarga del modelo y avisos (versión 0.7.0)
+
+- Decisión del usuario (tablero `descarga-modelo`): Ari puede usar internet solo para descargar el modelo.
+- `ModelDownload.kt`: DownloadManager, solo Wi-Fi (`setAllowedOverMetered(false)`), destino `getExternalFilesDir("modelos")/gemma-model.litertlm.descarga`; al terminar, si mide más de 1 GB, se renombra a `gemma-model.litertlm`. Revisa espacio (3.66 GB + 0.5 GB). URL: `https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm` (3 659 530 240 bytes según mirrors; no se valida el SHA-256 porque solo viene de terceros). Si el repositorio pide sesión (401/403), se explica cómo bajarlo a mano.
+- `MainActivity`: Modelo → descargar / ver o cancelar / elegir archivo. `savedModelFile()` prefiere el archivo interno (elegido a mano) y si no, el descargado. Al elegir a mano se borra el descargado; al terminar la descarga se borra el interno. Avance cada 2 s mientras Ari está visible (`onResume`/`onStop`).
+- Avisos (tablero `mensajes-de-ari`, "avísame cuando termine una tarea"): `TaskNotifier` en `ReminderNotifier.kt`, canal "avisos". Se usa al terminar Gemma, un agente (menos el del teléfono) o la carga del modelo, solo si Ari no está en primer plano.
+- Control total con Accesibilidad: el usuario eligió "solo acciones seguras por ahora", pero quiere que se siga buscando una forma segura (tarea de investigación en BACKLOG).
+- Google Play: más adelante; primero pruebas.

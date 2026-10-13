@@ -35,14 +35,14 @@ Lista de pasos para el lanzamiento. Lo marcado [autónomo] lo hace Claude; lo de
 
 Respuestas según cómo funciona Ari hoy:
 
-- ¿Recopila o comparte datos con terceros? No. Todo se queda en el teléfono.
+- ¿Recopila o comparte datos con terceros? No. Todo se queda en el teléfono. La descarga del modelo no envía datos del usuario.
 - ¿Los datos se cifran en tránsito? No aplica: Ari no envía datos a internet. Con el equipo de la red local la conexión es HTTP sin cifrar, solo en redes aprobadas por el usuario.
 - ¿El usuario puede pedir que se borren? Sí, desde la app o borrando los datos de la app.
 
 ## 6. Justificación de permisos [autónomo]
 
 - **Micrófono (RECORD_AUDIO)**: modo de voz, solo cuando el usuario lo activa.
-- **Internet y estado de red**: hablar con los modelos del equipo en la red local.
+- **Internet y estado de red**: descargar el modelo cuando el usuario lo pide y hablar con los modelos del equipo en la red local.
 - **Estado del Wi-Fi y ubicación precisa**: Android exige la ubicación para leer el nombre de la red Wi-Fi; Ari lo usa solo para saber si la red está aprobada. No se usa la ubicación.
 - **Notificaciones (POST_NOTIFICATIONS)**: avisar los recordatorios.
 - **Alarmas exactas (SCHEDULE_EXACT_ALARM)**: que los recordatorios lleguen a la hora pedida; si el usuario no lo activa, llegan con un posible retraso.

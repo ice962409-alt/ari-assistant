@@ -21,6 +21,8 @@ Ari es una asistente personal con inteligencia artificial que funciona dentro de
 
 Todo se guarda **solo en tu teléfono**. Ari no tiene servidores, no tiene cuentas y no envía tus conversaciones, tus recuerdos ni tu nombre a internet. El modelo de IA (Gemma) también funciona dentro del teléfono.
 
+La única conexión a internet es la **descarga del modelo**, si tú la pides: el gestor de descargas de Android baja el archivo desde Hugging Face (huggingface.co). Como en cualquier descarga, ese sitio ve la dirección de internet de tu teléfono, pero no recibe ningún dato tuyo de Ari.
+
 ## Con quién se comparten
 
 - **Con nadie por defecto.**

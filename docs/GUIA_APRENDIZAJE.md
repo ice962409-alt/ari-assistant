@@ -181,6 +181,17 @@ Una app cerrada no puede "estar pendiente" de la hora: Android la detiene para a
 - **Al reiniciar el teléfono, Android borra todas las alarmas.** Por eso Ari guarda los recordatorios en su base de datos y, al encender el teléfono, los vuelve a programar.
 - **Entender la frase**: "recuérdame mañana a las 3 pagar la luz" se separa en partes: el día ("mañana"), la hora ("a las 3", que se entiende como 15:00) y lo que queda ("pagar la luz"). A esto se le llama **analizar** (en inglés, *parsing*).
 
+### Descargar un archivo grande sin riesgos
+
+Para bajar a Gemma (3.7 GB), Ari no se conecta ella misma: le pide la descarga al **gestor de descargas** de Android, el mismo que usa el navegador. Así:
+
+- La descarga sigue aunque cierres Ari, y si se corta el Wi-Fi, se pausa y continúa sola.
+- Ari pide **solo Wi-Fi** para no gastar tus datos móviles.
+- El archivo se baja con otro nombre ("a medias") y solo se convierte en el modelo cuando está completo. Así nunca se carga un archivo roto.
+- Antes de empezar, Ari revisa que haya espacio libre. Si el teléfono se llenara a la mitad, la descarga fallaría y habría que borrar el archivo incompleto.
+
+Es la única puerta a internet que Ari abre, y solo cuando tú la pides: tus conversaciones nunca pasan por ahí.
+
 ### Intents: cómo una app le pide algo a otra
 
 En Android, las apps no se tocan entre sí directamente: se mandan **intents**, que son como notas de encargo. Ari no sabe usar WhatsApp por dentro; le manda a Android la nota "abre WhatsApp con este chat y este mensaje", y WhatsApp hace el resto. Lo mismo para "marca este número" (lo abre el teléfono), "pon una alarma a las 7" (la crea el reloj) o "busca esto" (lo abre el navegador).
@@ -298,4 +309,5 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Intent**: la "nota de encargo" con la que una app le pide algo a otra en Android.
 - **Accesibilidad**: el permiso que deja a una app ver y controlar la pantalla; muy poderoso y delicado.
 - **Inyección de instrucciones**: cuando un texto intenta engañar a una IA para que haga algo que su dueño no pidió.
+- **Gestor de descargas (DownloadManager)**: el servicio de Android que baja archivos grandes, aunque la app esté cerrada.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
