@@ -33,7 +33,7 @@ class Attachment(
     /** Páginas del PDF que no se incluyeron. */
     val skippedPages: Int = 0,
 ) {
-    enum class Kind { IMAGE, PDF, DOCUMENT }
+    enum class Kind { IMAGE, PDF, DOCUMENT, SCREEN }
 
     val needsVision: Boolean get() = images.isNotEmpty()
 
@@ -43,6 +43,7 @@ class Attachment(
             Kind.IMAGE -> "Imagen: $name"
             Kind.PDF -> "PDF: $name"
             Kind.DOCUMENT -> "Documento: $name"
+            Kind.SCREEN -> "Captura de tu pantalla"
         }
 
     fun delete() {
@@ -154,7 +155,7 @@ object AttachmentReader {
         return result
     }
 
-    private fun save(context: Context, bitmap: Bitmap): File {
+    internal fun save(context: Context, bitmap: Bitmap): File {
         val file = File(folder(context), "${UUID.randomUUID()}.jpg")
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 88, it) }
         bitmap.recycle()

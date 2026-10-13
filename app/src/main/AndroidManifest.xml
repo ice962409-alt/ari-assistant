@@ -21,6 +21,8 @@
          siempre con una notificación fija para terminar con un toque. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <!-- "Mira mi pantalla": una sola imagen, siempre después de que tocas "Permitir". -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <!-- Android 11+ solo deja ver los servicios de voz declarados aquí. -->
     <queries>
@@ -87,6 +89,18 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <!-- "Mira mi pantalla": la pregunta de Android y el servicio que toma una sola imagen. -->
+        <activity
+            android:name=".ScreenConsentActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <service
+            android:name=".ScreenGlanceService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
         <!-- "Compartir → Ari" desde otras apps: imágenes, PDF, documentos y texto.
              Solo prepara el adjunto; nada se envía hasta que tú lo decides. -->
         <activity
@@ -127,6 +141,11 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <!-- Lo que le contestas a Ari desde su chat de notificaciones. -->
+        <receiver
+            android:name=".AriChatReceiver"
+            android:exported="false" />
 
         <!-- Recordatorios: avisan aunque Ari esté cerrada. -->
         <receiver
