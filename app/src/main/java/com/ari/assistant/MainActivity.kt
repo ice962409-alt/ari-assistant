@@ -22,11 +22,9 @@ import android.widget.TextView
 import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.MemoryAgent
-import com.ari.assistant.agents.NetworkGuard
 import com.ari.assistant.agents.PeopleAgent
 import com.ari.assistant.agents.PhoneAgent
 import com.ari.assistant.agents.ReminderAgent
-import com.ari.assistant.agents.TeamAgent
 import com.ari.assistant.ui.AriOrbView
 import com.ari.assistant.ui.AriTheme
 import com.ari.assistant.ui.ChatView
@@ -100,8 +98,8 @@ class MainActivity : Activity() {
     // Ari dirige a sus agentes: cada mensaje pasa primero por el CEO, y solo
     // si ningún agente sabe atenderlo se envía a Gemma.
     private lateinit var ceo: AriCeo
-    private lateinit var team: TeamAgent
-    private lateinit var guard: NetworkGuard
+    // El equipo de modelos: solo en la versión completa (la Ari del dueño es la CEO).
+    private lateinit var ceoTeam: CeoTeam
     private lateinit var reminders: ReminderAgent
     private lateinit var reminderAlarms: AlarmReminders
     private lateinit var modelDownload: ModelDownload
@@ -130,8 +128,6 @@ class MainActivity : Activity() {
         override fun run() = watchDownload()
     }
 
-    // Acción con el equipo que espera el permiso de ubicación.
-    private var pendingNetworkAction: (() -> Unit)? = null
 
     // El modelo no conoce el historial guardado ni los recuerdos hasta que
     // se los enviamos; estos indicadores marcan qué falta por enviarle.
@@ -187,10 +183,7 @@ class MainActivity : Activity() {
         ceo.hire(phoneAgent)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
         ceo.hire(ClockAgent())
-        val agentSettings = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
-        guard = NetworkGuard(this, agentSettings)
-        team = TeamAgent(agentSettings, guard)
-        ceo.hire(team)
+        ceoTeam = CeoTeam(ceoHost, ceo)
         applyColor(AriColors.byId(getSharedPreferences(COLOR_PREFS, MODE_PRIVATE).getString(KEY_COLOR, null)), save = false)
         buildInterface()
         offerFailureReport()
@@ -212,7 +205,7 @@ class MainActivity : Activity() {
         }.start()
         restoreHistory()
         loadSavedModel()
-        recruitTeam()
+        ceoTeam.recruit()
         if (firstRun) askUserName(firstTime = true) else if (!offerModelOnce()) remindBackup()
         handleLaunch(intent)
         // Por si Android borró las alarmas (reinicio, actualización, respaldo recuperado).
@@ -796,52 +789,22 @@ class MainActivity : Activity() {
         chat.showWelcome(profile.userName)
     }
 
-    /**
-     * Autonomía del CEO: si aún no tiene equipo en esta red, busca modelos.
-     * Solo en redes aprobadas; contratarlos lo decide el usuario.
-     */
-    private fun recruitTeam() {
-        val network = guard.current()
-        if (!guard.isApproved(network) || team.hasTeam(network)) return
-
-        ceo.run(AriCeo.Delegation(team, team.discoveryTask())) { result ->
-            if (isDestroyed || !result.success) return@run
-            if (busy) {
-                status.text = result.reply
-            } else {
-                saveMessage(ROLE_ARI, result.reply)
-                chat.addAri(result.reply)
-            }
-            offerCandidates()
+    private val ceoHost = object : CeoHost {
+        override val activity get() = this@MainActivity
+        override fun isBusy() = busy
+        override fun say(reply: String) {
+            saveMessage(ROLE_ARI, reply)
+            chat.addAri(reply)
         }
-    }
-
-    /** Si Ari encontró modelos nuevos, pregunta al usuario a quién contratar. */
-    private fun offerCandidates() {
-        val network = guard.current()
-        val found = team.candidates(network)
-        if (found.isEmpty() || isFinishing || isDestroyed) return
-
-        val labels = found.map { "${it.role.title}: ${it.model}\n${it.url}" }.toTypedArray()
-        val checked = BooleanArray(found.size)
-        AlertDialog.Builder(this)
-            .setTitle("¿A quién contrato? Elige solo equipos que reconozcas")
-            .setMultiChoiceItems(labels, checked) { _, index, isChecked -> checked[index] = isChecked }
-            .setPositiveButton("Contratar") { _, _ ->
-                val chosen = found.filterIndexed { index, _ -> checked[index] }
-                team.hireCandidates(network, chosen)
-                val reply = if (chosen.isEmpty()) {
-                    "No contraté a nadie."
-                } else {
-                    "Contraté a ${chosen.joinToString { it.label }}. " +
-                        "Solo reciben las tareas que les paso, nunca tus recuerdos."
-                }
-                saveMessage(ROLE_ARI, reply)
-                chat.addAri(reply)
-            }
-            .setNegativeButton("A nadie") { _, _ -> team.rejectCandidates(network) }
-            .setCancelable(false)
-            .show()
+        override fun showStatus(text: String) {
+            status.text = text
+        }
+        override fun requestLocation() {
+            requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                REQUEST_LOCATION
+            )
+        }
     }
 
     /** Interfaz al estilo de Claude, oscura y con el color hielo de Ari. */
@@ -2114,79 +2077,15 @@ class MainActivity : Activity() {
 
     /** Delega, pero antes de usar el equipo comprueba que la red esté aprobada. */
     private fun delegateSafely(text: String, delegation: AriCeo.Delegation) {
-        if (delegation.agent !== team) {
+        if (!ceoTeam.isTeam(delegation.agent)) {
             delegate(text, delegation)
             return
         }
         input.text.clear()
-        withApprovedNetwork(
+        ceoTeam.withApprovedNetwork(
             onAllowed = { delegate(text, delegation) },
             onDenied = { reason -> answerLocally(text, reason) }
         )
-    }
-
-    /**
-     * Ejecuta [onAllowed] solo en el hotspot del teléfono o en una red Wi-Fi
-     * aprobada. Si hace falta, pide el permiso de ubicación (para leer el
-     * nombre de la red) o la aprobación de la red.
-     */
-    private fun withApprovedNetwork(onAllowed: () -> Unit, onDenied: (String) -> Unit) {
-        when (val network = guard.current()) {
-            is NetworkGuard.Network.Hotspot -> onAllowed()
-
-            is NetworkGuard.Network.Wifi -> {
-                if (guard.isApproved(network)) {
-                    onAllowed()
-                    return
-                }
-                if (network.open) {
-                    onDenied(
-                        "La red «${network.name}» no tiene contraseña, así que no trabajo con el equipo ahí. " +
-                            "Activa el hotspot de tu teléfono y conecta la laptop a él."
-                    )
-                    return
-                }
-                AlertDialog.Builder(this)
-                    .setTitle("¿Trabajar con el equipo en esta red?")
-                    .setMessage(
-                        "Ari hablará con los modelos de tu equipo por la red Wi-Fi «${network.name}» y les pasará " +
-                            "las tareas que les encargue, sin cifrar (tus recuerdos nunca salen del teléfono). " +
-                            "Apruébala solo si confías en quienes " +
-                            "están conectados: tu casa o una red privada. En redes públicas usa el " +
-                            "hotspot de tu teléfono."
-                    )
-                    .setPositiveButton("Aprobar") { _, _ ->
-                        guard.approve(network)
-                        onAllowed()
-                    }
-                    .setNegativeButton("No") { _, _ ->
-                        onDenied("De acuerdo, no trabajaré con el equipo en la red «${network.name}».")
-                    }
-                    .setCancelable(false)
-                    .show()
-            }
-
-            is NetworkGuard.Network.UnknownWifi -> {
-                if (!guard.hasLocationPermission()) {
-                    pendingNetworkAction = { withApprovedNetwork(onAllowed, onDenied) }
-                    requestPermissions(
-                        arrayOf(
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        ),
-                        REQUEST_LOCATION
-                    )
-                } else {
-                    onDenied(
-                        "No puedo leer el nombre de la red Wi-Fi. Enciende la ubicación del teléfono " +
-                            "y vuelve a intentarlo."
-                    )
-                }
-            }
-
-            is NetworkGuard.Network.None ->
-                onDenied("El teléfono no está conectado a ninguna red. Conéctate a tu Wi-Fi o activa el hotspot.")
-        }
     }
 
     /** Muestra (y lee, en modo voz) una respuesta de Ari que no pasó por ningún agente. */
@@ -2235,7 +2134,7 @@ class MainActivity : Activity() {
             } else {
                 status.text = "Ari está lista."
             }
-            if (agent === team) offerCandidates()
+            ceoTeam.afterDelegation(agent)
             if (agent === reminders && result.success) prepareReminderPermissions()
             if (agent === phoneAgent && phoneAgent.needsContactsPermission) {
                 phoneAgent.needsContactsPermission = false
@@ -2365,7 +2264,7 @@ class MainActivity : Activity() {
             }
 
             else -> "No conozco ese comando. Usa /recuerda <texto>, /memoria, /olvida <texto>, " +
-                "/agentes, /delega <agente> <tarea> o /equipo."
+                "/agentes" + (if (ceoTeam.enabled) ", /delega <agente> <tarea> o /equipo." else " o /delega <agente> <tarea>.")
         }
 
         chat.addUser(command)
@@ -2420,15 +2319,7 @@ class MainActivity : Activity() {
             return
         }
         if (requestCode == REQUEST_LOCATION) {
-            val action = pendingNetworkAction
-            pendingNetworkAction = null
-            // Android solo deja leer el nombre de la Wi-Fi con la ubicación precisa;
-            // con la aproximada no se vuelve a preguntar (evita un ciclo de permisos).
-            if (guard.hasLocationPermission()) {
-                action?.invoke()
-            } else {
-                status.text = "Ari necesita la ubicación precisa (no la aproximada) para reconocer la red Wi-Fi."
-            }
+            ceoTeam.onLocationResult()
             return
         }
         if (requestCode == REQUEST_AUDIO_ENROLL) {

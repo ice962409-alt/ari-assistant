@@ -56,16 +56,24 @@ jobs:
           done
 
       - name: Pruebas automaticas
-        run: ./gradlew :app:testDebugUnitTest
+        run: ./gradlew :app:testCompletaDebugUnitTest :app:testOtrosDebugUnitTest
 
       - name: Compilar APK
         run: ./gradlew assembleDebug
 
+      # La Ari del dueño (la CEO, con su equipo de modelos).
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
           name: ari-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/completa/debug/app-completa-debug.apk
+
+      # La Ari para otras personas (sin equipo de modelos).
+      - name: Guardar APK para otros
+        uses: actions/upload-artifact@v4
+        with:
+          name: ari-otros-apk
+          path: app/build/outputs/apk/otros/debug/app-otros-debug.apk
 
       - name: Guardar APK de Ari Estado
         uses: actions/upload-artifact@v4

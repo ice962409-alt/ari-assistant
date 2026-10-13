@@ -1,7 +1,7 @@
 package com.ari.assistant
 
 import android.content.SharedPreferences
-import com.ari.assistant.agents.NetworkGuard
+import com.ari.assistant.agents.PrivateAddress
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -118,7 +118,7 @@ object AriBackup {
         for (index in 0 until array.length()) {
             val item = array.optJSONObject(index) ?: continue
             val host = runCatching { URI(item.getString("url")).host }.getOrNull() ?: continue
-            if (NetworkGuard.isPrivateAddress(host)) result.put(item)
+            if (PrivateAddress.matches(host)) result.put(item)
         }
         return result
     }

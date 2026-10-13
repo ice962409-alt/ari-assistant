@@ -142,13 +142,6 @@ class NetworkGuard(
         /** Interfaces que Android usa para el hotspot y para compartir por USB o Bluetooth. */
         private val HOTSPOT_PREFIXES = listOf("ap", "swlan", "softap", "wlan1", "rndis", "bt-pan")
 
-        /** true si [host] es una dirección IPv4 privada escrita con números (192.168.x.x, 10.x.x.x, 172.16-31.x.x). */
-        fun isPrivateAddress(host: String): Boolean {
-            val parts = host.split('.').map { it.toIntOrNull() ?: return false }
-            if (parts.size != 4 || parts.any { it !in 0..255 }) return false
-            return parts[0] == 10 ||
-                (parts[0] == 172 && parts[1] in 16..31) ||
-                (parts[0] == 192 && parts[1] == 168)
-        }
+        fun isPrivateAddress(host: String): Boolean = PrivateAddress.matches(host)
     }
 }

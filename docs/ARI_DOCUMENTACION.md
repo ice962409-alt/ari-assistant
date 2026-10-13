@@ -35,6 +35,8 @@ La primera vez que abres esta versión, Ari te pregunta **cómo te llamas** para
 
 ### Instalar Ari en otro teléfono (versión básica)
 
+Para otras personas usa el APK **ari-otros-apk**: no trae el equipo de modelos (solo tu Ari es la CEO) ni pide el permiso de ubicación.
+
 Ari se instala con el mismo APK en cualquier teléfono con Android 8 o más nuevo y procesador de 64 bits. La primera vez, después de preguntar el nombre, Ari muestra sola su recomendación con "Descargar ahora", "Más tarde" o "Ya tengo el archivo" (y siempre está en el botón **Modelo**). Ari mide la memoria RAM y el espacio libre y pone primero el modelo que mejor corre ahí:
 
 - **Gemma 4 E4B** (3.7 GB): el más listo, para teléfonos con 8 GB de RAM o más (como el POCO).
@@ -378,6 +380,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 1. Cada cambio que llega a main se compila solo en GitHub Actions: https://github.com/javierhedzd-ops/ari-assistant/actions
 2. Abre la ejecución más reciente, que debe tener la palomita verde, y descarga **ari-debug-apk**.
+   - **ari-debug-apk** es tu Ari completa, la CEO, con su equipo de modelos.
+   - **ari-otros-apk** es la Ari para las demás personas: todo lo demás igual, pero sin el equipo de modelos ni el permiso de ubicación. Es la que les mandas.
 3. Instala el APK encima de la versión anterior. No hace falta desinstalar, y se conservan el modelo, el historial y los recuerdos.
 
 ### Problemas conocidos
@@ -426,6 +430,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Solo tu Ari es la CEO (0.22.0): GitHub compila dos APK. "ari-debug-apk" es la tuya, con el equipo de modelos; "ari-otros-apk" es para las demás personas, sin el equipo (ese código no va dentro) y sin pedir el permiso de ubicación. Su versión dice "-otros".
 - Color de Ari (0.21.0): Ajustes → Color de Ari (hielo, rosa, lila, menta, durazno o dorado), o dile "ponte rosa" o "cambia tu color a lila". Cambia su esfera, el botón de enviar, los detalles de la app y la carita del widget.
 - Ari se presenta (0.20.0): la primera vez, después de preguntar el nombre, Ari cuenta en el chat lo que puede hacer, con ejemplos para probar. Cuando le preguntas "¿qué puedes hacer?" (o "ayuda") lo repite, aunque Gemma no esté cargada; en voz dice una versión corta. La bienvenida tiene el botón "¿Qué puedes hacer?". Solo menciona lo que el teléfono puede hacer.
 - Primer uso más fácil (0.19.0): la primera vez sin modelo, después de preguntar el nombre, Ari muestra sola qué Gemma le conviene al teléfono (con tamaño, espacio y "solo por Wi-Fi") y ofrece "Descargar ahora", "Más tarde" o "Ya tengo el archivo". Solo pregunta una vez; nada se descarga sin tocar el botón.

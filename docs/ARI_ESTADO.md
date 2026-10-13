@@ -419,3 +419,12 @@ Pedido del usuario: "Se puede incluir cambiar el color de Ari".
 - Widget: si el color no es hielo, cada carita se dibuja en un bitmap de 128 px con el tono girado (ColorMatrix de rotación de tono + saturación).
 - Informes de fallo por correo (decisión del usuario: "Por correo a tu Gmail"): `sendReport` usa `ACTION_SENDTO mailto:` a `R.string.report_email` con asunto "Informe de fallo de Ari <versión>"; "Otra app" usa Compartir. Claude los busca en Gmail al empezar cada sesión (CLAUDE.md).
 
+## Solo la Ari del dueño es la CEO (versión 0.22.0)
+
+Decisión del usuario: "Dos versiones del APK".
+- `productFlavors` en app/build.gradle.kts: `completa` y `otros` (versionNameSuffix "-otros"). Mismo applicationId.
+- `src/completa`: `TeamAgent`, `NetworkGuard`, `CeoTeam` (buscar, contratar, red aprobada, permiso de ubicación) y un manifiesto con los permisos de Wi-Fi/ubicación y `usesCleartextTraffic`.
+- `src/otros`: `CeoTeam` vacío (`enabled = false`; con el equipo dice que no trabaja con uno).
+- main: `CeoHost` (lo que CeoTeam usa de MainActivity) y `PrivateAddress` (antes `NetworkGuard.isPrivateAddress`, lo usa el respaldo).
+- Actions: pruebas de ambas versiones; artefactos `ari-debug-apk` (completa) y `ari-otros-apk`.
+

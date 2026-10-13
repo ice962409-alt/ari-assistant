@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo la Ari completa (la del dueño, la CEO) trabaja con su equipo de modelos. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Para hablar con los modelos de la laptop en la red Wi-Fi local. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Android solo deja leer el nombre de la red Wi-Fi con permiso de ubicación.
+         Ari lo usa únicamente para saber si la red está aprobada. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- usesCleartextTraffic: Ollama y LM Studio sirven HTTP sin cifrar. El único
+         código de red (TeamAgent) solo se conecta a direcciones IPv4 privadas
+         y solo en el hotspot del teléfono o en redes Wi-Fi aprobadas por el usuario. -->
+    <application
+        android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic" />
+</manifest>

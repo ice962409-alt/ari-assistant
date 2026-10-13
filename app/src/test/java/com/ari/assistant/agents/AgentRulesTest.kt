@@ -125,10 +125,10 @@ class AgentRulesTest {
     @Test
     fun soloDireccionesPrivadas() {
         listOf("192.168.1.50", "10.0.0.2", "172.16.0.1", "172.31.255.255").forEach {
-            assertTrue(it, NetworkGuard.isPrivateAddress(it))
+            assertTrue(it, PrivateAddress.matches(it))
         }
         listOf("8.8.8.8", "172.32.0.1", "192.169.0.1", "localhost", "example.com", "192.168.1", "300.1.1.1").forEach {
-            assertFalse(it, NetworkGuard.isPrivateAddress(it))
+            assertFalse(it, PrivateAddress.matches(it))
         }
     }
 }

@@ -159,6 +159,15 @@ Google Play pide que cada app publique una **política de privacidad**: un texto
 - Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es su carita color hielo sobre fondo oscuro, y en iconos temáticos se pinta de un solo color con los ojos y la boca recortados.
 - Desde Android 15, las apps se dibujan **de borde a borde**, también detrás de la barra de estado y del teclado. Por eso la app calcula esos márgenes ("insets") para que la barra superior y el campo de texto nunca queden tapados.
 
+### Sabores de una app (product flavors)
+
+Una misma app puede compilarse en varias **versiones** ("sabores") a partir del mismo código. Cada sabor puede traer archivos propios y permisos distintos. Ari tiene dos:
+
+- **completa**: la tuya. Trae la carpeta `src/completa`, con el equipo de modelos (la parte de CEO) y los permisos de Wi-Fi y ubicación que necesita.
+- **otros**: la que mandas a las demás personas. Su carpeta `src/otros` trae una versión vacía de esa parte, así que el código del equipo **ni siquiera va dentro** del APK.
+
+Es más seguro que esconder un botón: lo que no está en la app no se puede activar.
+
 ### Pruebas automáticas
 
 Una **prueba automática** es un pequeño programa que revisa que otra parte del código haga lo que debe. Por ejemplo, una prueba de Ari le dice "olvida eso" al agente de memoria y comprueba que **no** borre nada; otra cifra un respaldo y comprueba que con una contraseña equivocada no se abra.
@@ -491,6 +500,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Falso positivo**: cuando un sistema dice que sí por error, por ejemplo confundir a otra persona contigo.
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
+- **Sabor (product flavor)**: una versión de la app compilada del mismo código, con piezas o permisos distintos.
 - **Instrucciones de sistema (system prompt)**: las reglas que recibe un modelo al empezar una conversación y que valen para toda la plática.
 - **Informe de fallo (crash report)**: el registro de por qué se cerró una app, para poder arreglarla.
 - **Traza (stack trace)**: la lista de funciones que se estaban ejecutando cuando ocurrió un error.

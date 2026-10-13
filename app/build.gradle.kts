@@ -36,11 +36,25 @@ android {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 33
-        versionName = "0.21.0"
+        versionCode = 34
+        versionName = "0.22.0"
         // Solo teléfonos de 64 bits (como el POCO): las librerías de voz pesan menos en el APK.
         ndk {
             abiFilters += listOf("arm64-v8a")
+        }
+    }
+
+    // Dos versiones con el mismo código:
+    // - completa: la Ari del dueño, la CEO, con su equipo de modelos (src/completa).
+    // - otros: para las demás personas, sin el equipo ni el permiso de ubicación (src/otros).
+    flavorDimensions += "version"
+    productFlavors {
+        create("completa") {
+            dimension = "version"
+        }
+        create("otros") {
+            dimension = "version"
+            versionNameSuffix = "-otros"
         }
     }
 }
