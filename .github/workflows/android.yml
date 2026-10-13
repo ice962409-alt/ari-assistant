@@ -44,6 +44,18 @@ jobs:
           echo "633c24321e06b1fe79feafa03ea16cbc0f8a286641e2da3559bac91bdb13bd96  app/libs/sherpa-onnx-1.13.8.aar" | sha256sum -c -
           echo "c46fad10b5f81e1aa4a60c162714208577093655076c5450f8c469e522ec54ef  app/src/main/assets/ari_voz.onnx" | sha256sum -c -
 
+      # Revisa que los enlaces de descarga de Gemma sigan vivos y anota su tamaño
+      # (Ari los usa para saber cuánto espacio pedir). No detiene la compilación.
+      - name: Revisar enlaces de los modelos
+        continue-on-error: true
+        run: |
+          for model in E4B E2B; do
+            url="https://huggingface.co/litert-community/gemma-4-${model}-it-litert-lm/resolve/main/gemma-4-${model}-it.litertlm"
+            echo "== $model"
+            curl -sSI "$url" | grep -iE "^HTTP|x-linked-size|x-linked-etag|^location" || true
+          done
+          curl -sS "https://huggingface.co/api/models/litert-community/gemma-4-E2B-it-litert-lm/tree/main" | head -c 3000 || true
+
       - name: Pruebas automaticas
         run: ./gradlew :app:testDebugUnitTest
 
