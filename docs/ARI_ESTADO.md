@@ -361,3 +361,10 @@ Decisión del usuario: "Sí, mi voz y la de otras personas". Detalle técnico en
 - Pruebas puras en `voz/VoiceTest`. Lo que solo se ve en el teléfono: si el reconocedor de Google acepta `EXTRA_AUDIO_SOURCE`, y el umbral 0.55.
 - APK solo arm64-v8a (abiFilters) por el peso de onnxruntime.
 
+## Ari ve tu pantalla y chat de notificaciones (versión 0.15.0)
+
+Pedidos del usuario: "Quiero que Ari vea mi pantalla cuando le diga" y "Quiero que me mande mensajes Ari cuando algo esté listo" (eligió "Mejor sin internet").
+- `ScreenRequest` (pruebas en `ScreenRequestTest`) detecta "mira mi pantalla" y descarta brillo, fondo, apagar, tiempo de pantalla, grabar.
+- `ScreenGlance.kt`: aviso "Ari quiere ver tu pantalla" (Android no deja abrir actividades desde atrás) → `ScreenConsentActivity` (no exportada, translúcida) lanza `createScreenCaptureIntent` (pantalla completa en Android 14+) → `ScreenGlanceService` (FGS `mediaProjection`) toma una imagen con `ImageReader`/`VirtualDisplay` tras 900 ms, la guarda como JPEG de 1024 px y para la proyección. MainActivity la manda a Gemma como `Attachment.Kind.SCREEN` con la pregunta. Solo dueño; con Ari en pantalla da una indicación; la pregunta vale 2 minutos.
+- `AriChat.kt`: reemplaza a `TaskNotifier`. `notifyIfAway(text)` escribe en un chat `MessagingStyle` (Persona "Ari", acceso directo de conversación en Android 11+, últimas 8 líneas). "Responder" con `RemoteInput` → `AriChatReceiver` (no exportado; `PendingIntent` mutable, `setAuthenticationRequired` en Android 12+) → `AriChat.controller` en MainActivity, que lo trata como mensaje escrito. Silencioso en modo live; se limpia en `onResume`. Canal viejo "avisos" se borra.
+

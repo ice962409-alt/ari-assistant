@@ -30,6 +30,8 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Gemma en la GPU (0.13.1), por "responde lento". Falta [prueba].
 - [autónomo] Esfera más elaborada (0.13.2), decisión del usuario. Falta [prueba].
 - [autónomo] Reconocer voces (0.14.0), decidido por el usuario. Falta [prueba] (sobre todo si el reconocedor del POCO acepta el audio de Ari).
+- [autónomo] Ari ve tu pantalla (0.15.0), pedido por el usuario. Falta [prueba].
+- [autónomo] Chat de Ari en las notificaciones (0.15.0), pedido por el usuario ("Mejor sin internet"). Falta [prueba].
 - [autónomo] Siguiente para voces: recuerdos propios de cada persona registrada.
 - [autónomo] Siguiente para la libreta: aviso un día antes de cada cumpleaños y verla y editarla en una pantalla (botón Memoria).
 - [autónomo] Siguiente para adjuntos: audios (Gemma 4 también entiende audio) y varias imágenes a la vez.

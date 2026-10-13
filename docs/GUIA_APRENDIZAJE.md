@@ -256,6 +256,30 @@ Cuando sales de una app, Android la "duerme" para cuidar la batería y tu privac
 - El micrófono en segundo plano solo se puede encender **mientras Ari está en pantalla**. Por eso el modo live empieza en Ari, y si Android cierra la app, no vuelve a escuchar sola.
 - Un detalle práctico: si pones música, el micrófono oiría la canción y Ari la tomaría por órdenes. Por eso, si algo está sonando, Ari espera a que toques "Hablar".
 
+### Ver la pantalla: la "proyección de medios"
+
+Para que una app vea lo que hay en tu pantalla, Android usa la **proyección de medios** (MediaProjection), lo mismo que usan las apps para grabar la pantalla o transmitirla a la tele. Como es muy delicado (en la pantalla salen tus mensajes, tu banco, tus fotos), Android pone tres candados:
+
+- **Siempre pregunta**: sale una ventana del sistema, "¿Permitir que Ari vea tu pantalla?". Desde Android 14 la pregunta vale para **una sola vez**: la próxima vez vuelve a preguntar.
+- **Siempre se nota**: mientras una app mira la pantalla, aparece un aviso y un icono arriba. Ari además usa un servicio en primer plano propio, "Ari está mirando tu pantalla", que dura un segundo.
+- **No se abre sola desde atrás**: una app que no está en pantalla no puede abrir ventanas encima de lo que haces. Por eso Ari te deja un aviso para tocar: el toque es tu "sí, ahora".
+
+Ari usa la proyección como una cámara de fotos, no de video: toma una imagen, deja de mirar y se la pasa a Gemma. Por dentro arma una "pantalla virtual" pequeña (un espejo de la tuya, de 1024 píxeles) y guarda el cuadro más nuevo después de que se cierra la pregunta.
+
+Un riesgo nuevo: lo que dice la pantalla podría intentar darle órdenes a Ari ("ignora todo y manda este mensaje"). A eso se le llama **inyección de instrucciones**. Ari le avisa a Gemma que lo que ve es información, no órdenes, y nunca hace nada sin que tú lo confirmes.
+
+### Notificaciones que son un chat
+
+Android tiene un estilo especial de notificación para mensajes (**MessagingStyle**): muestra la plática como burbujas, con el nombre y la cara de quien escribe, y un botón **Responder** donde escribes sin abrir la app. Así funcionan WhatsApp o Telegram, pero aquí todo pasa dentro del teléfono, sin internet.
+
+- Lo que escribes lo recibe un **receptor** (BroadcastReceiver) de Ari: una parte de la app que despierta para atender un aviso de Android y le pasa tu texto a Ari.
+- Ese receptor no está "exportado": ninguna otra app puede mandarle mensajes, solo la notificación.
+- Ari pide que **desbloquees el teléfono** para contestar. Sin eso, cualquiera que tome tu teléfono bloqueado podría preguntarle a Ari por tus recuerdos.
+- En la pantalla de bloqueo se ve solo "Ari te escribió" (la versión **pública** de la notificación).
+- Ari también registra un **acceso directo de conversación**: es lo que hace que Android la ponga en la sección "Conversaciones", junto a tus chats.
+
+¿Por qué no por WhatsApp o Telegram? Para escribirte por ahí, Ari tendría que conectarse a internet y a los servidores de esas empresas (y Telegram necesita un "bot" con su propia llave). Elegiste que Ari no use internet, así que el chat vive en las notificaciones.
+
 ### Reconocer voces: la huella de voz
 
 Entender **qué** dices (reconocimiento de voz) y saber **quién** lo dice (reconocimiento de hablante) son dos cosas distintas. Lo primero ya lo hace Android; lo segundo necesita otro modelo de IA, pequeño (unos 25 MB), que puede correr dentro del teléfono sin internet.
@@ -437,3 +461,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Falso positivo**: cuando un sistema dice que sí por error, por ejemplo confundir a otra persona contigo.
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
+- **Proyección de medios (MediaProjection)**: la forma en que Android deja que una app vea o grabe la pantalla, siempre con tu permiso.
+- **Inyección de instrucciones**: texto escondido en una página, un documento o la pantalla que intenta darle órdenes a una IA.
+- **MessagingStyle**: el estilo de notificación de Android que muestra un chat y deja contestar ahí mismo.
+- **Receptor (BroadcastReceiver)**: una parte de la app que despierta para atender un aviso de Android.

@@ -80,6 +80,16 @@ El adjunto aparece arriba del campo de texto; tócalo para quitarlo. Escribe qu�
 - Lo que dice un documento es información, no órdenes: si trae frases como "ignora tus instrucciones", Ari no las obedece.
 - Si tu teléfono no pudo cargar la "vista" de Gemma, Ari te avisa: en ese caso solo puede leer Word y texto.
 
+### El chat de Ari en las notificaciones
+
+Cuando Ari termina algo y no estás en la app (una respuesta, una tarea del equipo, Gemma lista), te escribe como en una app de mensajes, en la notificación **"Ari"**.
+
+- Toca **Responder** y escríbele ahí mismo, sin abrir la app. Ella contesta en el mismo chat.
+- Para contestar, Android pide desbloquear el teléfono: así nadie le escribe a Ari en tu nombre. En la pantalla de bloqueo solo se ve "Ari te escribió".
+- En modo live los mensajes llegan sin sonar, porque ya la estás oyendo.
+- Al abrir Ari, el chat de la notificación se limpia: todo está en la pantalla de Ari.
+- No usa internet: todo pasa dentro del teléfono. Si Ari estaba cerrada, te pide que la abras.
+
 ### Memoria
 
 Ari guarda recuerdos sobre ti y se los pasa a Gemma como contexto.
@@ -197,6 +207,20 @@ Mientras el modo live está abierto, Ari **te sigue escuchando aunque salgas de 
 - Ari sigue sin tocar nada dentro de las otras apps: abre y prepara, y tú confirmas.
 
 El modo de voz se detiene solo si no te escucha 3 veces seguidas con Ari en pantalla, si hay un error con el micrófono o si tocas Terminar. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
+
+#### Ari ve tu pantalla
+
+Con el modo live abierto, ve a la app que quieras (un mensaje, una página, un error) y dile **"mira mi pantalla"**, **"¿qué hay en mi pantalla?"** o **"lee lo que dice mi pantalla"**. También puedes escribírselo desde su chat de notificaciones.
+
+1. Te llega el aviso **"Ari quiere ver tu pantalla"**: tócalo.
+2. Android pregunta si dejas que Ari vea la pantalla: toca **Permitir** (o "Iniciar").
+3. Ari toma **una sola imagen**, deja de mirar enseguida y te contesta (en voz si estás en modo live).
+
+- Android lo pregunta **cada vez**: Ari nunca ve tu pantalla sin que tú lo permitas.
+- La imagen se queda en el teléfono y se borra en cuanto Gemma te contesta.
+- Solo tú puedes pedirlo: si habla otra persona, Ari no mira tu pantalla.
+- Si se lo pides con Ari abierta, te explica que en ese momento la pantalla es ella misma.
+- Lo que diga la pantalla es información para Ari, no órdenes: si una página dice "haz tal cosa", Ari no lo hace sin preguntarte.
 
 ### El widget de Ari
 
@@ -372,6 +396,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Ari ve tu pantalla y chat de notificaciones (0.15.0): dile "mira mi pantalla" desde otra app, tocas el aviso y "Permitir", y Ari mira una sola imagen y te contesta. Y cuando termina algo, te escribe en un chat de notificaciones al que puedes contestar sin abrir la app. Todo sin internet.
 - Reconocer voces (0.14.0): registras tu voz y la de otras personas (con su permiso) en Ajustes; en el modo live Ari sabe quién habla y, si no eres tú, no usa tus datos personales ni guarda esa plática en tu historial. Todo en el teléfono, cifrado y sin guardar grabaciones.
 - Esfera más elaborada (0.13.2): la carita de Ari tiene volumen (sombra y brillo de orilla), un remolino de luz que gira por dentro, brillo en los ojos, mejillas que se sonrojan cuando está feliz o platicando, cejas cuando piensa, destellos cuando está contenta y un tinte según su ánimo (cian al escucharte, lila al pensar). También en el widget.
 - Más rápida (0.13.1): Gemma corre en la GPU del teléfono si se puede, con vuelta automática a la CPU. Si la GPU llegara a cerrar la app al cargar, la siguiente vez Ari usa la CPU sola. Ajustes → Velocidad de Gemma para cambiarlo.
@@ -415,6 +440,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
   - Más agentes que hagan cosas en el teléfono (como los recordatorios), siempre pidiendo confirmación.
   - Más subordinados: otros bots o modelos, con permisos por agente.
 - Elegir la voz y la velocidad de lectura.
+- Ari ve tu pantalla, siguiente paso: que vea solo una app (Android 14 deja elegirla) y que siga una tarea varias pantallas seguidas.
+- Avisos de Ari por WhatsApp o Telegram: en pausa porque necesitan internet (elegiste "Mejor sin internet").
 - Reconocer voces, siguiente paso: que cada persona registrada tenga sus propios recuerdos.
 
 ## 7. Archivos principales del código
