@@ -151,7 +151,7 @@ Ari aparece así porque la instalas directamente desde GitHub (a esto se le llam
 
 Una **prueba automática** es un pequeño programa que revisa que otra parte del código haga lo que debe. Por ejemplo, una prueba de Ari le dice "olvida eso" al agente de memoria y comprueba que **no** borre nada; otra cifra un respaldo y comprueba que con una contraseña equivocada no se abra.
 
-GitHub Actions corre las 17 pruebas de Ari **antes** de compilar el APK. Si una falla, no sale el APK y Claude se entera antes de que el error llegue a tu teléfono. Es como un control de calidad en una fábrica: cada pieza se revisa antes de empaquetarla.
+GitHub Actions corre las pruebas de Ari **antes** de compilar el APK. Si una falla, no sale el APK y Claude se entera antes de que el error llegue a tu teléfono. Es como un control de calidad en una fábrica: cada pieza se revisa antes de empaquetarla.
 
 Para poder probar sin un teléfono, el código se separa en piezas que no dependen de Android. El agente de memoria, por ejemplo, ya no habla directamente con la base de datos sino con una **interfaz** (una lista de lo que necesita: guardar, listar y borrar recuerdos). En la app la cumple la base de datos real; en las pruebas, una "memoria de mentira".
 
