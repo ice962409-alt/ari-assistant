@@ -33,6 +33,13 @@ class AriOrbView(context: Context) : View(context) {
             invalidate()
         }
 
+    /** true cuando algo la tapa (el modo live encima del chat): deja de animarse para no gastar batería. */
+    var paused: Boolean = false
+        set(value) {
+            field = value
+            if (!value) invalidate()
+        }
+
     /** Volumen de tu voz (0 a 1) mientras Ari escucha. */
     var level: Float = 0f
         set(value) {
@@ -60,6 +67,7 @@ class AriOrbView(context: Context) : View(context) {
     private val oval = RectF()
     private val path = Path()
     private var shaderSize = 0f
+    private val sides = floatArrayOf(-1f, 1f)
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
@@ -101,6 +109,12 @@ class AriOrbView(context: Context) : View(context) {
                 intArrayOf(Color.argb(150, 158, 216, 238), Color.argb(0, 158, 216, 238)),
                 floatArrayOf(0.45f, 1f), Shader.TileMode.CLAMP
             )
+            // El degradado del cuerpo se calcula una vez; al respirar se escala el lienzo, no se rehace.
+            body.shader = RadialGradient(
+                cx - radius * 0.35f, cy - radius * 0.4f, radius * 1.6f,
+                intArrayOf(Color.rgb(222, 246, 253), AriTheme.ice, AriTheme.iceDeep),
+                floatArrayOf(0f, 0.45f, 1f), Shader.TileMode.CLAMP
+            )
         }
         glow.alpha = (255 * haloStrength).toInt().coerceIn(0, 255)
         canvas.drawCircle(cx, cy, size * 0.5f, glow)
@@ -116,14 +130,12 @@ class AriOrbView(context: Context) : View(context) {
         }
 
         // Cuerpo con luz arriba a la izquierda.
-        body.shader = RadialGradient(
-            cx - r * 0.35f, cy - r * 0.4f, r * 1.6f,
-            intArrayOf(Color.rgb(222, 246, 253), AriTheme.ice, AriTheme.iceDeep),
-            floatArrayOf(0f, 0.45f, 1f), Shader.TileMode.CLAMP
-        )
-        canvas.drawCircle(cx, cy, r, body)
-        oval.set(cx - r * 0.55f, cy - r * 0.75f, cx - r * 0.05f, cy - r * 0.45f)
+        canvas.save()
+        canvas.scale(r / radius, r / radius, cx, cy)
+        canvas.drawCircle(cx, cy, radius, body)
+        oval.set(cx - radius * 0.55f, cy - radius * 0.75f, cx - radius * 0.05f, cy - radius * 0.45f)
         canvas.drawOval(oval, shine)
+        canvas.restore()
 
         // Ojos: miran alrededor al pensar y parpadean de vez en cuando.
         val look = when (mood) {
@@ -139,7 +151,7 @@ class AriOrbView(context: Context) : View(context) {
         val eyeW = r * 0.14f
         val eyeH = if (mood == Mood.LISTENING) r * 0.30f else r * 0.26f
         line.strokeWidth = r * 0.075f
-        for (side in listOf(-1f, 1f)) {
+        for (side in sides) {
             val ex = cx + side * eyeDx + look
             when {
                 mood == Mood.HAPPY -> {
@@ -179,6 +191,6 @@ class AriOrbView(context: Context) : View(context) {
             }
         }
 
-        if (isShown) postInvalidateOnAnimation()
+        if (isShown && !paused) postInvalidateOnAnimation()
     }
 }

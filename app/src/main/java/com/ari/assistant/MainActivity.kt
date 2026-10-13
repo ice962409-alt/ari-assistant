@@ -158,7 +158,7 @@ class MainActivity : Activity() {
         // Adjuntos que quedaron de una vez anterior (por ejemplo, si Ari se cerró a medias).
         if (pendingPhoto == null) Thread {
             AttachmentReader.clean(this)
-            CaptureProvider.clean(this)
+            CaptureProvider.clean(this, minutes = 30)
         }.start()
         restoreHistory()
         loadSavedModel()
@@ -582,6 +582,7 @@ class MainActivity : Activity() {
 
     private fun openLive() {
         liveOverlay.visibility = android.view.View.VISIBLE
+        chat.pauseWelcome(true)
         // Mientras platican, la pantalla no se apaga (si se apagara, Ari dejaría de escucharte).
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         liveOrb.mood = AriOrbView.Mood.IDLE
@@ -596,6 +597,7 @@ class MainActivity : Activity() {
     private fun closeLive() {
         if (voiceMode) stopVoiceMode("Modo live terminado.")
         liveOverlay.visibility = android.view.View.GONE
+        chat.pauseWelcome(false)
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
@@ -1297,7 +1299,7 @@ class MainActivity : Activity() {
                                 spoke = true
                                 voice.streamSentence(it)
                             }
-                            liveCaption.text = VoiceController.cleanForSpeech(response.toString()).takeLast(260)
+                            liveCaption.text = VoiceController.cleanForSpeech(response.takeLast(600).toString()).takeLast(260)
                         }
                     }
                 }
@@ -1399,7 +1401,12 @@ class MainActivity : Activity() {
                     busy = false
                     sendButton.isEnabled = true
                     modelReady = false
-                    status.text = "No pude abrir una conversación nueva. Toca Modelo para volver a cargar a Gemma."
+                    val message = "No pude abrir una conversación nueva. Toca Modelo para volver a cargar a Gemma."
+                    status.text = message
+                    chat.addNote(message)
+                    if (voiceMode) stopVoiceMode(message)
+                    // El motor sin conversación solo ocupa memoria: se libera hasta que lo vuelvas a cargar.
+                    executor.execute { releaseModel() }
                 } else {
                     then()
                 }
@@ -1760,6 +1767,7 @@ class MainActivity : Activity() {
         // Así Ari te sigue escuchando si sales de la app o ella abre otra por ti.
         LiveSessionService.controller = liveSessionController
         LiveSessionService.start(this)
+        if (liveVisible) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val greet = greetOnStart
         greetOnStart = false
         if (busy) {
@@ -1781,6 +1789,8 @@ class MainActivity : Activity() {
         downloadWatcher.removeCallbacks(endStandby)
         LiveSessionService.controller = null
         LiveSessionService.stop(this)
+        // Sin plática, la pantalla ya puede apagarse aunque Ari siga a la vista.
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         voiceButton.text = VOICE_START_LABEL
         status.text = message
         setLive(AriOrbView.Mood.IDLE, "Toca a Ari para hablar", message)
@@ -1790,6 +1800,7 @@ class MainActivity : Activity() {
         status.text = "Preparando el micrófono..."
         setLive(AriOrbView.Mood.IDLE, "Un momento…")
         downloadWatcher.removeCallbacks(endStandby)
+        downloadWatcher.removeCallbacks(listenInBackground)
         if (inForeground) {
             voice.startListening()
         } else {
@@ -1832,6 +1843,7 @@ class MainActivity : Activity() {
             voice.stopSpeaking()
             silentAttempts = 0
             downloadWatcher.removeCallbacks(endStandby)
+            downloadWatcher.removeCallbacks(listenInBackground)
             // Tocaste "Hablar": escucha ya, aunque suene música.
             if (!busy) {
                 setLive(AriOrbView.Mood.IDLE, "Un momento…")

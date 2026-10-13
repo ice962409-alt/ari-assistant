@@ -322,6 +322,12 @@ Las skills de Anthropic más útiles para Ari:
 - **skill-creator**: para crear skills propias del proyecto.
 - **deep-research**: investigación a fondo, útil para preparar el lanzamiento.
 
+### El "ayudante confundido" (confused deputy)
+
+Es un error de seguridad clásico: alguien sin permiso le pide algo a un ayudante que sí tiene permiso, y el ayudante lo hace sin preguntarse para quién trabaja. En Ari pasaba así: una app maliciosa podía "compartirle" a Ari la dirección de un archivo privado de la propia Ari (por ejemplo, sus ajustes). Ari, que sí puede leer sus archivos, lo habría abierto y mostrado. La corrección: con "Compartir → Ari" solo se aceptan archivos que **otra app presta** (content://), nunca direcciones directas ni archivos de Ari.
+
+La lección: cuando alguien te pide algo, fíjate **con qué permiso** lo estás haciendo y **para quién**.
+
 ### Cómo evaluar una herramienta nueva (el caso Graphify)
 
 Antes de instalar algo, pregúntate:
@@ -389,6 +395,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Acceso directo (shortcut)**: la lista que sale al mantener presionado el icono de una app.
 - **Ajustes rápidos**: los botones del panel que bajas desde arriba de la pantalla.
 - **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
+- **Ayudante confundido (confused deputy)**: cuando un programa con permisos hace algo indebido porque otro sin permisos se lo pidió.
 - **Token**: un pedacito de palabra; es la unidad con la que lee y escribe un modelo de IA.
 - **Ventana de contexto**: cuántos tokens puede tener en mente un modelo a la vez, como el tamaño de su pizarra.
 - **Multimodal**: un modelo de IA que entiende varios tipos de cosas, como texto, imágenes y audio.

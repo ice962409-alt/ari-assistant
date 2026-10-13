@@ -333,6 +333,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Revisión de código de todo lo nuevo (0.12.3): 10 correcciones antes de tu prueba. Entre ellas, que una foto compartida con Ari cerrada ya no se borra al abrir, que el modo live no se traba si la voz del teléfono falla, que otra app no puede usar "Compartir → Ari" para que Ari lea sus propios archivos privados, que abrir y cerrar el modo live muy rápido ya no puede cerrar la app, y que la pantalla se puede apagar cuando el modo live se pausa solo.
 - Pláticas largas sin errores (0.12.2): cuando la memoria de la conversación de Gemma se llena, Ari empieza una conversación nueva sola, con tus recuerdos y los últimos mensajes, y vuelve a intentar. Antes había que cerrar la app.
 - Tomar foto y compartir con Ari (0.12.1): "+" → Tomar foto, y "Compartir → Ari" desde la Galería, WhatsApp, Archivos o el navegador.
 - Adjuntar imágenes y documentos (0.12.0): botón + para mandarle a Ari fotos, PDF, Word y archivos de texto; Gemma ve las imágenes y las páginas del PDF. Todo en el teléfono.

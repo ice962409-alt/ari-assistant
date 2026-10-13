@@ -316,3 +316,17 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `DocumentText.MAX_CHARS` bajó a 6 000 caracteres (unas 1 000 palabras) para caber en 4096 tokens con la personalidad, recuerdos e historial.
 - `LiveSessionService`: "Hablar" en una notificación vieja ya no deja el servicio encendido.
 
+## Revisión de código 0.10.0 a 0.12.2 (versión 0.12.3)
+
+Correcciones de la revisión (10 hallazgos):
+- `AttachmentReader.clean` y `CaptureProvider.clean` solo borran archivos de más de 30 minutos (antes borraban la foto recién compartida al abrir Ari en frío).
+- `VoiceController`: si el motor de voz no arranca (`ttsFailed`), `speak` y `streamSentence` no se quedan esperando; el modo live sigue escuchando.
+- `ShareActivity`: solo acepta `content://` de otras apps (nada de `file://` ni direcciones de Ari: era un "ayudante confundido" que leía archivos privados).
+- `LiveSessionService.stop` manda `ACTION_STOP` con `startService` en vez de `stopService`, para no apagarlo antes de `startForeground` (cierre de la app en algunas versiones).
+- `listen()` y "Hablar" cancelan `listenInBackground` pendiente (evita doble arranque del reconocedor).
+- `stopVoiceMode` quita `FLAG_KEEP_SCREEN_ON`; `startVoiceMode` lo vuelve a poner si el modo live está a la vista.
+- `freshConversation` fallido: detiene el modo voz, avisa en el chat y libera el motor.
+- `AriOrbView`: el degradado del cuerpo se crea una vez y se escala el lienzo; la carita de la bienvenida se pausa (`paused`) mientras el modo live la tapa.
+- El subtítulo del modo live limpia solo los últimos 600 caracteres por pedazo (antes, toda la respuesta cada vez).
+- `DocumentText.prompt` desarma "<<<" y ">>>" dentro del documento (prueba nueva).
+

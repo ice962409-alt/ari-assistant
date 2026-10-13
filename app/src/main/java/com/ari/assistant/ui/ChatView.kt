@@ -25,6 +25,12 @@ class ChatView(context: Context) : ScrollView(context) {
     }
 
     private var welcome: View? = null
+    private var welcomeOrb: AriOrbView? = null
+
+    /** Pausa la carita de la bienvenida mientras algo la tapa (el modo live). */
+    fun pauseWelcome(paused: Boolean) {
+        welcomeOrb?.paused = paused
+    }
     private var olderButton: View? = null
     private var current: TextView? = null
     private val currentText = StringBuilder()
@@ -45,7 +51,7 @@ class ChatView(context: Context) : ScrollView(context) {
             gravity = Gravity.CENTER
             setPadding(0, dp(96f), 0, dp(32f))
         }
-        box.addView(AriOrbView(context), LinearLayout.LayoutParams(dp(120f), dp(120f)).apply { bottomMargin = dp(12f) })
+        box.addView(AriOrbView(context).also { welcomeOrb = it }, LinearLayout.LayoutParams(dp(120f), dp(120f)).apply { bottomMargin = dp(12f) })
         box.addView(TextView(context).apply {
             text = if (userName.isBlank()) "Hola, soy Ari" else "Hola, $userName"
             textSize = 28f
@@ -71,6 +77,7 @@ class ChatView(context: Context) : ScrollView(context) {
         current = null
         currentText.setLength(0)
         welcome = null
+        welcomeOrb = null
         olderButton = null
         column.removeAllViews()
     }
@@ -273,6 +280,7 @@ class ChatView(context: Context) : ScrollView(context) {
     private fun clearWelcome() {
         welcome?.let { column.removeView(it) }
         welcome = null
+        welcomeOrb = null
     }
 
     private fun scrollToEnd() {

@@ -55,8 +55,13 @@ class ShareActivity : Activity() {
     private fun sharedUri(intent: Intent): Uri? {
         if (intent.action != Intent.ACTION_SEND) return null
         @Suppress("DEPRECATION")
-        return intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
+        val uri: Uri = intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
             ?: intent.getParcelableExtra(Intent.EXTRA_STREAM)
+            ?: return null
+        // Solo archivos que otra app presta (content://). Un "file://" o una dirección de Ari
+        // misma haría que Ari leyera sus propios archivos privados para quien se lo pidió.
+        if (uri.scheme != "content" || uri.authority.orEmpty().startsWith(packageName)) return null
+        return uri
     }
 
     companion object {

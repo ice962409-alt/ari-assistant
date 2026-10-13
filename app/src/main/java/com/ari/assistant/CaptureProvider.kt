@@ -65,8 +65,10 @@ class CaptureProvider : ContentProvider() {
             return File(folder(context), name) to Uri.parse("content://$AUTHORITY/$name")
         }
 
-        fun clean(context: Context) {
-            folder(context).listFiles()?.forEach { it.delete() }
+        /** Borra las fotos de la cámara que ya no se usan (las de hace más de [minutes] minutos). */
+        fun clean(context: Context, minutes: Int = 0) {
+            val limit = System.currentTimeMillis() - minutes * 60_000L
+            folder(context).listFiles()?.filter { minutes == 0 || it.lastModified() < limit }?.forEach { it.delete() }
         }
     }
 }

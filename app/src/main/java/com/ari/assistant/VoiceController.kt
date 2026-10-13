@@ -39,6 +39,8 @@ class VoiceController(
     private var recognizer: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    // El motor de voz del teléfono no arrancó: Ari no habla, pero la plática sigue (te escucha y escribe).
+    private var ttsFailed = false
     private var pendingSpeech: String? = null
     private var utteranceCounter = 0
     private var lastUtteranceId: String? = null
@@ -60,8 +62,13 @@ class VoiceController(
                     configureTts()
                     pendingSpeech?.let { speak(it) }
                     streamWaiting.toList().also { streamWaiting.clear() }.forEach { enqueue(it) }
-                } else if (pendingSpeech != null) {
-                    listener.onSpeakingFinished()
+                } else {
+                    ttsFailed = true
+                    val waiting = pendingSpeech != null
+                    pendingSpeech = null
+                    streamWaiting.clear()
+                    if (waiting) listener.onSpeakingFinished()
+                    finishStreamIfDone()
                 }
                 pendingSpeech = null
             }
@@ -141,6 +148,10 @@ class VoiceController(
         }
 
         val engine = tts
+        if (ttsFailed) {
+            listener.onSpeakingFinished()
+            return
+        }
         if (engine == null || !ttsReady) {
             // El motor aún se está iniciando; se leerá cuando esté listo.
             pendingSpeech = clean
@@ -167,7 +178,7 @@ class VoiceController(
     fun streamSentence(text: String) {
         if (!streamActive) return
         val clean = cleanForSpeech(text)
-        if (clean.isEmpty()) return
+        if (clean.isEmpty() || ttsFailed) return
         if (tts == null || !ttsReady) {
             streamWaiting.add(clean)
         } else {

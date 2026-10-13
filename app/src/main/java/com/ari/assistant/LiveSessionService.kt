@@ -45,6 +45,14 @@ class LiveSessionService : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            ACTION_STOP -> {
+                // Llega en orden después del arranque: el servicio ya está en primer plano y se apaga sin riesgo.
+                if (!running) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+                return START_NOT_STICKY
+            }
             else -> {
                 val notification = build(this, intent?.getStringExtra(EXTRA_TEXT) ?: TEXT_LISTENING)
                 try {
@@ -70,6 +78,7 @@ class LiveSessionService : Service() {
         private const val ID = 5_000_000
         private const val ACTION_TALK = "com.ari.assistant.live.TALK"
         private const val ACTION_END = "com.ari.assistant.live.END"
+        private const val ACTION_STOP = "com.ari.assistant.live.STOP"
         private const val EXTRA_TEXT = "texto"
         const val TEXT_LISTENING = "Te escucho aunque uses otras apps."
 
@@ -92,7 +101,13 @@ class LiveSessionService : Service() {
         fun stop(context: Context) {
             if (!running) return
             running = false
-            context.stopService(Intent(context, LiveSessionService::class.java))
+            // Se apaga con un aviso en la misma fila que el arranque, no con stopService: si Android
+            // aún no lo pasó a primer plano, apagarlo de golpe cerraría la app.
+            try {
+                context.startService(Intent(context, LiveSessionService::class.java).setAction(ACTION_STOP))
+            } catch (e: RuntimeException) {
+                context.stopService(Intent(context, LiveSessionService::class.java))
+            }
         }
 
         /** Cambia el texto de la notificación ("Pensando…", "En pausa…"). */
