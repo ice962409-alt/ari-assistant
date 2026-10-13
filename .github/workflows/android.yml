@@ -30,6 +30,20 @@ jobs:
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # Reconocer voces: la librería sherpa-onnx (Apache 2.0) y el modelo de huella de voz
+      # CAM++ de WeSpeaker (Apache 2.0). No viven en el repositorio; se descargan y se revisa
+      # su huella digital (sha256) para asegurar que son exactamente los que se revisaron.
+      - name: Descargar piezas de reconocer voces
+        run: |
+          set -euo pipefail
+          mkdir -p app/libs app/src/main/assets
+          curl -fsSL --retry 3 -o app/libs/sherpa-onnx-1.13.8.aar \
+            https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-1.13.8.aar
+          curl -fsSL --retry 3 -o app/src/main/assets/ari_voz.onnx \
+            "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/wespeaker_en_voxceleb_CAM++.onnx"
+          echo "633c24321e06b1fe79feafa03ea16cbc0f8a286641e2da3559bac91bdb13bd96  app/libs/sherpa-onnx-1.13.8.aar" | sha256sum -c -
+          echo "c46fad10b5f81e1aa4a60c162714208577093655076c5450f8c469e522ec54ef  app/src/main/assets/ari_voz.onnx" | sha256sum -c -
+
       - name: Pruebas automaticas
         run: ./gradlew :app:testDebugUnitTest
 

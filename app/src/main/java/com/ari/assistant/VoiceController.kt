@@ -2,12 +2,15 @@ package com.ari.assistant
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import com.ari.assistant.voz.VoiceCapture
 import java.util.Locale
 
 /**
@@ -33,7 +36,25 @@ class VoiceController(
 
         /** Volumen de tu voz mientras te escucha, de 0 a 1 (para animar su cara). */
         fun onVoiceLevel(level: Float) {}
+
+        /**
+         * La frase que acabas de decir, en números, para saber quién habló (solo si
+         * [speakerMode] está activo). null si fue muy corta o no hablaste.
+         */
+        fun onSpeakerAudio(samples: FloatArray?) {}
+
+        /** El reconocedor de este teléfono no acepta el audio que graba Ari: sin reconocer voces. */
+        fun onOwnAudioUnsupported() {}
     }
+
+    /** true para que Ari grabe ella misma la frase y así pueda saber quién habla. */
+    var speakerMode = false
+
+    /** Se pone en true si el reconocedor no aceptó el audio de Ari (Ari lo recuerda). */
+    var ownAudioUnsupported = false
+
+    private var capture: VoiceCapture? = null
+    private var captureReadSide: ParcelFileDescriptor? = null
 
     private val locale: Locale = Locale.getDefault()
     private var recognizer: SpeechRecognizer? = null
@@ -119,6 +140,7 @@ class VoiceController(
                 recognizer = it
             }
 
+        stopCapture()
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -132,11 +154,56 @@ class VoiceController(
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 800L)
         }
 
+        if (speakerMode && !ownAudioUnsupported && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Ari graba el micrófono y le pasa el audio al reconocedor por una "tubería": así la
+            // misma frase sirve para entender qué dijiste y para saber quién lo dijo.
+            val (readSide, writeSide) = ParcelFileDescriptor.createPipe()
+            captureReadSide = readSide
+            intent.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, readSide)
+            intent.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_CHANNEL_COUNT, 1)
+            intent.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, android.media.AudioFormat.ENCODING_PCM_16BIT)
+            intent.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_SAMPLING_RATE, VoiceCapture.RATE)
+            val started = VoiceCapture(
+                pipe = writeSide,
+                onLevel = { level -> activity.runOnUiThread { listener.onVoiceLevel(level) } },
+                onFinished = { result -> activity.runOnUiThread { onCaptureFinished(result) } }
+            )
+            capture = started
+            activeRecognizer.startListening(intent)
+            started.start()
+            return
+        }
+
         activeRecognizer.startListening(intent)
     }
 
+    private fun onCaptureFinished(result: VoiceCapture.Result) {
+        if (result.stalled) {
+            // El reconocedor nunca leyó el audio: en este teléfono se escucha como antes.
+            ownAudioUnsupported = true
+            stopCapture()
+            recognizer?.cancel()
+            listener.onOwnAudioUnsupported()
+            startListening()
+            return
+        }
+        listener.onSpeakerAudio(result.samples)
+    }
+
+    private fun stopCapture() {
+        capture?.stop()
+        capture = null
+    }
+
+    private fun closeReadSide() {
+        captureReadSide?.let { runCatching { it.close() } }
+        captureReadSide = null
+    }
+
     fun stopListening() {
+        stopCapture()
         recognizer?.cancel()
+        closeReadSide()
     }
 
     /** Lee [text] en voz alta; al terminar llama a [Listener.onSpeakingFinished]. */
@@ -258,6 +325,7 @@ class VoiceController(
         }
 
         override fun onResults(results: Bundle?) {
+            closeReadSide()
             val text = firstResult(results)
             if (text.isNullOrBlank()) {
                 listener.onSpeechError("No te escuché.", noSpeech = true)
@@ -267,6 +335,8 @@ class VoiceController(
         }
 
         override fun onError(error: Int) {
+            stopCapture()
+            closeReadSide()
             val noSpeech = error == SpeechRecognizer.ERROR_NO_MATCH ||
                 error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT
             listener.onSpeechError(errorMessage(error), noSpeech)

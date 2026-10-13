@@ -36,12 +36,19 @@ android {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 24
-        versionName = "0.13.2"
+        versionCode = 25
+        versionName = "0.14.0"
+        // Solo teléfonos de 64 bits (como el POCO): las librerías de voz pesan menos en el APK.
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
     }
 }
 
 dependencies {
     implementation("com.google.ai.edge.litertlm:litertlm-android:latest.release")
+    // Reconocer voces: sherpa-onnx (Apache 2.0). GitHub Actions descarga el .aar en app/libs al
+    // compilar (no vive en el repositorio; ver .github/workflows/android.yml).
+    implementation(files("libs/sherpa-onnx-1.13.8.aar"))
     testImplementation("junit:junit:4.13.2")
 }

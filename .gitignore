@@ -13,3 +13,6 @@ local.properties
 *.jks
 *.keystore
 !app/debug.keystore
+# Piezas de reconocer voces: las descarga GitHub Actions al compilar.
+app/libs/*.aar
+app/src/main/assets/ari_voz.onnx

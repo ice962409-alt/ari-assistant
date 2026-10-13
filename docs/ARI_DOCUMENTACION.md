@@ -164,6 +164,29 @@ Funciona escribiendo o con el modo de voz. En el modo live, Ari sigue contigo au
 5. **Para interrumpirla**, tócala (o toca "Interrumpir"): se calla y te escucha, como cuando le interrumpes a alguien.
 6. Al terminar de hablar, vuelve a escucharte sola, y el teléfono vibra suavecito para avisarte que es tu turno. Mientras platican, la pantalla no se apaga. Para salir, toca el cuadrado, "Escribir" o el botón atrás.
 
+#### Reconocer voces: tú y las personas que registres
+
+Ari puede saber **quién le habla** en el modo live. Para eso, cada quien registra su voz una vez:
+
+1. **Ajustes → Reconocer voces → Registrar mi voz**. Lees en voz alta tres frases cortas (unos 20 segundos). Ari saca tu **huella de voz** (unos números) y la guarda cifrada en el teléfono. Nunca guarda la grabación.
+2. Para otra persona: **Agregar a otra persona**, escribes su nombre y confirmas que **está de acuerdo**. Ella lee las tres frases.
+3. En el modo live, Ari reconoce quién habla y lo dice en el chat ("Te reconozco", "Te habla Rosa", "No reconozco esta voz").
+
+Lo que cambia cuando no eres tú:
+
+- Ari **no usa tus datos personales**: ni tus recuerdos, ni tu libreta de personas, ni tus contactos, ni tus recordatorios, ni tus pláticas. Gemma empieza una plática aparte con esa persona.
+- Solo puede platicar con Gemma y preguntar la hora. Lo que platique no se guarda en tu historial.
+- Cuando vuelves a hablar tú, Ari regresa a tu plática con todo lo tuyo.
+- Si dices algo muy corto ("sí", "ajá"), Ari sigue con quien venía hablando.
+- Escribir en el chat siempre cuenta como tú: el teléfono está en tu mano.
+
+Detalles:
+
+- Necesita Android 13 o más. La primera vez, Ari comprueba si el reconocimiento de voz de tu teléfono acepta el audio que ella graba; si no, te avisa y todo sigue como antes.
+- No es una contraseña: una grabación de tu voz podría engañarla. Por eso las acciones del teléfono siguen pidiendo que tú toques la pantalla.
+- Las huellas no van en el respaldo cifrado: en un teléfono nuevo, cada quien vuelve a registrar su voz.
+- En Ajustes → Reconocer voces también puedes borrar una voz o desactivarlo.
+
 #### Ari en segundo plano
 
 Mientras el modo live está abierto, Ari **te sigue escuchando aunque salgas de la app** o aunque ella misma abra otra por ti ("abre WhatsApp", "pon una alarma"…). Así puedes seguir pidiéndole cosas mientras usas el teléfono.
@@ -349,6 +372,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Reconocer voces (0.14.0): registras tu voz y la de otras personas (con su permiso) en Ajustes; en el modo live Ari sabe quién habla y, si no eres tú, no usa tus datos personales ni guarda esa plática en tu historial. Todo en el teléfono, cifrado y sin guardar grabaciones.
 - Esfera más elaborada (0.13.2): la carita de Ari tiene volumen (sombra y brillo de orilla), un remolino de luz que gira por dentro, brillo en los ojos, mejillas que se sonrojan cuando está feliz o platicando, cejas cuando piensa, destellos cuando está contenta y un tinte según su ánimo (cian al escucharte, lila al pensar). También en el widget.
 - Más rápida (0.13.1): Gemma corre en la GPU del teléfono si se puede, con vuelta automática a la CPU. Si la GPU llegara a cerrar la app al cargar, la siguiente vez Ari usa la CPU sola. Ajustes → Velocidad de Gemma para cambiarlo.
 - Libreta de personas (0.13.0): Ari recuerda a quien le mencionas ("mi primo Luis es dentista", "Luis cumple el 5 de mayo"), te cuenta lo que sabe ("qué sabes de Luis"), lista a quién conoce y los próximos cumpleaños. Gemma también la recibe.
@@ -391,7 +415,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
   - Más agentes que hagan cosas en el teléfono (como los recordatorios), siempre pidiendo confirmación.
   - Más subordinados: otros bots o modelos, con permisos por agente.
 - Elegir la voz y la velocidad de lectura.
-- Que Ari reconozca voces: registrar tu voz y la de otras personas para saber quién le habla, saludar a cada quien y no contarle tus recuerdos a otros. Todo en el teléfono y cifrado. Plan en docs/RECONOCER_VOCES.md; esperando tu decisión en el tablero.
+- Reconocer voces, siguiente paso: que cada persona registrada tenga sus propios recuerdos.
 
 ## 7. Archivos principales del código
 
@@ -408,6 +432,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
 - **Attachments.kt**: leer las imágenes y documentos que le adjuntas a Ari. **CaptureProvider.kt**: recibe la foto de la cámara. **ShareActivity.kt**: "Compartir → Ari" desde otras apps.
+- **voz/**: reconocer voces (VoiceCapture graba la frase, SpeechEndDetector sabe cuándo terminaste, VoiceIdentity saca la huella con sherpa-onnx, VoicePrints las compara y VoiceVault las guarda cifradas).
 - **LiveSessionService.kt**: mantiene el modo live en segundo plano, con su notificación.
 - **AriLiveTile.kt** y **LiveShortcutActivity.kt**: el botón de ajustes rápidos y el acceso directo "Hablar con Ari".
 - **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).

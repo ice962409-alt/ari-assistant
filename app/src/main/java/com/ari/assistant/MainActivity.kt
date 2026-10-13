@@ -30,6 +30,11 @@ import com.ari.assistant.agents.TeamAgent
 import com.ari.assistant.ui.AriOrbView
 import com.ari.assistant.ui.AriTheme
 import com.ari.assistant.ui.ChatView
+import com.ari.assistant.voz.VoiceCapture
+import com.ari.assistant.voz.VoiceIdentity
+import com.ari.assistant.voz.VoicePrint
+import com.ari.assistant.voz.VoicePrints
+import com.ari.assistant.voz.VoiceVault
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
@@ -65,6 +70,23 @@ class MainActivity : Activity() {
     private lateinit var attachmentChip: TextView
     // La foto que la cámara está tomando para Ari.
     private var pendingPhoto: String? = null
+
+    // Reconocer voces (ver docs/RECONOCER_VOCES.md).
+    private lateinit var voiceVault: VoiceVault
+    private lateinit var voiceIdentity: VoiceIdentity
+    @Volatile
+    private var voicePrints: List<VoicePrint> = emptyList()
+    private val voiceWorker: ExecutorService = Executors.newSingleThreadExecutor()
+    // Quién habla en el modo live (null: alguien que Ari no reconoce).
+    private var speaker: VoicePrint? = null
+    private var speakerSeen = false
+    // true mientras habla alguien que no eres tú: Ari no usa tus datos personales.
+    private var guestMode = false
+    // Para quién está preparada la conversación de Gemma ahora (tú o un invitado).
+    private var conversationForGuest = false
+    // La frase reconocida espera a saber quién la dijo.
+    private var speakerReady = true
+    private var heldSpeech: String? = null
     private var busy = false
 
     private lateinit var database: AriDatabase
@@ -158,6 +180,16 @@ class MainActivity : Activity() {
         ceo.hire(team)
         buildInterface()
         voice = VoiceController(this, voiceListener)
+        voiceVault = VoiceVault(this)
+        voiceIdentity = VoiceIdentity(this)
+        voice.ownAudioUnsupported = voicePrefs().getBoolean(KEY_OWN_AUDIO_NO, false)
+        voiceWorker.execute {
+            val loaded = voiceVault.load()
+            runOnUiThread {
+                voicePrints = loaded
+                applyVoiceSettings()
+            }
+        }
         // Adjuntos que quedaron de una vez anterior (por ejemplo, si Ari se cerró a medias).
         if (pendingPhoto == null) Thread {
             AttachmentReader.clean(this)
@@ -265,6 +297,7 @@ class MainActivity : Activity() {
             "Tono de Ari: ${profile.tone.title}",
             "Respaldo de la memoria",
             "Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}",
+            "Reconocer voces",
             "Acerca de Ari y licencias"
         )
         AlertDialog.Builder(this)
@@ -275,11 +308,183 @@ class MainActivity : Activity() {
                     1 -> chooseTone()
                     2 -> showBackupDialog()
                     3 -> chooseEngine()
+                    4 -> showVoicesDialog()
                     else -> showAbout()
                 }
             }
             .setNegativeButton("Cerrar", null)
             .show()
+    }
+
+    // Registro de voz que espera el permiso de micrófono: nombre y si es el dueño.
+    private var pendingEnroll: Pair<String, Boolean>? = null
+
+    private fun showVoicesDialog() {
+        if (!voiceIdentity.supported || voice.ownAudioUnsupported) {
+            val why = when {
+                android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU ->
+                    "Reconocer voces necesita Android 13 o más."
+                voice.ownAudioUnsupported ->
+                    "El reconocimiento de voz de este teléfono no me deja escuchar el audio yo misma, así que no puedo saber quién habla."
+                else -> "Esta versión de Ari no trae el modelo para reconocer voces."
+            }
+            AlertDialog.Builder(this).setTitle("Reconocer voces").setMessage(why)
+                .setPositiveButton("Entendido", null).show()
+            return
+        }
+        val prints = voicePrints
+        val owner = prints.firstOrNull { it.owner }
+        val others = prints.filter { !it.owner }
+        val summary = buildString {
+            append(if (owner != null) "Tu voz está registrada." else "Todavía no registras tu voz.")
+            if (others.isNotEmpty()) append("\nTambién conozco a: ").append(others.joinToString(", ") { it.name }).append(".")
+            append("\n\nEn el modo live, si habla alguien que no eres tú, no uso tus recuerdos, tu libreta, tus contactos ni tus pláticas. ")
+            append("Las voces se guardan cifradas solo en este teléfono (nunca la grabación) y no van en el respaldo.")
+        }
+        val actions = mutableListOf<Pair<String, () -> Unit>>()
+        actions += (if (owner == null) "Registrar mi voz" else "Volver a registrar mi voz") to {
+            enrollVoice(profile.userName.trim().ifEmpty { "Tú" }, owner = true)
+        }
+        if (owner != null) actions += "Agregar a otra persona" to { askGuestName() }
+        if (prints.isNotEmpty()) {
+            actions += "Borrar una voz" to { chooseVoiceToDelete() }
+            actions += (if (voicesEnabled()) "Desactivar reconocer voces" else "Activar reconocer voces") to {
+                voicePrefs().edit().putBoolean(KEY_VOICES_ON, !voicesEnabled()).apply()
+                applyVoiceSettings()
+                chat.addNote(if (voicesEnabled()) "Reconocer voces activado." else "Reconocer voces desactivado.")
+            }
+        }
+        val view = TextView(this).apply {
+            text = summary
+            setPadding(dp(24f), dp(12f), dp(24f), dp(4f))
+            setTextColor(AriTheme.text)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Reconocer voces")
+            .setView(view)
+            .setItems(actions.map { it.first }.toTypedArray()) { _, which -> actions[which].second() }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun askGuestName() {
+        val field = EditText(this).apply {
+            hint = "Su nombre, por ejemplo Rosa"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
+        }
+        AlertDialog.Builder(this)
+            .setTitle("¿A quién le registro la voz?")
+            .setView(field)
+            .setPositiveButton("Siguiente") { _, _ ->
+                val name = field.text.toString().trim().take(40)
+                if (name.isEmpty()) return@setPositiveButton
+                AlertDialog.Builder(this)
+                    .setTitle("Permiso de $name")
+                    .setMessage(
+                        "Su voz es un dato personal. Pregúntale a $name si está de acuerdo en que guarde su huella de voz: " +
+                            "se guarda cifrada solo en este teléfono, nunca la grabación, y la puedes borrar cuando quieran."
+                    )
+                    .setPositiveButton("Sí, está de acuerdo") { _, _ -> enrollVoice(name, owner = false) }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun chooseVoiceToDelete() {
+        val prints = voicePrints
+        AlertDialog.Builder(this)
+            .setTitle("Borrar una voz")
+            .setItems(prints.map { if (it.owner) "${it.name} (tú)" else it.name }.toTypedArray()) { _, which ->
+                val gone = prints[which]
+                saveVoicePrints(prints.filter { it !== gone })
+                chat.addNote("Borré la voz de ${gone.name}.")
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun saveVoicePrints(prints: List<VoicePrint>) {
+        voicePrints = prints
+        applyVoiceSettings()
+        voiceWorker.execute { runCatching { voiceVault.save(prints) } }
+    }
+
+    /** Graba tres frases cortas y guarda la huella de voz (nunca la grabación). */
+    private fun enrollVoice(name: String, owner: Boolean) {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            pendingEnroll = name to owner
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_AUDIO_ENROLL)
+            return
+        }
+        if (voiceMode) closeLive()
+        val phrases = ENROLL_PHRASES
+        val collected = mutableListOf<FloatArray>()
+        val text = TextView(this).apply {
+            textSize = 18f
+            setTextColor(AriTheme.text)
+            setPadding(dp(24f), dp(16f), dp(24f), dp(8f))
+        }
+        var current: VoiceCapture? = null
+        var cancelled = false
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(if (owner) "Registrar tu voz" else "Registrar la voz de $name")
+            .setView(text)
+            .setNegativeButton("Cancelar") { _, _ ->
+                cancelled = true
+                current?.stop()
+            }
+            .setCancelable(false)
+            .show()
+
+        fun finishEnroll() {
+            dialog.dismiss()
+            if (collected.size < 2) {
+                chat.addNote("No escuché bien la voz de $name. Intenta otra vez en un lugar sin ruido, hablando normal y cerca del teléfono.")
+                return
+            }
+            val kept = voicePrints.filter { it.name != name && !(owner && it.owner) }
+            saveVoicePrints(kept + VoicePrint(name, owner, collected.toList()))
+            chat.addNote(
+                if (owner) "Listo, ya reconozco tu voz. En el modo live sabré cuándo eres tú."
+                else "Listo, ya reconozco la voz de $name. Cuando hable, no usaré tus datos personales."
+            )
+        }
+
+        fun step(index: Int) {
+            if (cancelled) return
+            if (index >= phrases.size) {
+                finishEnroll()
+                return
+            }
+            text.text = "Frase ${index + 1} de ${phrases.size}. Léela en voz alta, como si platicaras:\n\n\"${phrases[index]}\""
+            current = VoiceCapture(
+                pipe = null,
+                onLevel = {},
+                onFinished = { result ->
+                    runOnUiThread {
+                        if (cancelled || isDestroyed) return@runOnUiThread
+                        val samples = result.samples
+                        if (samples == null) {
+                            step(index + 1)
+                            return@runOnUiThread
+                        }
+                        text.text = "Un momento…"
+                        voiceWorker.execute {
+                            val embedding = voiceIdentity.embedding(samples)
+                            runOnUiThread {
+                                if (cancelled || isDestroyed) return@runOnUiThread
+                                embedding?.let { collected.add(it) }
+                                step(index + 1)
+                            }
+                        }
+                    }
+                },
+                detector = com.ari.assistant.voz.SpeechEndDetector(noSpeechMs = 7_000, maxMs = 10_000)
+            ).also { it.start() }
+        }
+        step(0)
     }
 
     private fun gpuAllowed() =
@@ -323,7 +528,11 @@ class MainActivity : Activity() {
             "los equipos de tu red local que tú apruebas, y a ellos no les pasa tus recuerdos.\n\n" +
             "Componentes de terceros:\n" +
             "• Gemma 4, de Google: Apache License 2.0.\n" +
-            "• LiteRT-LM, de Google: Apache License 2.0."
+            "• LiteRT-LM, de Google: Apache License 2.0.\n" +
+            "• sherpa-onnx, de k2-fsa (reconocer voces): Apache License 2.0.\n" +
+            "• Modelo de voz CAM++, de WeSpeaker: Apache License 2.0.\n" +
+            "• ONNX Runtime, de Microsoft: MIT License (Copyright (c) Microsoft Corporation). " +
+            "Se permite usarlo, copiarlo y modificarlo gratis, conservando este aviso; se entrega \"tal cual\", sin garantías."
         AlertDialog.Builder(this)
             .setTitle("Acerca de Ari")
             .setMessage(text)
@@ -1134,6 +1343,8 @@ class MainActivity : Activity() {
     }
 
     private fun sendMessage() {
+        // Escribir en el chat es cosa del dueño del teléfono; solo en voz puede hablar otra persona.
+        if (!voiceMode) guestMode = false
         val attachment = pendingAttachment
         if (attachment != null) {
             sendWithAttachment(input.text.toString().trim(), attachment)
@@ -1160,8 +1371,12 @@ class MainActivity : Activity() {
         if (busy) return
 
         ceo.route(text)?.let { delegation ->
-            delegateSafely(text, delegation)
-            return
+            // Con otra persona hablando, solo la hora: tus recuerdos, tu libreta, tus contactos,
+            // tus recordatorios y tu equipo son tuyos.
+            if (!guestMode || delegation.agent.id in GUEST_AGENTS) {
+                delegateSafely(text, delegation)
+                return
+            }
         }
 
         if (!modelReady || conversation == null) {
@@ -1174,10 +1389,11 @@ class MainActivity : Activity() {
         }
 
         input.text.clear()
-        saveMessage(ROLE_USER, text)
+        val guest = guestMode
+        if (!guest) saveMessage(ROLE_USER, text)
         chat.addUser(text)
         chat.startAri()
-        askGemma(text)
+        withConversationFor(guest) { askGemma(text) }
     }
 
     private fun chooseAttachment() {
@@ -1320,6 +1536,7 @@ class MainActivity : Activity() {
             return
         }
 
+        val forGuest = guestMode
         val hadHistoryPending = historyPending
         val hadMemoriesPending = memoriesPending
         // En voz, Ari contesta corto y natural, y empieza a hablar con la primera frase.
@@ -1380,7 +1597,7 @@ class MainActivity : Activity() {
                         if (isDestroyed) return@runOnUiThread
                         liveOverlay.removeCallbacks(filler)
                         attachment?.delete()
-                        saveResponse(response)
+                        if (!forGuest) saveResponse(response)
                         chat.finishAri()
                         busy = false
                         sendButton.isEnabled = true
@@ -1415,7 +1632,7 @@ class MainActivity : Activity() {
                             return@runOnUiThread
                         }
                         attachment?.delete()
-                        saveResponse(response)
+                        if (!forGuest) saveResponse(response)
                         busy = false
                         status.text =
                             "Error de respuesta: ${throwable.message}"
@@ -1656,6 +1873,14 @@ class MainActivity : Activity() {
      * modelo, las últimas conversaciones guardadas.
      */
     private fun buildPrompt(text: String, savedAs: String = text): String {
+        if (guestMode) {
+            // Con otra persona: ni recuerdos, ni libreta, ni historial del dueño.
+            val preface = if (historyPending) guestPreface() + "\n\n" else ""
+            historyPending = false
+            memoriesPending = false
+            val who = speaker?.name ?: "la persona nueva"
+            return "$preface[Habla $who] $text"
+        }
         val context = StringBuilder()
 
         if (historyPending) {
@@ -1831,6 +2056,16 @@ class MainActivity : Activity() {
             }
             return
         }
+        if (requestCode == REQUEST_AUDIO_ENROLL) {
+            val pending = pendingEnroll
+            pendingEnroll = null
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED && pending != null) {
+                enrollVoice(pending.first, pending.second)
+            } else {
+                chat.addNote("Sin permiso de micrófono no puedo registrar voces.")
+            }
+            return
+        }
         if (requestCode != REQUEST_AUDIO) return
 
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
@@ -1864,6 +2099,11 @@ class MainActivity : Activity() {
 
     private fun stopVoiceMode(message: String) {
         voiceMode = false
+        guestMode = false
+        speaker = null
+        speakerSeen = false
+        heldSpeech = null
+        downloadWatcher.removeCallbacks(releaseHeldSpeech)
         voice.stopAll()
         downloadWatcher.removeCallbacks(listenInBackground)
         downloadWatcher.removeCallbacks(endStandby)
@@ -1882,7 +2122,7 @@ class MainActivity : Activity() {
         downloadWatcher.removeCallbacks(endStandby)
         downloadWatcher.removeCallbacks(listenInBackground)
         if (inForeground) {
-            voice.startListening()
+            startRecognizer()
         } else {
             // Fuera de Ari espera un momento: si la otra app empezó a sonar (música, un video),
             // Ari no escucha, para no tomar la canción por órdenes tuyas.
@@ -1897,7 +2137,7 @@ class MainActivity : Activity() {
         if (audio?.isMusicActive == true) {
             standby("En pausa mientras suena algo. Toca Hablar cuando quieras.")
         } else {
-            voice.startListening()
+            startRecognizer()
         }
     }
 
@@ -1927,13 +2167,89 @@ class MainActivity : Activity() {
             // Tocaste "Hablar": escucha ya, aunque suene música.
             if (!busy) {
                 setLive(AriOrbView.Mood.IDLE, "Un momento…")
-                voice.startListening()
+                startRecognizer()
             }
         }
 
         override fun onEndRequested() = runOnUiThread {
             if (!isDestroyed) closeLive()
         }
+    }
+
+    private val releaseHeldSpeech = Runnable {
+        speakerReady = true
+        heldSpeech?.let {
+            heldSpeech = null
+            handleSpeech(it)
+        }
+    }
+
+    /** Empieza a escuchar. Con reconocer voces, la frase espera a saber quién la dijo. */
+    private fun startRecognizer() {
+        speakerReady = !voice.speakerMode
+        heldSpeech = null
+        downloadWatcher.removeCallbacks(releaseHeldSpeech)
+        voice.startListening()
+    }
+
+    private fun handleSpeech(text: String) {
+        if (!voiceMode) return
+        input.setText(text)
+        sendMessage()
+    }
+
+    private fun voicePrefs() = getSharedPreferences(VOICE_PREFS, MODE_PRIVATE)
+
+    private fun voicesEnabled() = voicePrefs().getBoolean(KEY_VOICES_ON, true)
+
+    /** Ari reconoce voces si el teléfono puede, si está activado y si ya registraste tu voz. */
+    private fun applyVoiceSettings() {
+        voice.speakerMode = voiceIdentity.supported && voicesEnabled() &&
+            voicePrints.any { it.owner } && !voice.ownAudioUnsupported
+        if (!voice.speakerMode) {
+            guestMode = false
+            speaker = null
+        }
+    }
+
+    /** Quien habla cambió: Ari lo dice y, si no eres tú, deja de usar tus datos personales. */
+    private fun updateSpeaker(who: VoicePrint?) {
+        val changed = !speakerSeen || who?.name != speaker?.name
+        speaker = who
+        speakerSeen = true
+        guestMode = who == null || !who.owner
+        if (!changed) return
+        val note = when {
+            who == null -> "No reconozco esta voz: no usaré tus datos personales mientras hable."
+            who.owner -> "Te reconozco, ${who.name}."
+            else -> "Te habla ${who.name}: no usaré tus datos personales mientras hable."
+        }
+        chat.addNote(note)
+        setLive(AriOrbView.Mood.THINKING, if (who == null) "Voz nueva" else "Habla ${who.name}")
+    }
+
+    /**
+     * Antes de preguntarle a Gemma, la plática tiene que ser de quien habla: si cambia de ti
+     * a otra persona (o al revés), Gemma empieza una conversación nueva, sin lo anterior.
+     */
+    private fun withConversationFor(guest: Boolean, then: () -> Unit) {
+        if (guest == conversationForGuest) {
+            then()
+            return
+        }
+        conversationForGuest = guest
+        busy = true
+        freshConversation(then)
+    }
+
+    private fun guestPreface(): String {
+        val owner = profile.userName.trim().ifEmpty { "tu usuario" }
+        val who = speaker?.name
+        return "Eres Ari, la asistente personal de $owner. Eres mujer: habla de ti en femenino. " +
+            "Ahora no te habla $owner sino " + (who?.let { "$it, alguien que $owner te presentó" } ?: "una persona que no conoces") + ". " +
+            "Sé amable y útil, pero no compartas nada personal de $owner: ni sus recuerdos, ni sus pláticas, " +
+            "ni sus contactos, ni sus planes. Si te lo piden, di con amabilidad que eso es privado. " +
+            "Contesta en español, corto y natural."
     }
 
     private val voiceListener = object : VoiceController.Listener {
@@ -1956,8 +2272,40 @@ class MainActivity : Activity() {
             if (!voiceMode) return
             silentAttempts = 0
             setLive(AriOrbView.Mood.THINKING, "Pensando…", text)
-            input.setText(text)
-            sendMessage()
+            if (!speakerReady) {
+                // Aún está sacando la huella de voz: se espera un momento (máximo 2.5 s).
+                heldSpeech = text
+                downloadWatcher.postDelayed(releaseHeldSpeech, SPEAKER_WAIT_MS)
+                return
+            }
+            handleSpeech(text)
+        }
+
+        override fun onSpeakerAudio(samples: FloatArray?) {
+            if (!voiceMode || !voice.speakerMode) return
+            val prints = voicePrints
+            voiceWorker.execute {
+                val embedding = samples?.let { voiceIdentity.embedding(it) }
+                val who = embedding?.let { VoicePrints.identify(it, prints) }
+                runOnUiThread {
+                    if (isDestroyed) return@runOnUiThread
+                    // Frase muy corta ("sí", "ajá"): se queda quien venía hablando.
+                    if (embedding != null) updateSpeaker(who)
+                    speakerReady = true
+                    downloadWatcher.removeCallbacks(releaseHeldSpeech)
+                    heldSpeech?.let {
+                        heldSpeech = null
+                        handleSpeech(it)
+                    }
+                }
+            }
+        }
+
+        override fun onOwnAudioUnsupported() {
+            voicePrefs().edit().putBoolean(KEY_OWN_AUDIO_NO, true).apply()
+            speakerReady = true
+            chat.addNote("El reconocimiento de voz de este teléfono no me deja escuchar el audio yo misma, así que por ahora no puedo saber quién habla. Todo lo demás funciona igual.")
+            applyVoiceSettings()
         }
 
         override fun onSpeakingStarted() {
@@ -2226,6 +2574,8 @@ class MainActivity : Activity() {
         forgetBackupPassword()
         LiveSessionService.controller = null
         LiveSessionService.stop(this)
+        voiceWorker.execute { voiceIdentity.release() }
+        voiceWorker.shutdown()
 
         executor.execute { releaseModel() }
         executor.shutdown()
@@ -2261,6 +2611,18 @@ class MainActivity : Activity() {
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val FILLER_DELAY_MS = 1800L
         private const val ENGINE_PREFS = "ari_motor"
+        private const val VOICE_PREFS = "ari_voces"
+        private const val KEY_VOICES_ON = "activo"
+        private const val KEY_OWN_AUDIO_NO = "sin_audio_propio"
+        private const val SPEAKER_WAIT_MS = 2500L
+        /** Lo único que puede usar alguien que no es el dueño (además de platicar con Gemma). */
+        private val GUEST_AGENTS = setOf("reloj")
+        private const val REQUEST_AUDIO_ENROLL = 112
+        private val ENROLL_PHRASES = listOf(
+            "Hola Ari, soy yo. Hoy quiero platicar contigo un rato.",
+            "El perro de mi vecino corre rápido por el parque grande.",
+            "Uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve y diez."
+        )
         private const val KEY_GPU = "gpu"
         private const val GPU_TRYING = "probando"
         private const val GPU_OK = "ok"

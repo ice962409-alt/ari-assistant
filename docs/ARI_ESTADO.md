@@ -353,3 +353,11 @@ Decisión del usuario en el tablero: "Seguir con la esfera, más elaborada".
 - `AriOrbView`: remolino de luz recortado al círculo (más rápido al pensar), tinte por ánimo, sombra radial cacheada, brillo de orilla, brillo en los ojos, cejas al pensar, mejillas (más intensas feliz/hablando), destellos de cuatro puntas cuando está feliz.
 - Widget: `ari_face_*` con sombra, brillo de orilla, mejillas y brillo en los ojos.
 
+## Reconocer voces (versión 0.14.0)
+
+Decisión del usuario: "Sí, mi voz y la de otras personas". Detalle técnico en docs/RECONOCER_VOCES.md ("Cómo quedó").
+- Paquete `voz/` (VoiceCapture, SpeechEndDetector, VoiceIdentity, VoicePrints, VoiceVault) y `VoiceController.speakerMode`.
+- Ajustes → Reconocer voces: registrar la propia voz, agregar a otra persona con confirmación de permiso, borrar, activar/desactivar.
+- Pruebas puras en `voz/VoiceTest`. Lo que solo se ve en el teléfono: si el reconocedor de Google acepta `EXTRA_AUDIO_SOURCE`, y el umbral 0.55.
+- APK solo arm64-v8a (abiFilters) por el peso de onnxruntime.
+

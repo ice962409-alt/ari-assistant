@@ -29,7 +29,8 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Libreta de personas (0.13.0), pedida por el usuario. Falta [prueba].
 - [autónomo] Gemma en la GPU (0.13.1), por "responde lento". Falta [prueba].
 - [autónomo] Esfera más elaborada (0.13.2), decisión del usuario. Falta [prueba].
-- [autónomo] Reconocer voces (decidido: "mi voz y la de otras personas"). Plan en docs/RECONOCER_VOCES.md; primer paso: versión de prueba que comprueba si el reconocedor del POCO acepta el audio de Ari.
+- [autónomo] Reconocer voces (0.14.0), decidido por el usuario. Falta [prueba] (sobre todo si el reconocedor del POCO acepta el audio de Ari).
+- [autónomo] Siguiente para voces: recuerdos propios de cada persona registrada.
 - [autónomo] Siguiente para la libreta: aviso un día antes de cada cumpleaños y verla y editarla en una pantalla (botón Memoria).
 - [autónomo] Siguiente para adjuntos: audios (Gemma 4 también entiende audio) y varias imágenes a la vez.
 - [decisión] Burbuja flotante con la carita de Ari sobre otras apps (necesita el permiso "mostrar sobre otras apps"). Proponer después de la prueba de 0.11.0.
@@ -39,7 +40,6 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Revisar AppFunctions cada cierto tiempo (etapa 2 del control de apps).
 
 ## Esperando al usuario
-- [decisión] Que Ari reconozca voces (huella de voz local, cifrada; recuerdos separados por persona). Plan en docs/RECONOCER_VOCES.md; pregunta en el tablero.
 - [decisión] Etapa 3 del control de apps: rutinas con Accesibilidad (en el tablero).
 - [prueba] APK más reciente (en el tablero).
 - [prueba] Laptop con Linux y equipo de modelos (en el tablero).

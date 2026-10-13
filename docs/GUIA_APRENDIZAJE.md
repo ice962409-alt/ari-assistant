@@ -266,6 +266,12 @@ Cómo funciona:
 2. **Reconocerte**: cada vez que hablas, el modelo saca los números de esa frase y los compara con las huellas guardadas. Si se parecen lo suficiente, sabe que eres tú. Si no se parecen a ninguna, eres alguien nuevo y Ari puede preguntar "¿quién eres?".
 3. **El umbral**: es qué tan parecidas tienen que ser dos huellas para decir "es la misma persona". Si es muy estricto, a veces no te reconoce (con gripa o con ruido); si es muy flojo, podría confundirte con otra persona. A ese error se le llama **falso positivo**.
 
+Cómo lo hace Ari por dentro (desde la 0.14.0):
+
+- **Una tubería para el audio**: normalmente el reconocedor de voz de Google usa el micrófono solo. Ahora Ari graba ella misma y le pasa el audio por una **tubería** (*pipe*): un conducto por el que una parte del programa escribe y otra lee. Así la misma frase sirve para saber qué dijiste y quién lo dijo.
+- **Saber cuándo terminaste**: como ahora Ari controla el micrófono, ella decide cuándo acabaste de hablar: mide el volumen y, cuando hay casi un segundo de silencio, cierra la tubería. A esto se le llama **detección de actividad de voz** (VAD, por sus siglas en inglés).
+- **Comparar huellas**: dos huellas de la misma persona "apuntan" casi a la misma dirección. Ari mide qué tan parecida es la dirección con la **similitud coseno**: 1 es idéntica, 0 nada que ver. Si pasa de 0.55 y le gana claramente a las demás personas, es esa persona.
+
 Lo que hay que cuidar:
 
 - La huella de voz es un **dato biométrico**, como la huella digital o la cara. Es muy personal, así que se guarda cifrada, solo en el teléfono, y nunca sale de ahí.
@@ -421,6 +427,9 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Codificador de visión**: la parte del modelo que convierte una imagen en algo que puede "leer".
 - **Proveedor de contenido (content provider)**: la "ventanilla" por la que una app presta un archivo a otra, con permiso temporal.
 - **Servicio en primer plano**: la parte de una app que sigue trabajando fuera de pantalla, siempre con una notificación fija.
+- **Tubería (pipe)**: un conducto por el que una parte de un programa le pasa datos a otra, como el audio al reconocedor.
+- **Detección de actividad de voz (VAD)**: saber, por el sonido, cuándo alguien empieza y deja de hablar.
+- **Similitud coseno**: una forma de medir qué tan parecidas son dos listas de números; 1 es idéntica.
 - **Reconocimiento de hablante**: saber quién está hablando, no lo que dice.
 - **Huella de voz (embedding de voz)**: la lista de números que resume cómo suena la voz de una persona.
 - **Dato biométrico**: un dato del cuerpo que identifica a una persona, como la huella digital, la cara o la voz.

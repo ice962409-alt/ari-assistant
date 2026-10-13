@@ -1,4 +1,6 @@
-# Plan: que Ari reconozca voces
+# Que Ari reconozca voces
+
+Estado: hecho en la versión 0.14.0 (decisión del usuario: "Sí, mi voz y la de otras personas"). Falta la prueba en el POCO.
 
 Petición del usuario: "Que tenga guardado mi voz y me reconozca a mí y a otras personas".
 
@@ -32,3 +34,11 @@ Petición del usuario: "Que tenga guardado mi voz y me reconozca a mí y a otras
 
 - RecognizerIntent.EXTRA_AUDIO_SOURCE (API 33): https://developer.android.com/reference/android/speech/RecognizerIntent
 - sherpa-onnx (identificación y verificación de hablante, Android, Kotlin/Java): https://pkg.go.dev/github.com/k2-fsa/sherpa-onnx
+
+## Cómo quedó (0.14.0)
+
+- sherpa-onnx 1.13.8 (.aar) y el modelo `wespeaker_en_voxceleb_CAM++.onnx` (29 MB) se descargan en GitHub Actions con su sha256; no viven en el repositorio. Solo arm64-v8a.
+- `voz/VoiceCapture`: AudioRecord 16 kHz → tubería (`EXTRA_AUDIO_SOURCE`) al reconocedor + copia para la huella. `SpeechEndDetector` cierra la tubería tras 0.9 s de silencio (sin eso el reconocedor no termina). Si el reconocedor no lee la tubería en 3 s, se marca "sin audio propio" y se vuelve al modo normal.
+- `voz/VoicePrints`: similitud coseno contra el promedio de las muestras; umbral 0.55 y margen 0.05 sobre la segunda persona. Frases de menos de 1 s no cambian a quien habla.
+- `voz/VoiceVault`: huellas cifradas con AES-GCM y llave del Keystore, en `files/voces.bin`; fuera del respaldo.
+- MainActivity: `guestMode` cuando habla alguien que no es el dueño: solo agente de reloj; `buildPrompt` con un prefacio de invitado sin recuerdos, libreta ni historial; conversación de Gemma aparte (`withConversationFor`); no se guarda en el historial.
