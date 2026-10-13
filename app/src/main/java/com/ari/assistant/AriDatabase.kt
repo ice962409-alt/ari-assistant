@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.ari.assistant.agents.MemoryStore
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -19,7 +20,13 @@ data class AgentTaskRecord(
 )
 
 class AriDatabase(context: Context) :
-    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), MemoryStore {
+
+    init {
+        // WAL: las lecturas no esperan a las escrituras de otros hilos (los
+        // agentes y el guardado en segundo plano) y cada escritura es más rápida.
+        setWriteAheadLoggingEnabled(true)
+    }
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
@@ -97,7 +104,7 @@ class AriDatabase(context: Context) :
         writableDatabase.delete("messages", null, null)
     }
 
-    fun addMemory(content: String): Long {
+    override fun addMemory(content: String): Long {
         val values = ContentValues().apply {
             put("content", content)
             put("created_at", System.currentTimeMillis())
@@ -105,7 +112,7 @@ class AriDatabase(context: Context) :
         return writableDatabase.insert("memories", null, values)
     }
 
-    fun memories(): List<Memory> {
+    override fun memories(): List<Memory> {
         val result = mutableListOf<Memory>()
         readableDatabase.query(
             "memories",
@@ -131,7 +138,7 @@ class AriDatabase(context: Context) :
      * Borra los recuerdos que contienen [text] como palabra o frase completa,
      * sin distinguir mayúsculas: "olvida café" no borra "cafetería".
      */
-    fun deleteMemoriesMatching(text: String): Int {
+    override fun deleteMemoriesMatching(text: String): Int {
         val needle = Regex(
             "(?<![\\p{L}\\p{N}])" + Regex.escape(text.trim()) + "(?![\\p{L}\\p{N}])",
             RegexOption.IGNORE_CASE

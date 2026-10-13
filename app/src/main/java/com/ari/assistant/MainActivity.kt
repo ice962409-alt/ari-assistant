@@ -39,6 +39,10 @@ class MainActivity : Activity() {
     private val executor: ExecutorService =
         Executors.newSingleThreadExecutor()
 
+    // Los mensajes se guardan en este hilo, en orden, para que escribir en la
+    // base de datos nunca frene la pantalla.
+    private val storage: ExecutorService = Executors.newSingleThreadExecutor()
+
     @Volatile
     private var engine: Engine? = null
     @Volatile
@@ -113,7 +117,7 @@ class MainActivity : Activity() {
             if (busy) {
                 status.text = result.reply
             } else {
-                database.addMessage(ROLE_ARI, result.reply)
+                saveMessage(ROLE_ARI, result.reply)
                 chat.addAri(result.reply)
             }
             offerCandidates()
@@ -140,7 +144,7 @@ class MainActivity : Activity() {
                     "Contraté a ${chosen.joinToString { it.label }}. " +
                         "Solo reciben las tareas que les paso, nunca tus recuerdos."
                 }
-                database.addMessage(ROLE_ARI, reply)
+                saveMessage(ROLE_ARI, reply)
                 chat.addAri(reply)
             }
             .setNegativeButton("A nadie") { _, _ -> team.rejectCandidates(network) }
@@ -514,7 +518,7 @@ class MainActivity : Activity() {
         }
 
         input.text.clear()
-        database.addMessage(ROLE_USER, text)
+        saveMessage(ROLE_USER, text)
         chat.addUser(text)
         chat.startAri()
         askGemma(text)
@@ -529,6 +533,8 @@ class MainActivity : Activity() {
             return
         }
 
+        val hadHistoryPending = historyPending
+        val hadMemoriesPending = memoriesPending
         val prompt = buildPrompt(text)
         status.text = "Ari está pensando..."
         busy = true
@@ -580,6 +586,9 @@ class MainActivity : Activity() {
         try {
             activeConversation.sendMessageAsync(prompt, callback)
         } catch (e: Throwable) {
+            // El contexto no llegó a Gemma: se vuelve a enviar con el siguiente mensaje.
+            historyPending = hadHistoryPending
+            memoriesPending = hadMemoriesPending
             busy = false
             sendButton.isEnabled = true
             status.text = "Error de respuesta: ${e.message ?: e.javaClass.simpleName}"
@@ -681,8 +690,8 @@ class MainActivity : Activity() {
 
     /** Muestra (y lee, en modo voz) una respuesta de Ari que no pasó por ningún agente. */
     private fun answerLocally(text: String, reply: String) {
-        database.addMessage(ROLE_USER, text)
-        database.addMessage(ROLE_ARI, reply)
+        saveMessage(ROLE_USER, text)
+        saveMessage(ROLE_ARI, reply)
         chat.addUser(text)
         chat.addAri(reply)
         if (voiceMode) voice.speak(reply)
@@ -692,7 +701,7 @@ class MainActivity : Activity() {
     private fun delegate(text: String, delegation: AriCeo.Delegation) {
         val agent = delegation.agent
         input.text.clear()
-        database.addMessage(ROLE_USER, text)
+        saveMessage(ROLE_USER, text)
         chat.addUser(text)
         chat.startAri(agent.name)
         status.text = "${agent.name} está trabajando..."
@@ -713,7 +722,7 @@ class MainActivity : Activity() {
                 return@run
             }
 
-            database.addMessage(ROLE_ARI, result.reply)
+            saveMessage(ROLE_ARI, result.reply)
             chat.appendAri(result.reply)
             chat.finishAri()
             if (voiceMode) {
@@ -726,10 +735,21 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun saveMessage(role: String, content: String) {
+        if (storage.isShutdown) return
+        storage.execute {
+            try {
+                database.addMessage(role, content)
+            } catch (_: Throwable) {
+                // Si la base de datos falla, la conversación sigue; solo no se guarda ese mensaje.
+            }
+        }
+    }
+
     private fun saveResponse(response: StringBuilder) {
         val content = response.toString().trim()
         if (content.isNotEmpty()) {
-            database.addMessage(ROLE_ARI, content)
+            saveMessage(ROLE_ARI, content)
         }
     }
 
@@ -756,7 +776,12 @@ class MainActivity : Activity() {
         }
 
         if (historyPending) {
-            val history = database.recentMessages(HISTORY_CONTEXT_LIMIT)
+            // El mensaje actual ya va al final del prompt: si ya se guardó, no se repite aquí.
+            val history = database.recentMessages(HISTORY_CONTEXT_LIMIT + 1).let { saved ->
+                val last = saved.lastOrNull()
+                if (last != null && last.role == ROLE_USER && last.content == text) saved.dropLast(1)
+                else saved.takeLast(HISTORY_CONTEXT_LIMIT)
+            }
             if (history.isNotEmpty()) {
                 context.append("Últimos mensajes de conversaciones anteriores:\n")
                 history.forEach { message ->
@@ -1182,7 +1207,9 @@ class MainActivity : Activity() {
         executor.shutdown()
         voice.release()
         ceo.shutdown()
-        database.close()
+        // Se cierra la base de datos después de guardar lo que quedaba pendiente.
+        storage.execute { database.close() }
+        storage.shutdown()
     }
 
     companion object {

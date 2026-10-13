@@ -1,13 +1,12 @@
 package com.ari.assistant.agents
 
-import com.ari.assistant.AriDatabase
 
 /**
  * Guarda, lista y olvida recuerdos con frases normales, sin comandos:
  * "recuerda que me gusta el café", "olvida café", "qué recuerdas de mí".
  */
 class MemoryAgent(
-    private val database: AriDatabase,
+    private val database: MemoryStore,
     private val onMemoriesChanged: () -> Unit
 ) : Agent {
 
