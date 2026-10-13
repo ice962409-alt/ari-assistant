@@ -208,6 +208,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **MainActivity.kt**: interfaz, chat, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
+- **AriWidget.kt**: el widget de la pantalla de inicio.
 - **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt), los agentes de memoria y reloj, el equipo de modelos (TeamAgent.kt y Role.kt) y el guardia de red (NetworkGuard.kt).
 - **docs/ARI_ESTADO.md**: estado técnico, para que cualquier asistente pueda continuar.
 - **.github/workflows/android.yml**: compilación automática del APK.
