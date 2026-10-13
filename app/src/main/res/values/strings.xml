@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_description">Ari en tu pantalla: su estado, tus recuerdos y tus pendientes con Claude.</string>
+    <string name="widget_description">Ari en tu pantalla: tócala para platicar con ella en modo live.</string>
 </resources>

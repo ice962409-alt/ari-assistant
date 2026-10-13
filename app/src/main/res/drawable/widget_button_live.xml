@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botón "Hablar" del widget: lleno de color hielo, el principal. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/ari_ice" />
+    <corners android:radius="19dp" />
+</shape>

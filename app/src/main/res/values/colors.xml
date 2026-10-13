@@ -7,4 +7,5 @@
     <color name="ari_ice_dim">#339ED8EE</color>
     <color name="ari_text">#E8EEF2</color>
     <color name="ari_muted">#9AA6B2</color>
+    <color name="ari_on_ice">#0B1A22</color>
 </resources>

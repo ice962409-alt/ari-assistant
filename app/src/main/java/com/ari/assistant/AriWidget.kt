@@ -7,6 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.widget.RemoteViews
 import org.json.JSONArray
 import java.io.File
@@ -27,32 +29,75 @@ class AriWidget : AppWidgetProvider() {
         widgetIds.forEach { manager.updateAppWidget(it, views) }
     }
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action != ACTION_POKE) return
+        // Le "hiciste cosquillas": Ari pone cara feliz y saluda unos segundos.
+        val pending = goAsync()
+        render(context, happy = true)
+        Handler(Looper.getMainLooper()).postDelayed({
+            try {
+                render(context, happy = false)
+            } finally {
+                pending.finish()
+            }
+        }, HAPPY_MS)
+    }
+
     companion object {
+        private const val ACTION_POKE = "com.ari.assistant.WIDGET_POKE"
+        private const val HAPPY_MS = 4000L
+
+        private val GREETINGS = listOf(
+            "¡Hola! Toca \"Hablar\" y platicamos.",
+            "Jaja, ¡me hiciste cosquillas!",
+            "Aquí estoy, lista para lo que necesites.",
+            "¿Me llamaste? Te escucho.",
+            "¡Qué gusto verte por aquí!"
+        )
+        private val FACES = listOf(
+            R.id.widget_face_1, R.id.widget_face_2, R.id.widget_face_3, R.id.widget_face_4, R.id.widget_face_5
+        )
+        private val NORMAL_FACES = listOf(
+            R.drawable.ari_face_open, R.drawable.ari_face_glow, R.drawable.ari_face_open,
+            R.drawable.ari_face_glow, R.drawable.ari_face_blink
+        )
+
+        private fun render(context: Context, happy: Boolean) {
+            val manager = AppWidgetManager.getInstance(context) ?: return
+            val ids = manager.getAppWidgetIds(ComponentName(context, AriWidget::class.java))
+            if (ids.isEmpty()) return
+            val views = buildViews(context, happy)
+            ids.forEach { manager.updateAppWidget(it, views) }
+        }
         /** El tablero "Pendientes de Ari" en claude.ai; se abre en el navegador. */
         private const val BOARD_URL = "https://claude.ai/artifact/7kCcA7Ppg1tGW1HDATrfyB"
 
         /** Vuelve a dibujar todos los widgets de Ari, por ejemplo al salir de la app. */
-        fun refresh(context: Context) {
-            val manager = AppWidgetManager.getInstance(context) ?: return
-            val ids = manager.getAppWidgetIds(ComponentName(context, AriWidget::class.java))
-            if (ids.isEmpty()) return
-            val views = buildViews(context)
-            ids.forEach { manager.updateAppWidget(it, views) }
-        }
+        fun refresh(context: Context) = render(context, happy = false)
 
-        private fun buildViews(context: Context): RemoteViews {
+        private fun buildViews(context: Context, happy: Boolean = false): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_ari)
-            val modelReady = File(context.filesDir, "gemma-model.litertlm").let { it.exists() && it.length() > 0 }
+            // El modelo elegido a mano o el descargado desde la app.
+            val modelReady = File(context.filesDir, "gemma-model.litertlm").let { it.exists() && it.length() > 0 } ||
+                runCatching { ModelDownload(context).downloadedFile() != null }.getOrDefault(false)
+            FACES.forEachIndexed { index, id ->
+                views.setImageViewResource(id, if (happy) R.drawable.ari_face_happy else NORMAL_FACES[index])
+            }
             val memories = countMemories(context)
             val team = countTeam(context)
 
             views.setTextViewText(
                 R.id.widget_status,
-                if (modelReady) "Lista para ayudarte" else "Falta cargar el modelo"
+                when {
+                    happy -> "Feliz"
+                    modelReady -> "Lista para platicar"
+                    else -> "Falta el modelo"
+                }
             )
             views.setTextViewText(
                 R.id.widget_line_1,
-                if (modelReady) "Hola, soy Ari. ¿En qué trabajamos hoy?" else "Abre Ari y elige el modelo Gemma para empezar."
+                if (modelReady) "Hola, soy Ari. ¿En qué trabajamos hoy?" else "Ábreme y toca Modelo para descargar a Gemma."
             )
             views.setTextViewText(
                 R.id.widget_line_2,
@@ -72,16 +117,39 @@ class AriWidget : AppWidgetProvider() {
             )
             views.setTextViewText(
                 R.id.widget_line_4,
-                "Toca \"Ver a Claude\" para ver en qué trabaja y si te necesita."
+                "Toca mi cara o \"Hablar\" para platicar conmigo en voz."
             )
 
+            // Al tocarla, el saludo ocupa todos los mensajes, para que se vea sea cual sea el que está en pantalla.
+            if (happy) {
+                val greeting = GREETINGS.random()
+                listOf(R.id.widget_line_1, R.id.widget_line_2, R.id.widget_line_3, R.id.widget_line_4)
+                    .forEach { views.setTextViewText(it, greeting) }
+            }
+
             val openApp = Intent(context, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             val openAppIntent = PendingIntent.getActivity(
                 context, 0, openApp, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_open_ari, openAppIntent)
-            views.setOnClickPendingIntent(R.id.widget_flipper, openAppIntent)
+
+            // Su cara y "Hablar" abren Ari directo en el modo live.
+            val live = Intent(context, MainActivity::class.java)
+                .setAction(MainActivity.ACTION_LIVE)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            val liveIntent = PendingIntent.getActivity(
+                context, 2, live, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_live, liveIntent)
+            views.setOnClickPendingIntent(R.id.widget_face, liveIntent)
+
+            val poke = PendingIntent.getBroadcast(
+                context, 3,
+                Intent(context, AriWidget::class.java).setAction(ACTION_POKE),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_flipper, poke)
 
             val openBoard = Intent(Intent.ACTION_VIEW, Uri.parse(BOARD_URL))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

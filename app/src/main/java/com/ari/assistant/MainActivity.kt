@@ -25,6 +25,7 @@ import com.ari.assistant.agents.NetworkGuard
 import com.ari.assistant.agents.PhoneAgent
 import com.ari.assistant.agents.ReminderAgent
 import com.ari.assistant.agents.TeamAgent
+import com.ari.assistant.ui.AriOrbView
 import com.ari.assistant.ui.AriTheme
 import com.ari.assistant.ui.ChatView
 import com.google.ai.edge.litertlm.Backend
@@ -107,6 +108,12 @@ class MainActivity : Activity() {
     private var voiceMode = false
     private var silentAttempts = 0
 
+    // Modo live: Ari a pantalla completa, para platicar con ella como con una persona.
+    private lateinit var liveOverlay: LinearLayout
+    private lateinit var liveOrb: AriOrbView
+    private lateinit var liveStatus: TextView
+    private lateinit var liveCaption: TextView
+
     // Contraseña del respaldo mientras el usuario elige el archivo. Se borra al usarla.
     private var backupPassword: CharArray? = null
 
@@ -138,6 +145,7 @@ class MainActivity : Activity() {
         loadSavedModel()
         recruitTeam()
         if (firstRun) askUserName(firstTime = true) else remindBackup()
+        handleLaunch(intent)
         // Por si Android borró las alarmas (reinicio, actualización, respaldo recuperado).
         storage.execute { runCatching { AlarmReminders.rescheduleAll(this, database) } }
     }
@@ -447,7 +455,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.END or Gravity.CENTER_VERTICAL
         }
-        voiceButton = roundButton(VOICE_START_LABEL, filled = false) { toggleVoiceMode() }
+        voiceButton = roundButton(VOICE_START_LABEL, filled = false) { if (voiceMode) closeLive() else openLive() }
         sendButton = roundButton("↑", filled = true) { sendMessage() }
         actions.addView(voiceButton, LinearLayout.LayoutParams(dp(44f), dp(44f)).apply { rightMargin = dp(8f) })
         actions.addView(sendButton, LinearLayout.LayoutParams(dp(44f), dp(44f)))
@@ -459,7 +467,128 @@ class MainActivity : Activity() {
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { setMargins(dp(12f), dp(4f), dp(12f), dp(12f)) })
 
-        setContentView(root)
+        val frame = android.widget.FrameLayout(this)
+        frame.addView(root)
+        liveOverlay = buildLive()
+        frame.addView(liveOverlay)
+        setContentView(frame)
+    }
+
+    /** Pantalla del modo live: Ari grande, lo que oye o dice, y los botones para salir. */
+    private fun buildLive(): LinearLayout {
+        val overlay = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setBackgroundColor(AriTheme.background)
+            visibility = android.view.View.GONE
+            isClickable = true
+            setPadding(dp(24f), dp(24f), dp(24f), dp(24f))
+        }
+        overlay.setOnApplyWindowInsetsListener { view, insets ->
+            val bars = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                val i = insets.getInsets(WindowInsets.Type.systemBars())
+                intArrayOf(i.top, i.bottom)
+            } else {
+                @Suppress("DEPRECATION")
+                intArrayOf(insets.systemWindowInsetTop, insets.systemWindowInsetBottom)
+            }
+            view.setPadding(dp(24f), bars[0] + dp(24f), dp(24f), bars[1] + dp(24f))
+            insets
+        }
+        overlay.addView(TextView(this).apply {
+            text = "Ari"
+            textSize = 22f
+            setTypeface(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL)
+            setTextColor(AriTheme.text)
+            gravity = Gravity.CENTER
+        })
+        liveStatus = TextView(this).apply {
+            textSize = 14f
+            setTextColor(AriTheme.muted)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(4f), 0, 0)
+        }
+        overlay.addView(liveStatus)
+
+        liveOrb = AriOrbView(this).apply {
+            contentDescription = "Ari. Tócala para hablar o para interrumpirla."
+            setOnClickListener { onLiveOrbTapped() }
+        }
+        overlay.addView(liveOrb, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+
+        liveCaption = TextView(this).apply {
+            textSize = 20f
+            setTextColor(AriTheme.text)
+            gravity = Gravity.CENTER
+            setLineSpacing(0f, 1.2f)
+            maxLines = 5
+            ellipsize = android.text.TextUtils.TruncateAt.START
+            minHeight = dp(110f)
+        }
+        overlay.addView(liveCaption, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ))
+
+        val buttons = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, dp(20f), 0, 0)
+        }
+        buttons.addView(chip("Escribir") { closeLive() })
+        buttons.addView(roundButton(VOICE_STOP_LABEL, filled = true) { closeLive() },
+            LinearLayout.LayoutParams(dp(64f), dp(64f)).apply { leftMargin = dp(20f); rightMargin = dp(20f) })
+        buttons.addView(chip("Interrumpir") { onLiveOrbTapped() })
+        overlay.addView(buttons)
+        return overlay
+    }
+
+    private val liveVisible: Boolean
+        get() = ::liveOverlay.isInitialized && liveOverlay.visibility == android.view.View.VISIBLE
+
+    private fun openLive() {
+        liveOverlay.visibility = android.view.View.VISIBLE
+        liveOrb.mood = AriOrbView.Mood.IDLE
+        liveCaption.text = if (modelReady) "" else "Todavía no cargo a Gemma: puedo hacer recordatorios, abrir apps y más, pero para platicar toca Modelo."
+        liveStatus.text = "Toca a Ari para hablar"
+        if (!voiceMode) toggleVoiceMode()
+    }
+
+    private fun closeLive() {
+        if (voiceMode) stopVoiceMode("Modo live terminado.")
+        liveOverlay.visibility = android.view.View.GONE
+    }
+
+    /** Tocar a Ari: si habla, se calla y te escucha (como interrumpir a alguien); si no, empieza. */
+    private fun onLiveOrbTapped() {
+        when {
+            !voiceMode -> toggleVoiceMode()
+            voice.isSpeaking -> {
+                voice.stopSpeaking()
+                if (!busy) listen()
+            }
+            !busy -> listen()
+        }
+    }
+
+    private fun setLive(mood: AriOrbView.Mood, statusText: String? = null, caption: String? = null) {
+        if (!::liveOrb.isInitialized) return
+        liveOrb.mood = mood
+        statusText?.let { liveStatus.text = it }
+        caption?.let { liveCaption.text = it }
+    }
+
+    /** "Hablar" en el widget abre Ari directo en el modo live. */
+    private fun handleLaunch(intent: Intent?) {
+        if (intent?.action == ACTION_LIVE) {
+            intent.action = null
+            liveOverlay.post { openLive() }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleLaunch(intent)
     }
 
     private fun dp(value: Float) = AriTheme.dp(this, value)
@@ -869,7 +998,14 @@ class MainActivity : Activity() {
 
         val hadHistoryPending = historyPending
         val hadMemoriesPending = memoriesPending
-        val prompt = buildPrompt(text)
+        // En voz, Ari contesta corto y natural, y empieza a hablar con la primera frase.
+        val speakLive = voiceMode
+        val prompt = buildPrompt(text).let { if (speakLive) "$VOICE_STYLE\n\n$it" else it }
+        val speech = StringBuilder()
+        if (speakLive) {
+            voice.beginStream()
+            setLive(AriOrbView.Mood.THINKING, "Pensando…")
+        }
         status.text = "Ari está pensando..."
         busy = true
         sendButton.isEnabled = false
@@ -883,6 +1019,11 @@ class MainActivity : Activity() {
                         if (isDestroyed) return@runOnUiThread
                         response.append(chunk)
                         chat.appendAri(chunk)
+                        if (speakLive && voiceMode) {
+                            speech.append(chunk)
+                            SpeechChunker.take(speech).forEach { voice.streamSentence(it) }
+                            liveCaption.text = VoiceController.cleanForSpeech(response.toString()).takeLast(260)
+                        }
                     }
                 }
 
@@ -894,7 +1035,12 @@ class MainActivity : Activity() {
                         busy = false
                         sendButton.isEnabled = true
                         notifyIfAway("Ari terminó de responder", response.toString())
-                        if (voiceMode) {
+                        if (speakLive && voiceMode) {
+                            status.text = "Ari está hablando..."
+                            voice.streamSentence(SpeechChunker.rest(speech))
+                            // Si la interrumpiste mientras pensaba, te escucha en cuanto termina.
+                            if (!voice.endStream()) listen()
+                        } else if (voiceMode) {
                             status.text = "Ari está hablando..."
                             voice.speak(response.toString())
                         } else {
@@ -913,7 +1059,10 @@ class MainActivity : Activity() {
                         chat.appendAri("\n\n_No pude terminar la respuesta._")
                         chat.finishAri()
                         sendButton.isEnabled = true
-                        if (voiceMode) voice.speak("Hubo un error al generar la respuesta.")
+                        if (voiceMode) {
+                            voice.stopSpeaking()
+                            voice.speak("Hubo un error al generar la respuesta.")
+                        }
                     }
                 }
             }
@@ -1064,6 +1213,7 @@ class MainActivity : Activity() {
             if (agent !== phoneAgent) notifyIfAway("${agent.name} terminó", result.reply)
             if (voiceMode) {
                 status.text = "Ari está hablando..."
+                setLive(AriOrbView.Mood.SPEAKING, caption = VoiceController.cleanForSpeech(result.reply))
                 voice.speak(result.reply)
             } else {
                 status.text = "Ari está lista."
@@ -1294,27 +1444,42 @@ class MainActivity : Activity() {
         voice.stopAll()
         voiceButton.text = VOICE_START_LABEL
         status.text = message
+        setLive(AriOrbView.Mood.IDLE, "Toca a Ari para hablar", message)
     }
 
     private fun listen() {
         status.text = "Preparando el micrófono..."
+        setLive(AriOrbView.Mood.IDLE, "Un momento…")
         voice.startListening()
     }
 
     private val voiceListener = object : VoiceController.Listener {
         override fun onListeningStarted() {
-            if (voiceMode) status.text = "Escuchando... habla ahora."
+            if (!voiceMode) return
+            status.text = "Escuchando... habla ahora."
+            setLive(AriOrbView.Mood.LISTENING, "Te escucho…", "")
         }
 
         override fun onPartialSpeech(text: String) {
-            if (voiceMode) input.setText(text)
+            if (!voiceMode) return
+            input.setText(text)
+            setLive(AriOrbView.Mood.LISTENING, caption = text)
         }
 
         override fun onSpeechResult(text: String) {
             if (!voiceMode) return
             silentAttempts = 0
+            setLive(AriOrbView.Mood.THINKING, "Pensando…", text)
             input.setText(text)
             sendMessage()
+        }
+
+        override fun onSpeakingStarted() {
+            if (voiceMode) setLive(AriOrbView.Mood.SPEAKING, "Hablando · tócala para interrumpir")
+        }
+
+        override fun onVoiceLevel(level: Float) {
+            if (::liveOrb.isInitialized) liveOrb.level = level
         }
 
         override fun onSpeechError(message: String, noSpeech: Boolean) {
@@ -1597,6 +1762,12 @@ class MainActivity : Activity() {
         private const val AGENT_SETTINGS = "ari_agentes"
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
+        const val ACTION_LIVE = "com.ari.assistant.LIVE"
+
+        /** Para la voz: respuestas cortas y naturales, como en una plática. */
+        private const val VOICE_STYLE =
+            "(Estamos platicando en voz alta, como dos personas: responde corto y natural, en una a tres frases, " +
+                "sin listas, sin emojis y sin formato. Si hace falta más detalle, ofrécelo al final con una pregunta breve.)"
         private const val VOICE_START_LABEL = "🎙"
         private const val VOICE_STOP_LABEL = "■"
         private const val MODEL_FILE_NAME = "gemma-model.litertlm"

@@ -45,9 +45,7 @@ class ChatView(context: Context) : ScrollView(context) {
             gravity = Gravity.CENTER
             setPadding(0, dp(96f), 0, dp(32f))
         }
-        box.addView(View(context).apply {
-            background = AriTheme.circle(AriTheme.background, AriTheme.ice, dp(3f))
-        }, LinearLayout.LayoutParams(dp(56f), dp(56f)).apply { bottomMargin = dp(20f) })
+        box.addView(AriOrbView(context), LinearLayout.LayoutParams(dp(120f), dp(120f)).apply { bottomMargin = dp(12f) })
         box.addView(TextView(context).apply {
             text = if (userName.isBlank()) "Hola, soy Ari" else "Hola, $userName"
             textSize = 28f

@@ -27,6 +27,12 @@ class VoiceController(
         /** [noSpeech] indica que no se oyó nada (silencio o sin coincidencias). */
         fun onSpeechError(message: String, noSpeech: Boolean)
         fun onSpeakingFinished()
+
+        /** Ari empezó a decir algo en voz alta (para animar su cara). */
+        fun onSpeakingStarted() {}
+
+        /** Volumen de tu voz mientras te escucha, de 0 a 1 (para animar su cara). */
+        fun onVoiceLevel(level: Float) {}
     }
 
     private val locale: Locale = Locale.getDefault()
@@ -36,6 +42,12 @@ class VoiceController(
     private var pendingSpeech: String? = null
     private var utteranceCounter = 0
     private var lastUtteranceId: String? = null
+
+    // Respuesta que se dice frase por frase mientras Gemma la escribe.
+    private val streamIds = mutableSetOf<String>()
+    private val streamWaiting = mutableListOf<String>()
+    private var streamOpen = false
+    private var streamActive = false
 
     val isRecognitionAvailable: Boolean
         get() = SpeechRecognizer.isRecognitionAvailable(activity)
@@ -47,6 +59,7 @@ class VoiceController(
                 if (ttsReady) {
                     configureTts()
                     pendingSpeech?.let { speak(it) }
+                    streamWaiting.toList().also { streamWaiting.clear() }.forEach { enqueue(it) }
                 } else if (pendingSpeech != null) {
                     listener.onSpeakingFinished()
                 }
@@ -65,7 +78,9 @@ class VoiceController(
         }
 
         engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {}
+            override fun onStart(utteranceId: String?) {
+                activity.runOnUiThread { listener.onSpeakingStarted() }
+            }
 
             override fun onDone(utteranceId: String?) {
                 activity.runOnUiThread {
@@ -73,6 +88,7 @@ class VoiceController(
                         lastUtteranceId = null
                         listener.onSpeakingFinished()
                     }
+                    if (utteranceId != null && streamIds.remove(utteranceId)) finishStreamIfDone()
                 }
             }
 
@@ -104,6 +120,9 @@ class VoiceController(
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.toLanguageTag())
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            // Al terminar de hablar, Ari contesta enseguida (si el reconocedor lo permite).
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 800L)
         }
 
         activeRecognizer.startListening(intent)
@@ -137,9 +156,62 @@ class VoiceController(
         }
     }
 
+    /** Empieza una respuesta que llegará por frases con [streamSentence]. */
+    fun beginStream() {
+        stopSpeaking()
+        streamOpen = true
+        streamActive = true
+    }
+
+    /** Dice una frase de la respuesta en curso, en cuanto el motor de voz pueda. */
+    fun streamSentence(text: String) {
+        if (!streamActive) return
+        val clean = cleanForSpeech(text)
+        if (clean.isEmpty()) return
+        if (tts == null || !ttsReady) {
+            streamWaiting.add(clean)
+        } else {
+            enqueue(clean)
+        }
+    }
+
+    /**
+     * No llegarán más frases: al terminar la última se avisa [Listener.onSpeakingFinished].
+     * Devuelve false si la respuesta ya se había interrumpido (nadie va a avisar).
+     */
+    fun endStream(): Boolean {
+        if (!streamActive) return false
+        streamOpen = false
+        finishStreamIfDone()
+        return true
+    }
+
+    private fun enqueue(text: String) {
+        val engine = tts ?: return
+        splitForSpeech(text, TextToSpeech.getMaxSpeechInputLength() - 100).forEach { chunk ->
+            val id = "ari_stream_${utteranceCounter++}"
+            streamIds.add(id)
+            engine.speak(chunk, TextToSpeech.QUEUE_ADD, null, id)
+        }
+    }
+
+    private fun finishStreamIfDone() {
+        if (streamActive && !streamOpen && streamIds.isEmpty() && streamWaiting.isEmpty()) {
+            streamActive = false
+            listener.onSpeakingFinished()
+        }
+    }
+
+    val isSpeaking: Boolean
+        get() = streamActive || lastUtteranceId != null || pendingSpeech != null
+
     fun stopSpeaking() {
         pendingSpeech = null
         lastUtteranceId = null
+        streamIds.clear()
+        streamWaiting.clear()
+        streamOpen = false
+        streamActive = false
         tts?.stop()
     }
 
@@ -161,7 +233,10 @@ class VoiceController(
         }
 
         override fun onBeginningOfSpeech() {}
-        override fun onRmsChanged(rmsdB: Float) {}
+        // El volumen llega más o menos entre -2 (silencio) y 10 (voz fuerte).
+        override fun onRmsChanged(rmsdB: Float) {
+            listener.onVoiceLevel(((rmsdB + 2f) / 12f).coerceIn(0f, 1f))
+        }
         override fun onBufferReceived(buffer: ByteArray?) {}
         override fun onEndOfSpeech() {}
         override fun onEvent(eventType: Int, params: Bundle?) {}

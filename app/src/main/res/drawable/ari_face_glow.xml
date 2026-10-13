@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ari brillando: el halo crece, como si respirara. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path android:fillColor="#709ED8EE" android:pathData="M1,50a49,49 0 1,0 98,0a49,49 0 1,0 -98,0z" />
+    <path android:pathData="M12,50a38,38 0 1,0 76,0a38,38 0 1,0 -76,0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="38" android:centerY="34" android:gradientRadius="60">
+                <item android:offset="0" android:color="#FFDEF6FD" />
+                <item android:offset="0.45" android:color="#FF9ED8EE" />
+                <item android:offset="1" android:color="#FF5FB8DA" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#59FFFFFF" android:pathData="M29,30a9,4.5 0 1,0 18,0a9,4.5 0 1,0 -18,0z" />
+    <path android:fillColor="#FF0B1A22" android:pathData="M34,47a4,7 0 1,0 8,0a4,7 0 1,0 -8,0zM58,47a4,7 0 1,0 8,0a4,7 0 1,0 -8,0z" />
+    <path android:strokeColor="#FF0B1A22" android:strokeWidth="3" android:strokeLineCap="round" android:pathData="M42,60Q50,67 58,60" />
+</vector>

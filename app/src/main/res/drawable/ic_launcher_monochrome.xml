@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono temático (un solo color): la silueta de Ari con ojos y sonrisa recortados. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="0.66" android:scaleY="0.66" android:translateX="21" android:translateY="21">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M12,50a38,38 0 1,0 76,0a38,38 0 1,0 -76,0zM34,47a4,7 0 1,0 8,0a4,7 0 1,0 -8,0zM58,47a4,7 0 1,0 8,0a4,7 0 1,0 -8,0zM42,60Q50,67 58,60Q50,63.5 42,60z" />
+    </group>
+</vector>

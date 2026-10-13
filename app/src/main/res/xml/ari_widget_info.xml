@@ -2,6 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
     android:initialLayout="@layout/widget_ari"
+    android:previewImage="@drawable/ari_face_open"
     android:minWidth="250dp"
     android:minHeight="110dp"
     android:minResizeWidth="180dp"
