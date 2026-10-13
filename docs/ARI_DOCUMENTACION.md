@@ -51,6 +51,20 @@ Ari guarda recuerdos sobre ti y se los pasa a Gemma como contexto.
 
 El botón **Memoria** también deja ver, agregar y borrar recuerdos. Para borrar uno, tócalo.
 
+### Respaldo cifrado (llevar a Ari a otro teléfono o guardar una copia)
+
+En el botón **Memoria** → **Respaldo** hay dos opciones:
+
+- **Guardar un respaldo cifrado**: pide una contraseña de al menos 8 caracteres (dos veces) y te deja elegir dónde guardar el archivo, por ejemplo en Descargas o en tu Google Drive. El archivo se llama "ari-respaldo-fecha.ari" y guarda los recuerdos, el historial de la conversación, la bitácora de los agentes, el equipo contratado y las redes aprobadas.
+- **Recuperar desde un respaldo**: eliges el archivo, escribes la contraseña y Ari reemplaza sus datos actuales por los del archivo.
+
+Importante:
+
+- Sin la contraseña nadie puede abrir el archivo, **ni siquiera tú**. Anótala en un lugar seguro.
+- Si la contraseña es incorrecta o alguien modificó el archivo, Ari no lo importa y no cambia nada.
+- El modelo Gemma no va en el respaldo (pesa 3.4 GB); en el teléfono nuevo hay que volver a seleccionarlo.
+- Por seguridad, al recuperar solo vuelven los equipos con direcciones de la red local.
+
 ### Modo de voz
 
 1. Toca el botón del micrófono, junto al de enviar. La primera vez, Ari pide permiso para usar el micrófono.
@@ -91,7 +105,7 @@ Para instalarla:
 
 1. Descarga **ari-estado-apk** de la compilación más reciente en GitHub Actions e instálalo.
 2. Abre Ari Estado: la pantalla te explica cómo crear la llave en GitHub (solo lectura, solo Ari-estado, con vencimiento). Pégala ahí, nunca en un chat.
-3. Toca **Guardar y probar**: debe decir "¡Funciona!".
+3. Toca **Guardar y probar**: debe decir "¡Funciona!". Debajo del campo verás el inicio de la llave guardada y cuántos caracteres tiene (una llave completa tiene unos 93 y empieza con github_pat_). Si sale menos, se copió incompleta.
 4. Agrega el widget: mantén presionado un espacio vacío de la pantalla de inicio → Widgets → Ari Estado → "Claude trabajando".
 
 ### Ari como CEO de sus agentes
@@ -220,6 +234,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Widget animado para la pantalla de inicio, con acceso a Ari y al tablero de Claude (con barra de progreso).
 - Interfaz estilo Claude en color hielo: burbujas, texto con formato, "Pensando…" animado y respuesta en vivo. Iconos nuevos para Ari y Ari Estado, y widgets en color hielo.
 - App Ari Estado: widget "Claude trabajando" con la tarea, barra de progreso y avisos cuando Claude se detiene, leído del repositorio privado Ari-estado con una llave de solo lectura.
+- Respaldo cifrado de la memoria: guardar y recuperar recuerdos, historial, equipo y redes aprobadas en un archivo con contraseña (versión 0.3.0). Base de los respaldos y de la mudanza a otra PC.
+- Ari Estado 0.1.2: muestra el inicio y la longitud de la llave guardada y quita espacios que se cuelen al pegarla.
 - Compila correctamente; falta probarlo en el teléfono.
 
 ## 5. Plan hacia el lanzamiento
@@ -246,6 +262,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
+- **AriBackup.kt**: el respaldo cifrado con contraseña.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
 - **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).

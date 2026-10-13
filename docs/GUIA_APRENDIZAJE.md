@@ -91,6 +91,16 @@ La regla que usan las empresas para no perder nada:
 
 Para Ari: la laptop, tu teléfono y una copia cifrada en tu Google Drive.
 
+### Cómo funciona el respaldo cifrado de Ari
+
+Cuando guardas un respaldo desde Memoria → Respaldo, pasan tres cosas:
+
+1. **De la contraseña sale una llave.** Una contraseña como "gatito2026" es fácil de adivinar para una computadora que prueba millones por segundo. Por eso Ari la pasa por una "licuadora" llamada **PBKDF2** que la mezcla 210 000 veces. Para ti tarda menos de un segundo; para alguien que quiera probar millones de contraseñas, se vuelve lentísimo.
+2. **La sal.** Antes de licuar, Ari agrega unos bytes al azar (la **sal**) que se guardan en el archivo. Así, dos respaldos con la misma contraseña tienen llaves distintas, y nadie puede usar una tabla de contraseñas ya calculadas.
+3. **El candado AES-GCM.** Con esa llave, Ari cierra el contenido con **AES-256-GCM**, el mismo tipo de cifrado que usan los bancos. "GCM" además pone un **sello**: si alguien cambia aunque sea una letra del archivo, Ari lo nota y no lo importa.
+
+Lo importante: sin la contraseña el archivo es solo ruido, por eso puedes guardarlo en Drive sin miedo. Pero si la olvidas, tampoco tú lo puedes abrir: nadie tiene una "llave maestra".
+
 ### Nube privada
 
 Una **nube privada** es un servidor que es tuyo y al que solo tú y tus dispositivos pueden entrar, desde cualquier lugar. Para Ari, la laptop con Linux será su casa principal y el teléfono, tu forma de hablarle.
@@ -209,4 +219,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Llave de acceso (token)**: una contraseña limitada que una app usa para entrar a un servicio.
 - **Menor privilegio**: darle a cada cosa solo los permisos mínimos que necesita.
 - **SSID**: el nombre de una red Wi-Fi.
+- **AES-GCM**: un cifrado muy seguro que además detecta si alguien modificó el archivo.
+- **PBKDF2**: la "licuadora" que convierte una contraseña en una llave difícil de adivinar.
+- **Sal**: bytes al azar que se mezclan con la contraseña para que cada respaldo tenga una llave distinta.
+- **Respaldo**: una copia de tus datos para recuperarlos si algo falla.
 - **Widget**: un mini panel de una app en la pantalla de inicio.

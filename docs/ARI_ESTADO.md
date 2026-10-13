@@ -195,3 +195,11 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `ui/AriTheme.kt` (colores: fondo #16181C, superficie #1F2227, burbuja #2A2F36, hielo #9ED8EE, hielo profundo #5FB8DA), `ui/Markdown.kt` (títulos, listas, negritas, cursivas y código) y `ui/ChatView.kt` (burbujas del usuario a la derecha, Ari sin burbuja con su etiqueta, "Pensando…" animado, respuesta en vivo, pantalla de bienvenida, notas).
 - `MainActivity`: barra superior (punto hielo, "Ari", estado, botones Memoria y Modelo), campo redondeado con micrófono y botón de enviar circular. Tema oscuro (los diálogos también), barras del sistema oscuras y márgenes para el borde a borde de Android 15 y el teclado.
 - Iconos adaptativos: Ari (anillo hielo, punto central y un "satélite") y Ari Estado (anillo convertido en barra de progreso). Los widgets pasaron de verde a hielo.
+
+## Respaldo cifrado de la memoria (versión 0.3.0)
+
+- `AriBackup.kt`: archivo `.ari` = "ARI1" + sal 16 B + IV 12 B + JSON cifrado con AES-256-GCM (AAD "ARI1"); llave con PBKDF2WithHmacSHA256, 210 000 iteraciones. Contraseña mínima de 8 caracteres.
+- Contenido: tablas memories, messages y agent_tasks (`AriDatabase.exportData/importData`, en una transacción), claves `team|<red>` y `approved_networks` de las preferencias `ari_agentes`. Los candidatos no viajan.
+- Al importar: se reemplaza todo; solo se aceptan equipos con IP privada; archivos de más de 64 MB se rechazan; contraseña mala o archivo alterado → no cambia nada. Se abre una conversación nueva de Gemma y se reenvían personalidad, recuerdos e historial.
+- UI: Memoria → Respaldo; selector del sistema (ACTION_CREATE_DOCUMENT / ACTION_OPEN_DOCUMENT). La contraseña solo vive en memoria y se borra al usarla.
+- Ari Estado 0.1.2: muestra prefijo y longitud de la llave guardada y quita espacios al pegarla (ayuda con el error 401).

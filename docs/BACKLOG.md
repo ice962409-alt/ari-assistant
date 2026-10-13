@@ -9,12 +9,12 @@ Etiquetas:
 Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (https://claude.ai/artifact/7kCcA7Ppg1tGW1HDATrfyB) y se espera la respuesta ahí.
 
 ## En curso
-- [autónomo] Exportar e importar la memoria de Ari (recuerdos, historial, equipo, redes aprobadas) en un archivo cifrado con contraseña. Base de los respaldos y de la mudanza a otra PC.
+- [autónomo] Primer uso guiado: descarga del modelo desde la app en lugar de buscar el archivo a mano.
+
+## Hecho recientemente
+- [autónomo] Respaldo cifrado de la memoria de Ari (0.3.0). Falta [prueba] en el teléfono.
 
 ## Siguiente
-- [decisión] Estilo de la interfaz (en el tablero).
-- [autónomo] Interfaz nueva: burbujas de chat, tema oscuro, texto con formato, respuestas que aparecen mientras se escriben. Empieza cuando el usuario elija el estilo.
-- [autónomo] Primer uso guiado: descarga del modelo desde la app en lugar de buscar el archivo a mano.
 - [autónomo] Una Ari para cada usuario: nombre del usuario y personalidad configurables en el primer uso.
 - [autónomo] Estabilidad, segunda ronda: base de datos fuera del hilo principal, historial largo sin lentitud, pruebas automáticas de las reglas de enrutamiento.
 
