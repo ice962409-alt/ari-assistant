@@ -48,10 +48,12 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un erro
 
 ### El widget de Ari
 
-Ari tiene un widget para tu pantalla de inicio, con sus colores. Va rotando mensajes animados: si está lista, cuántos recuerdos guarda, cuántos modelos tiene su equipo y un recordatorio de tus pendientes con Claude.
+Ari tiene un widget para tu pantalla de inicio, con sus colores. Va rotando mensajes animados: si está lista, cuántos recuerdos guarda, cuántos modelos tiene su equipo y una invitación a ver el progreso de Claude.
+
+El widget no muestra el progreso de Claude directamente porque, para eso, la app tendría que conectarse a internet con tu cuenta, y Ari no sale de tu red. Por eso el progreso vive en el tablero, a un toque.
 
 - **Hablar con Ari**: abre la app.
-- **Pendientes**: abre tu tablero de pendientes con Claude en el navegador.
+- **Ver a Claude**: abre tu tablero en el navegador. Arriba verás si Claude está trabajando o en pausa, una barra con el progreso de su tarea (por ejemplo "Paso 2 de 4") y, abajo, lo que te necesita. Si dice "En pausa", escribe "sigue" en la sesión de Claude.
 
 Para agregarlo: mantén presionado un espacio vacío de la pantalla de inicio → Widgets → busca "Ari" → arrástralo a la pantalla.
 

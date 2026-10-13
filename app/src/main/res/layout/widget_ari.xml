@@ -98,7 +98,7 @@
             android:layout_weight="1"
             android:background="@drawable/widget_button"
             android:gravity="center"
-            android:text="Pendientes"
+            android:text="Ver a Claude"
             android:textColor="@color/ari_green"
             android:textSize="14sp"
             android:textStyle="bold" />

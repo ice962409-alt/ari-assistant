@@ -13,7 +13,8 @@ import java.io.File
 
 /**
  * Widget de Ari para la pantalla de inicio: rota mensajes animados con el
- * estado de Ari y da acceso directo a la app y al tablero de pendientes.
+ * estado de Ari y da acceso directo a la app y al tablero de Claude, donde se
+ * ve una barra con el progreso de lo que Claude está haciendo y sus pendientes.
  *
  * Todo lo que muestra sale del teléfono; el widget no se conecta a internet.
  * Por privacidad no muestra el texto de las conversaciones ni de los recuerdos,
@@ -71,7 +72,7 @@ class AriWidget : AppWidgetProvider() {
             )
             views.setTextViewText(
                 R.id.widget_line_4,
-                "Claude puede necesitarte: toca Pendientes para ver qué decidir."
+                "Toca \"Ver a Claude\" para ver en qué trabaja y si te necesita."
             )
 
             val openApp = Intent(context, MainActivity::class.java)
