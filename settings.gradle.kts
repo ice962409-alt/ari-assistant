@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Ari"
 include(":app")
+include(":estado")

@@ -1,0 +1,156 @@
+package com.ari.estado
+
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.text.InputType
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+
+/**
+ * Configuración de Ari Estado: explica cómo crear la llave de solo lectura y
+ * la guarda cifrada. La llave se pega aquí, nunca en un chat.
+ */
+class SetupActivity : Activity() {
+
+    private lateinit var status: TextView
+    private lateinit var tokenInput: EditText
+
+    private val bg = Color.rgb(18, 18, 24)
+    private val green = Color.rgb(120, 220, 170)
+    private val muted = Color.rgb(184, 188, 196)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val column = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 64, 48, 48)
+            setBackgroundColor(bg)
+        }
+
+        column.addView(text("Ari Estado", 28f, Color.WHITE))
+        column.addView(
+            text(
+                "Este widget muestra en qué trabaja Claude, su barra de progreso y te avisa cuando te necesita. " +
+                    "Lee el estado del repositorio privado Ari-estado con una llave de solo lectura.",
+                15f, muted
+            )
+        )
+
+        column.addView(text("Cómo crear la llave (una sola vez)", 18f, green))
+        column.addView(
+            text(
+                "1. Toca \"Abrir GitHub\" (inicia sesión si te lo pide).\n" +
+                    "2. Token name: Ari Estado widget.\n" +
+                    "3. Expiration: 90 días (cuando venza, crea otra).\n" +
+                    "4. Repository access: Only select repositories → elige Ari-estado.\n" +
+                    "5. Permissions → Repository permissions → Contents: Read-only.\n" +
+                    "6. Toca Generate token, copia la llave (empieza con github_pat_) y pégala abajo.\n\n" +
+                    "No la mandes por chat ni la guardes en notas: solo va aquí.",
+                15f, Color.WHITE
+            )
+        )
+        column.addView(button("Abrir GitHub") {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/settings/personal-access-tokens/new"))
+            )
+        })
+
+        tokenInput = EditText(this).apply {
+            hint = if (TokenVault.hasToken(this@SetupActivity)) "Llave guardada (pega otra para cambiarla)" else "Pega aquí la llave"
+            setHintTextColor(Color.GRAY)
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.rgb(35, 35, 44))
+            setPadding(24, 24, 24, 24)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        column.addView(tokenInput, spaced())
+        column.addView(button("Guardar y probar") { saveAndTest() })
+        column.addView(button("Borrar la llave") {
+            TokenVault.clear(this)
+            RefreshJob.cancelAll(this)
+            StatusWidget.renderAll(this)
+            status.text = "Llave borrada. El widget dejó de consultar."
+        })
+
+        status = text("", 15f, green)
+        column.addView(status, spaced())
+
+        column.addView(text("Para agregar el widget", 18f, green))
+        column.addView(
+            text(
+                "Mantén presionado un espacio vacío de la pantalla de inicio → Widgets → Ari Estado → " +
+                    "\"Claude trabajando\" → arrástralo.",
+                15f, Color.WHITE
+            )
+        )
+
+        setContentView(ScrollView(this).apply {
+            setBackgroundColor(bg)
+            addView(column)
+        })
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
+    }
+
+    private fun saveAndTest() {
+        val token = tokenInput.text.toString().trim()
+        if (token.isEmpty()) {
+            status.text = if (TokenVault.hasToken(this)) "Probando la llave guardada…" else "Primero pega la llave."
+            if (!TokenVault.hasToken(this)) return
+        } else {
+            TokenVault.save(this, token)
+            tokenInput.text.clear()
+            tokenInput.hint = "Llave guardada (pega otra para cambiarla)"
+            status.text = "Llave guardada. Probando…"
+        }
+
+        Thread {
+            val saved = TokenVault.load(this)
+            val message = try {
+                if (saved == null) throw IllegalStateException("No se pudo leer la llave guardada.")
+                val json = StatusFetcher.fetch(saved)
+                StatusStore.saveStatus(this, json)
+                val current = ClaudeStatus.parse(json)
+                "¡Funciona! Claude: ${current.task.ifBlank { "sin tarea" }} (${current.progress}%)."
+            } catch (e: Exception) {
+                StatusStore.saveError(this, e.message ?: "No se pudo leer el estado.")
+                "No funcionó: ${e.message}"
+            }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                status.text = message
+                RefreshJob.schedule(this)
+                StatusWidget.renderAll(this)
+            }
+        }.start()
+    }
+
+    private fun text(value: String, size: Float, color: Int) = TextView(this).apply {
+        text = value
+        textSize = size
+        setTextColor(color)
+        setPadding(0, 16, 0, 16)
+    }
+
+    private fun button(label: String, onClick: () -> Unit) = Button(this).apply {
+        text = label
+        setOnClickListener { onClick() }
+    }
+
+    private fun spaced() = LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+    ).apply { topMargin = 16 }
+}

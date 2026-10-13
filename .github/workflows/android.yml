@@ -38,3 +38,9 @@ jobs:
         with:
           name: ari-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Guardar APK de Ari Estado
+        uses: actions/upload-artifact@v4
+        with:
+          name: ari-estado-apk
+          path: estado/build/outputs/apk/debug/estado-debug.apk

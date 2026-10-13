@@ -32,3 +32,9 @@ El usuario quiere aprender y pidió guardar todo lo que Claude le enseña en una
 
 - Fuente: `docs/GUIA_APRENDIZAJE.md`. Cada vez que expliques un concepto nuevo (redes, seguridad, Android, IA, herramientas), agrégalo en la sección que corresponda, en lenguaje sencillo, con ejemplos del propio proyecto, y suma los términos nuevos al glosario.
 - Exporta la guía a Drive igual que la documentación: título "Ari - Guía de aprendizaje", misma carpeta (`parentId: 1REKTNNKcgTP9DnetLUgbHCsbLrvQZFI7`), y manda a la papelera la versión anterior de la guía (no la de la documentación).
+
+## Estado para el widget "Ari Estado" (actualizarlo siempre)
+
+- La app aparte `estado/` (Ari Estado) muestra en un widget lo que Claude está haciendo. Lee `estado.json` del repositorio privado `javierhedzd-ops/Ari-estado` con una llave de solo lectura que el usuario pega en la app (nunca en el chat).
+- Cada vez que actualices `estado/actual` en el tablero, actualiza también `estado.json` en `Ari-estado` (rama main) con los mismos datos: `activo`, `haciendo`, `paso`, `pasos`, `progreso`, `siguiente`, `pendientes` (pendientes sin responder en el tablero) y `actualizado` (UTC, ISO 8601). Clona el repositorio con `add_repo` si la sesión no lo tiene.
+- Al detenerte, pon `activo: false`. Si `activo` es true y `actualizado` tiene más de 45 minutos, el widget avisa que la sesión probablemente se cerró: por eso hay que actualizar la hora en cada paso.

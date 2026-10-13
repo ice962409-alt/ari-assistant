@@ -1,0 +1,41 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Solo para leer estado.json del repositorio privado Ari-estado, por HTTPS. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Avisar cuando Claude se detiene o deja de dar noticias. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Que la revisión periódica siga programada después de reiniciar el teléfono. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:allowBackup="false"
+        android:label="Ari Estado"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+
+        <activity
+            android:name=".SetupActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".StatusWidget"
+            android:exported="true"
+            android:label="Claude trabajando">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/estado_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".RefreshJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+    </application>
+</manifest>

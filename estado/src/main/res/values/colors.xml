@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Los mismos colores de Ari. -->
+    <color name="bg">#121218</color>
+    <color name="surface">#23232C</color>
+    <color name="green">#78DCAA</color>
+    <color name="green_dim">#3378DCAA</color>
+    <color name="orange">#FF9B6A</color>
+    <color name="text">#FFFFFF</color>
+    <color name="muted">#B8BCC4</color>
+</resources>

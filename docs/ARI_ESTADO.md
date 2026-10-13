@@ -179,3 +179,11 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Muestra solo datos del teléfono: si el modelo está cargado, cuántos recuerdos hay y cuántos modelos tiene el equipo. Por privacidad no muestra texto de conversaciones ni recuerdos. No se conecta a internet.
 - Se actualiza cada 30 minutos (mínimo de Android) y cada vez que el usuario sale de la app (`onPause`).
 - Aviso de "sesión cerrada": Claude no puede detectar el cierre de su sesión. En su lugar, al terminar o detenerse un bloque de trabajo, manda una notificación y deja `estado/actual` del tablero en "En pausa: escribe 'sigue'".
+
+## App Ari Estado (widget del progreso de Claude)
+- Módulo `estado/` (applicationId `com.ari.estado`), segunda app del proyecto; GitHub Actions sube su APK como `ari-estado-apk`. Firmada con la misma clave de depuración.
+- Lee `estado.json` de `javierhedzd-ops/Ari-estado` (privado) con la API de GitHub por HTTPS y una llave fine-grained de solo lectura limitada a ese repositorio. La llave se guarda cifrada con AES-GCM y una clave del Android Keystore (`TokenVault`).
+- Widget "Claude trabajando": estado (Trabajando, En pausa, Sin noticias), tarea, barra de progreso, barra fina animada mientras trabaja, "Paso X de Y · N% · hace N min · N pendientes", y botones Actualizar y Tablero.
+- `RefreshJob` (JobScheduler, cada 15 minutos y al tocar Actualizar) redibuja el widget y avisa con una notificación cuando Claude se detiene o lleva más de 45 minutos sin actualizar estando activo.
+- Ari (la app principal) sigue sin conectarse a internet.
+- Nota: `ari-assistant` ya era privado; la comprobación anterior con curl pasaba por el proxy autenticado de la sesión. Para saber la visibilidad hay que leer el campo `private` de la API.
