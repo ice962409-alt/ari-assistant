@@ -47,6 +47,12 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
             else AgentResult("No encontré una app de teléfono.", success = false)
         }
 
+        if (action is PhoneAction.SmsContact) return withContact(action.name) { contact ->
+            if (phone.launch(PhoneAction.Sms(contact.number, action.text)))
+                AgentResult("Abrí un mensaje para ${contact.name} con el texto listo. Revísalo y toca enviar.")
+            else AgentResult("No encontré una app de mensajes.", success = false)
+        }
+
         if (action is PhoneAction.WhatsAppContact) return withContact(action.name) { contact ->
             if (phone.launch(PhoneAction.WhatsApp(contact.number, action.text)))
                 AgentResult("Abrí el chat de ${contact.name} en WhatsApp con el mensaje listo. Revísalo y toca enviar.")
@@ -73,6 +79,11 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
                     is PhoneAction.WhatsApp -> "No encontré WhatsApp en tu teléfono."
                     is PhoneAction.Alarm, is PhoneAction.Timer -> "Tu teléfono no tiene una app de reloj que acepte alarmas desde otras apps."
                     is PhoneAction.Navigate -> "No encontré una app de mapas."
+                    is PhoneAction.PlayMusic ->
+                        if (action.app.isNotEmpty()) "No encontré ${action.app} en tu teléfono." else "No encontré una app de música que acepte búsquedas."
+                    is PhoneAction.CalendarEvent -> "No encontré una app de calendario."
+                    is PhoneAction.Email -> "No encontré una app de correo."
+                    is PhoneAction.Sms -> "No encontré una app de mensajes."
                     else -> "No encontré una app que pueda hacer eso."
                 },
                 success = false
@@ -114,11 +125,32 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
         }
         is PhoneAction.Timer -> "Puse un temporizador de ${describeSeconds(action.seconds)}."
         is PhoneAction.WebSearch -> "Busqué \"${action.query}\" en tu navegador."
+        is PhoneAction.Sms ->
+            if (action.number.isEmpty()) "Abrí un mensaje con el texto listo: elige a quién y toca enviar."
+            else "Abrí un mensaje para el ${action.number} con el texto listo. Revísalo y toca enviar."
+        is PhoneAction.Email ->
+            (if (action.to.isEmpty()) "Abrí un correo nuevo" else "Abrí un correo para ${action.to}") +
+                (if (action.text.isNotEmpty()) " con el texto listo" else "") + ". Revísalo y toca enviar."
+        is PhoneAction.PlayMusic ->
+            "Busqué \"${action.query}\"" + (if (action.app.isNotEmpty()) " en ${appName(action.app)}" else " en tu app de música") + "."
+        is PhoneAction.YouTube -> "Busqué \"${action.query}\" en YouTube."
+        is PhoneAction.CalendarEvent ->
+            "Abrí el calendario con \"${action.title}\" para el ${describe(action.start)}. Toca guardar para confirmarlo."
         is PhoneAction.Navigate -> "Abrí el mapa hacia ${action.place}."
         PhoneAction.Camera -> "Abrí la cámara."
         is PhoneAction.Settings -> "Abrí los ajustes" + (if (action.section != "general") " de ${action.section}" else "") + "."
         else -> "Listo."
     }
+
+    private fun appName(app: String) = when (app) {
+        "spotify" -> "Spotify"
+        "youtube music" -> "YouTube Music"
+        "deezer" -> "Deezer"
+        else -> app
+    }
+
+    private fun describe(time: java.time.LocalDateTime): String =
+        time.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'a las' H:mm", java.util.Locale.forLanguageTag("es")))
 
     private fun describeSeconds(seconds: Int): String = when {
         seconds % 3600 == 0 -> plural(seconds / 3600, "hora", "horas")

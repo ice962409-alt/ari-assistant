@@ -84,6 +84,44 @@ class PhoneCommandsTest {
     }
 
     @Test
+    fun mensajesYCorreos() {
+        assertEquals(PhoneAction.SmsContact("mamá", "ya llegué"), parse("Mándale un mensaje a mamá que diga ya llegué"))
+        assertEquals(PhoneAction.Sms("5512345678", "hola"), parse("manda un sms al 5512345678 que diga hola"))
+        assertEquals(
+            PhoneAction.Email("ana@ejemplo.com", "llego tarde"),
+            parse("escríbele un correo a ana@ejemplo.com que diga llego tarde")
+        )
+        // Pedir que Ari redacte algo no es enviarlo: eso lo contesta Gemma.
+        assertNull(parse("escribe un mensaje bonito para mi novia"))
+        assertNull(parse("escribe un correo para mi jefe pidiendo vacaciones"))
+    }
+
+    @Test
+    fun musicaYYoutube() {
+        assertEquals(PhoneAction.PlayMusic("Bad Bunny", ""), parse("pon música de Bad Bunny"))
+        assertEquals(PhoneAction.PlayMusic("Despacito", "spotify"), parse("pon Despacito en Spotify"))
+        assertEquals(PhoneAction.PlayMusic("Bohemian Rhapsody", ""), parse("reproduce Bohemian Rhapsody"))
+        assertEquals(PhoneAction.YouTube("Shape of You"), parse("pon la canción Shape of You en YouTube"))
+        assertEquals(PhoneAction.YouTube("cómo hacer pan"), parse("busca en YouTube cómo hacer pan"))
+    }
+
+    @Test
+    fun citasEnElCalendario() {
+        val now = java.time.LocalDateTime.of(2026, 10, 13, 10, 0)
+        assertEquals(
+            PhoneAction.CalendarEvent("cita con el dentista", java.time.LocalDateTime.of(2026, 10, 16, 17, 0)),
+            PhoneCommands.parse("agenda cita con el dentista el viernes a las 5", now)
+        )
+        assertEquals(
+            PhoneAction.CalendarEvent("reunión con Pedro", java.time.LocalDateTime.of(2026, 10, 14, 10, 0)),
+            PhoneCommands.parse("agenda una reunión mañana a las 10 con Pedro", now)
+        )
+        assertTrue(PhoneCommands.parse("agenda algo", now) is PhoneAction.Missing)
+        // "anota que…" sigue siendo un recuerdo, no una cita.
+        assertNull(PhoneCommands.parse("anota que mañana hay junta", now))
+    }
+
+    @Test
     fun eligeElContacto() {
         val contacts = listOf(
             PhoneContact("Mamá", "+525511111111"),

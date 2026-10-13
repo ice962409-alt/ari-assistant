@@ -33,6 +33,10 @@
         </intent>
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
+        <package android:name="com.spotify.music" />
+        <package android:name="com.google.android.apps.youtube.music" />
+        <package android:name="com.google.android.youtube" />
+        <package android:name="deezer.android.app" />
     </queries>
 
     <!-- usesCleartextTraffic: Ollama y LM Studio sirven HTTP sin cifrar. El único

@@ -8,7 +8,9 @@ import android.provider.ContactsContract
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.app.SearchManager
 import android.provider.AlarmClock
+import android.provider.CalendarContract
 import android.provider.MediaStore
 import android.provider.Settings
 import android.telephony.PhoneNumberUtils
@@ -126,8 +128,36 @@ class AndroidPhone(context: Context) : PhoneLauncher {
             },
             Intent(Settings.ACTION_SETTINGS)
         )
+        is PhoneAction.Sms -> listOf(
+            Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + Uri.encode(action.number))).putExtra("sms_body", action.text)
+        )
+        is PhoneAction.Email -> listOf(
+            Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + Uri.encode(action.to)))
+                .apply { if (action.text.isNotEmpty()) putExtra(Intent.EXTRA_TEXT, action.text) }
+        )
+        is PhoneAction.PlayMusic -> {
+            val search = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
+                .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
+                .putExtra(SearchManager.QUERY, action.query)
+            val pkg = MUSIC_PACKAGES[action.app]
+            if (pkg != null) listOf(Intent(search).setPackage(pkg)) else listOf(search)
+        }
+        is PhoneAction.YouTube -> listOf(
+            Intent(Intent.ACTION_SEARCH).setPackage("com.google.android.youtube").putExtra(SearchManager.QUERY, action.query),
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(action.query)))
+        )
+        is PhoneAction.CalendarEvent -> {
+            val begin = action.start.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            listOf(
+                Intent(Intent.ACTION_INSERT, CalendarContract.Events.CONTENT_URI)
+                    .putExtra(CalendarContract.Events.TITLE, action.title)
+                    .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, begin)
+                    .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, begin + 60 * 60 * 1000L)
+            )
+        }
         // Las de contactos se resuelven en el agente antes de llegar aquí.
-        is PhoneAction.Missing, is PhoneAction.DialContact, is PhoneAction.WhatsAppContact -> emptyList()
+        is PhoneAction.Missing, is PhoneAction.DialContact, is PhoneAction.WhatsAppContact,
+        is PhoneAction.SmsContact -> emptyList()
     }
 
     private fun whatsApp(action: PhoneAction.WhatsApp): List<Intent> {
@@ -154,5 +184,10 @@ class AndroidPhone(context: Context) : PhoneLauncher {
 
     companion object {
         private val WHATSAPP_PACKAGES = listOf("com.whatsapp", "com.whatsapp.w4b")
+        private val MUSIC_PACKAGES = mapOf(
+            "spotify" to "com.spotify.music",
+            "youtube music" to "com.google.android.apps.youtube.music",
+            "deezer" to "deezer.android.app"
+        )
     }
 }

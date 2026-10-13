@@ -21,10 +21,14 @@ object ReminderParser {
     /** true si el mensaje pide un recordatorio. [normalized] va sin acentos. */
     fun isRequest(normalized: String): Boolean = PREFIX.containsMatchIn(normalized)
 
-    fun parse(message: String, now: LocalDateTime): Result {
+    /**
+     * [order] es la palabra que inicia la frase ("recuérdame" por defecto); el
+     * calendario usa la misma lógica con "agenda".
+     */
+    fun parse(message: String, now: LocalDateTime, order: Regex = PREFIX): Result {
         // Misma longitud que el original: así las posiciones sirven para recortar el texto real.
         val plain = plain(message)
-        val prefix = PREFIX.find(plain) ?: return Result.Problem(HOW_TO)
+        val prefix = order.find(plain) ?: return Result.Problem(HOW_TO)
         val removed = mutableListOf<IntRange>()
         removed.add(prefix.range)
 

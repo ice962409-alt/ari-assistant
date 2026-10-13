@@ -1,5 +1,7 @@
 package com.ari.assistant.agents
 
+import java.time.LocalDateTime
+
 /** Una acción en el teléfono que Ari puede hacer por ti. */
 sealed class PhoneAction {
     data class OpenApp(val name: String) : PhoneAction()
@@ -9,6 +11,14 @@ sealed class PhoneAction {
     /** [number] vacío: WhatsApp pregunta a quién enviarlo. */
     data class WhatsApp(val number: String, val text: String) : PhoneAction()
     data class WhatsAppContact(val name: String, val text: String) : PhoneAction()
+    /** Mensaje de texto (SMS) listo para enviar; [number] vacío: el usuario elige a quién. */
+    data class Sms(val number: String, val text: String) : PhoneAction()
+    data class SmsContact(val name: String, val text: String) : PhoneAction()
+    data class Email(val to: String, val text: String) : PhoneAction()
+    /** [app]: "spotify", "youtube music", "deezer" o vacío para la app de música del teléfono. */
+    data class PlayMusic(val query: String, val app: String) : PhoneAction()
+    data class YouTube(val query: String) : PhoneAction()
+    data class CalendarEvent(val title: String, val start: LocalDateTime) : PhoneAction()
     data class Alarm(val hour: Int, val minute: Int, val label: String) : PhoneAction()
     data class Timer(val seconds: Int, val label: String) : PhoneAction()
     data class WebSearch(val query: String) : PhoneAction()
@@ -31,7 +41,7 @@ data class PhoneContact(val name: String, val number: String)
  */
 object PhoneCommands {
 
-    fun parse(message: String): PhoneAction? {
+    fun parse(message: String, now: LocalDateTime = LocalDateTime.now()): PhoneAction? {
         val original = message.trim()
         // Misma longitud que el original, para recortar el texto real (con acentos y mayúsculas).
         val plain = ReminderParser.plain(original)
@@ -47,24 +57,27 @@ object PhoneCommands {
 
         WHATSAPP.find(p)?.let { found ->
             if (found.range.first != 0) return@let
+            return message(o, p, found.range.last + 1, ::whatsAppAction,
+                "¿Qué le escribo? Dime, por ejemplo: manda un WhatsApp a Juan que diga ya voy.") ?: return null
+        }
+
+        SMS.find(p)?.let { found ->
+            if (found.range.first != 0) return@let
+            return message(o, p, found.range.last + 1, ::smsAction,
+                "¿Qué le escribo? Dime, por ejemplo: mándale un mensaje a mamá que diga ya llegué.") ?: return null
+        }
+
+        EMAIL.find(p)?.let { found ->
+            if (found.range.first != 0) return@let
             val rest = o.substring(found.range.last + 1)
             val restPlain = p.substring(found.range.last + 1)
-            val number = NUMBER.find(restPlain)
-            var textStart = number?.range?.last?.plus(1) ?: 0
-            val saying = SAYING.find(restPlain, textStart)
-            saying?.let { textStart = it.range.last + 1 }
+            val address = ADDRESS.find(rest)
+            var textStart = address?.range?.last?.plus(1) ?: 0
+            SAYING_EMAIL.find(restPlain, textStart)?.let { textStart = it.range.last + 1 }
             val text = rest.substring(textStart).trim().trim(':', ',', ' ')
-            if (text.isEmpty()) {
-                return PhoneAction.Missing("¿Qué le escribo? Dime, por ejemplo: manda un WhatsApp a Juan que diga ya voy.")
-            }
-            // "manda un WhatsApp a Juan que diga …": Juan se busca en los contactos.
-            if (number == null && saying != null) {
-                val name = rest.substring(0, saying.range.first).trim().trim(',', ' ')
-                if (name.isNotEmpty() && name.split(" ").size <= MAX_NAME_WORDS) {
-                    return PhoneAction.WhatsAppContact(name, text)
-                }
-            }
-            return PhoneAction.WhatsApp(number?.value?.let(::digits).orEmpty(), text)
+            // "escribe un correo para mi jefe pidiendo vacaciones" pide redactarlo: eso lo hace Gemma.
+            if (address == null && textStart == 0) return null
+            return PhoneAction.Email(address?.value.orEmpty(), text)
         }
 
         DIAL.matchEntire(p)?.let { found ->
@@ -96,6 +109,30 @@ object PhoneCommands {
             return PhoneAction.Timer(seconds, "")
         }
 
+        CALENDAR.find(p)?.let { found ->
+            if (found.range.first != 0) return@let
+            return when (val parsed = ReminderParser.parse(o, now, CALENDAR)) {
+                is ReminderParser.Result.Ok ->
+                    PhoneAction.CalendarEvent(parsed.text.replace(Regex("^(?i)(?:una?\\s+)?(?:evento\\s+)?"), "").ifEmpty { parsed.text }, parsed.dueAt)
+                is ReminderParser.Result.Problem ->
+                    PhoneAction.Missing("¿Qué y cuándo lo agendo? Dime, por ejemplo: agenda cita con el dentista el viernes a las 5.")
+            }
+        }
+
+        YOUTUBE.matchEntire(p)?.let { found ->
+            return PhoneAction.YouTube(o.substring(found.groups[1]!!.range.first).trim())
+        }
+
+        PLAY_ANY.matchEntire(p)?.takeIf { MUSIC_IN_APP.matchEntire(p) == null }?.let { found ->
+            return PhoneAction.PlayMusic(o.substring(found.groups[1]!!.range.first).trim(), "")
+        }
+
+        (MUSIC.matchEntire(p) ?: MUSIC_IN_APP.matchEntire(p))?.let { found ->
+            val query = o.substring(found.groups[1]!!.range.first, found.groups[1]!!.range.last + 1).trim()
+            val app = found.groups[2]?.value?.replace(Regex("\\s+"), " ").orEmpty()
+            return if (app == "youtube") PhoneAction.YouTube(query) else PhoneAction.PlayMusic(query, app)
+        }
+
         SEARCH.matchEntire(p)?.let { found ->
             return PhoneAction.WebSearch(o.substring(found.groups[1]!!.range.first).trim())
         }
@@ -110,6 +147,38 @@ object PhoneCommands {
         }
         return null
     }
+
+    /**
+     * WhatsApp y SMS: número o nombre del contacto, y el texto después de "que diga".
+     * Sin número ni "que diga" devuelve null: "escribe un mensaje bonito para mi novia"
+     * pide que Ari lo redacte, no que lo envíe.
+     */
+    private fun message(
+        o: String, p: String, after: Int,
+        build: (number: String, name: String, text: String) -> PhoneAction,
+        missing: String
+    ): PhoneAction? {
+        val rest = o.substring(after)
+        val restPlain = p.substring(after)
+        val number = NUMBER.find(restPlain)
+        var textStart = number?.range?.last?.plus(1) ?: 0
+        val saying = SAYING.find(restPlain, textStart)
+        saying?.let { textStart = it.range.last + 1 }
+        val text = rest.substring(textStart).trim().trim(':', ',', ' ')
+        if (text.isEmpty()) return PhoneAction.Missing(missing)
+        if (number == null && saying == null) return null
+        if (number == null && saying != null) {
+            val name = rest.substring(0, saying.range.first).trim().trim(',', ' ')
+            if (name.isNotEmpty() && name.split(" ").size <= MAX_NAME_WORDS) return build("", name, text)
+        }
+        return build(number?.value?.let(::digits).orEmpty(), "", text)
+    }
+
+    private fun whatsAppAction(number: String, name: String, text: String): PhoneAction =
+        if (name.isNotEmpty()) PhoneAction.WhatsAppContact(name, text) else PhoneAction.WhatsApp(number, text)
+
+    private fun smsAction(number: String, name: String, text: String): PhoneAction =
+        if (name.isNotEmpty()) PhoneAction.SmsContact(name, text) else PhoneAction.Sms(number, text)
 
     private fun alarm(found: MatchResult, original: String): PhoneAction {
         val hour = if (found.groupValues[1] == "la una") 1 else found.groupValues[2].toIntOrNull() ?: 0
@@ -212,6 +281,24 @@ object PhoneCommands {
     private val TIMER = Regex(
         "^(?:pon|ponme|programa|inicia|activa)(?:\\s+(?:un|el))?\\s+(?:temporizador|timer|cronometro)(?:\\s+de)?\\s+(\\d{1,4}|un|una|media)\\s+(segundos?|minutos?|mins?|horas?)$"
     )
+    // Va después de WHATSAPP: "manda un mensaje por WhatsApp" ya se atendió.
+    private val SMS = Regex(
+        "^(?:manda|mandale|envia|enviale|escribe|escribele)\\s+(?:un\\s+)?(?:mensaje(?:\\s+de\\s+texto)?|sms)\\b(?:\\s+(?:al|a|para)\\b)?"
+    )
+    private val EMAIL = Regex(
+        "^(?:manda|mandale|envia|enviale|escribe|escribele)\\s+(?:un\\s+)?(?:correo(?:\\s+electronico)?|email|e-mail|mail)\\b(?:\\s+(?:al|a|para)\\b)?"
+    )
+    private val ADDRESS = Regex("[\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)+")
+    private val SAYING_EMAIL = Regex("\\s*(?:que\\s+diga|diciendo|sobre|con\\s+el\\s+texto|:)\\s*")
+    private val CALENDAR = Regex(
+        "^(?:agenda|agendame|agendar|(?:anota|agrega|pon|apunta)(?:me)?\\s+en\\s+(?:el|mi)\\s+calendario|programa\\s+(?:una\\s+)?(?:cita|reunion|junta))\\b[,:]?"
+    )
+    private val YOUTUBE = Regex("^(?:busca|buscame|pon|ponme)(?:\\s+(?:en|por))?\\s+youtube\\s+(.+)$")
+    private val MUSIC = Regex(
+        "^(?:pon|ponme|reproduce|toca)\\s+(?:musica|canciones|la\\s+cancion|el\\s+album|algo)(?:\\s+de)?\\s+(.+?)(?:\\s+en\\s+(spotify|youtube\\s+music|youtube|deezer))?$"
+    )
+    private val MUSIC_IN_APP = Regex("^(?:pon|ponme|reproduce)\\s+(.+?)\\s+en\\s+(spotify|youtube\\s+music|youtube|deezer)$")
+    private val PLAY_ANY = Regex("^reproduce\\s+(.+)$")
     private val SEARCH = Regex("^(?:(?:busca|buscame)(?:\\s+(?:en|por))?\\s+(?:google|internet|la\\s+web)|googlea)\\s+(.+)$")
     private val NAVIGATE = Regex(
         "^(?:llevame|como\\s+llego|guiame|navega|ruta)(?:\\s+(?:a|al|hasta|para|a\\s+la|hacia))?\\s+(.+)$"
