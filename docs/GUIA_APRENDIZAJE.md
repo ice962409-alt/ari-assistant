@@ -157,7 +157,7 @@ Antes de instalar algo, pregúntate:
 
 ### El tablero de pendientes
 
-Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te necesita (decisiones, permisos, pruebas) aparece en tu tablero "Pendientes de Ari". Cuando Claude se detiene, te avisa con una notificación y el tablero dice "En pausa: escribe 'sigue'".
+Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te necesita (decisiones, permisos, pruebas) aparece en tu tablero "Pendientes de Ari". Arriba ves si Claude está trabajando o en pausa, una barra con el progreso de su tarea y el paso en el que va. Cuando Claude se detiene, te avisa con una notificación y el tablero dice "En pausa: escribe 'sigue'".
 
 ## 8. Glosario rápido
 
