@@ -50,7 +50,7 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un erro
 
 Ari dirige un equipo de agentes. Cada mensaje pasa primero por Ari, que decide si lo atiende un agente o lo responde Gemma. Los agentes contestan al instante y funcionan con texto y con voz, aunque el modelo no haya cargado.
 
-- **Agente de memoria**: entiende frases normales, sin "/". Ejemplos: "recuerda que me gusta el café", "anota que mañana hay junta", "olvida café", "qué recuerdas de mí".
+- **Agente de memoria**: entiende frases normales, sin "/". Ejemplos: "recuerda que me gusta el café", "anota que mañana hay junta", "olvida café", "qué recuerdas de mí". "Olvida café" borra solo los recuerdos con la palabra "café" (no "cafetería"). Frases como "olvida eso" u "olvida lo que te dije" no borran nada: son conversación y las responde Gemma.
 - **Agente de reloj**: dice la hora y la fecha del teléfono, que Gemma no conoce. Ejemplos: "qué hora es", "qué día es hoy".
 
 Comandos:
@@ -124,7 +124,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Ari y su equipo se hablan sin cifrar, como si se pasaran tarjetas postales: cualquiera conectado a la misma red podría leerlas. Por eso Ari solo trabaja con el equipo en redes que tú apruebas.
 - **Red privada** (por ejemplo, tu casa con contraseña): solo están tus dispositivos y gente de confianza. Se puede aprobar.
 - **Red compartida** (un trabajo donde la Wi-Fi solo la usan empleados): no es pública, pero no controlas qué dispositivos hay. Apruébala solo si confías.
-- **Red pública** (cafeterías, aeropuertos, hoteles): no la apruebes.
+- **Red pública** (cafeterías, aeropuertos, hoteles): no la apruebes. Las redes sin contraseña Ari ni siquiera deja aprobarlas.
 - **Hotspot del teléfono**: activa "compartir internet" en el teléfono y conecta la laptop. Es una red solo entre tus dispositivos, así que Ari siempre la permite. Es la mejor opción fuera de casa.
 - La primera vez que uses el equipo en una red Wi-Fi, Ari pide el permiso de ubicación. Android lo exige para leer el nombre de la red; Ari no usa tu ubicación para nada más. Después pregunta "¿Trabajar con el equipo en esta red?".
 - Ari solo se conecta a direcciones de la red local, nunca a internet (tampoco si un equipo intenta redirigirla), y guarda el equipo por separado en cada red.
@@ -166,7 +166,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Equipo de modelos: Ari busca todos los modelos de la red (PC o celulares), les asigna un puesto según su capacidad y les delega las tareas de su especialidad.
 - Protección de red: solo en el hotspot del teléfono o en redes aprobadas, y solo direcciones locales.
 - Personalidad de Ari: mujer, cercana, con buen humor, seria cuando hace falta, directa y detallada si hace falta.
-- Seguridad: revisión de seguridad hecha; Ari ya no contrata modelos sin tu aprobación ni les pasa tus recuerdos.
+- Seguridad: revisión de seguridad hecha; Ari ya no contrata modelos sin tu aprobación ni les pasa tus recuerdos, y no aprueba redes sin contraseña.
+- Revisión de código hecha: 10 problemas corregidos, entre ellos que "olvida eso" borraba recuerdos, un ciclo con el permiso de ubicación y cierres por respuestas enormes de la red.
 - Estabilidad: Ari ya no se cierra al girar el teléfono o cambiar el tema; libera la memoria al cambiar de modelo; aguanta errores de memoria; no deja archivos del modelo a medias; y si el equipo no responde, contesta ella con Gemma.
 - Compila correctamente; falta probarlo en el teléfono.
 
