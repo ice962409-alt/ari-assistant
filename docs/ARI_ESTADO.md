@@ -203,3 +203,11 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Al importar: se reemplaza todo; solo se aceptan equipos con IP privada; archivos de más de 64 MB se rechazan; contraseña mala o archivo alterado → no cambia nada. Se abre una conversación nueva de Gemma y se reenvían personalidad, recuerdos e historial.
 - UI: Memoria → Respaldo; selector del sistema (ACTION_CREATE_DOCUMENT / ACTION_OPEN_DOCUMENT). La contraseña solo vive en memoria y se borra al usarla.
 - Ari Estado 0.1.2: muestra prefijo y longitud de la llave guardada y quita espacios al pegarla (ayuda con el error 401).
+
+## Estabilidad, segunda ronda
+
+- Pruebas JVM en `app/src/test/` (JUnit 4.13.2): `AgentRulesTest` (normalización, MemoryAgent con `FakeStore`, ClockAgent, Role, NetworkGuard.isPrivateAddress) y `BackupCryptoTest`. El workflow corre `:app:testDebugUnitTest` antes de `assembleDebug`.
+- `MemoryAgent` depende de la interfaz `agents/MemoryStore` (la implementa `AriDatabase`). El cifrado del respaldo está en `BackupCrypto.kt`.
+- `MainActivity.saveMessage()` guarda en el executor `storage` (un hilo, en orden); `onDestroy` cierra la base de datos en ese hilo. `AriDatabase` usa WAL.
+- `buildPrompt` ya no repite el mensaje actual en el historial; si `sendMessageAsync` falla, se restauran `historyPending`/`memoriesPending`.
+- Pendiente: la personalidad "sin censura" (decisión del usuario; un cambio automático fue bloqueado por el sistema de permisos). La descarga guiada del modelo requiere decidir si Ari puede usar internet una vez.

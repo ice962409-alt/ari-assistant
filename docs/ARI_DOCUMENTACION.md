@@ -236,11 +236,12 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - App Ari Estado: widget "Claude trabajando" con la tarea, barra de progreso y avisos cuando Claude se detiene, leído del repositorio privado Ari-estado con una llave de solo lectura.
 - Respaldo cifrado de la memoria: guardar y recuperar recuerdos, historial, equipo y redes aprobadas en un archivo con contraseña (versión 0.3.0). Base de los respaldos y de la mudanza a otra PC.
 - Ari Estado 0.1.2: muestra el inicio y la longitud de la llave guardada y quita espacios que se cuelen al pegarla.
-- Compila correctamente; falta probarlo en el teléfono.
+- Estabilidad, segunda ronda: 17 pruebas automáticas que se ejecutan en cada compilación (reglas de los agentes, puestos de los modelos, direcciones privadas y cifrado del respaldo); los mensajes se guardan en segundo plano; la base de datos es más rápida (modo WAL); y el primer mensaje tras cargar el modelo ya no le llega repetido a Gemma.
+- Compila correctamente y las pruebas pasan; falta probarlo en el teléfono.
 
 ## 5. Plan hacia el lanzamiento
 
-- **Estabilidad y optimización**: primera ronda hecha; seguirá en cada cambio.
+- **Estabilidad y optimización**: dos rondas hechas, con pruebas automáticas en cada compilación; seguirá en cada cambio.
 - **Interfaz como la de Claude**: hecha, en color hielo; se pulirán detalles con las pruebas.
 - **Primer uso sencillo**: que la app guíe la descarga del modelo, sin buscar el archivo a mano.
 - **Una Ari para cada usuario**: que cada persona que la instale tenga su propia Ari.
@@ -262,7 +263,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
-- **AriBackup.kt**: el respaldo cifrado con contraseña.
+- **AriBackup.kt** y **BackupCrypto.kt**: el respaldo y su cifrado con contraseña.
+- **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
 - **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).

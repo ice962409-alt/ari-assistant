@@ -137,6 +137,20 @@ Android solo deja instalar una versión nueva **encima** de la anterior si las d
 - Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es un anillo hielo sobre fondo oscuro.
 - Desde Android 15, las apps se dibujan **de borde a borde**, también detrás de la barra de estado y del teclado. Por eso la app calcula esos márgenes ("insets") para que la barra superior y el campo de texto nunca queden tapados.
 
+### Pruebas automáticas
+
+Una **prueba automática** es un pequeño programa que revisa que otra parte del código haga lo que debe. Por ejemplo, una prueba de Ari le dice "olvida eso" al agente de memoria y comprueba que **no** borre nada; otra cifra un respaldo y comprueba que con una contraseña equivocada no se abra.
+
+GitHub Actions corre las 17 pruebas de Ari **antes** de compilar el APK. Si una falla, no sale el APK y Claude se entera antes de que el error llegue a tu teléfono. Es como un control de calidad en una fábrica: cada pieza se revisa antes de empaquetarla.
+
+Para poder probar sin un teléfono, el código se separa en piezas que no dependen de Android. El agente de memoria, por ejemplo, ya no habla directamente con la base de datos sino con una **interfaz** (una lista de lo que necesita: guardar, listar y borrar recuerdos). En la app la cumple la base de datos real; en las pruebas, una "memoria de mentira".
+
+### Hilos: por qué la pantalla no se congela
+
+Una app tiene un **hilo principal** que dibuja la pantalla y atiende tus toques. Si ese hilo se pone a hacer algo lento (guardar en la base de datos, esperar al modelo), la pantalla se congela, y si tarda unos segundos Android muestra "La app no responde". Por eso Ari hace el trabajo pesado en **hilos en segundo plano**: uno para Gemma, uno para los agentes y, desde esta versión, uno para guardar los mensajes.
+
+La base de datos usa además el modo **WAL** ("registro de escritura anticipada"): escribe los cambios en una libreta aparte y los pasa al archivo principal después. Así leer y escribir al mismo tiempo no se estorban.
+
 ### Permisos de Android
 
 Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono y la ubicación.
@@ -223,4 +237,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **PBKDF2**: la "licuadora" que convierte una contraseña en una llave difícil de adivinar.
 - **Sal**: bytes al azar que se mezclan con la contraseña para que cada respaldo tenga una llave distinta.
 - **Respaldo**: una copia de tus datos para recuperarlos si algo falla.
+- **Prueba automática**: un programa que revisa que otra parte del código funcione bien, en cada compilación.
+- **Hilo**: una línea de trabajo dentro de una app; el principal dibuja la pantalla.
+- **Interfaz (en programación)**: la lista de lo que una pieza necesita de otra, sin decir cómo se hace.
+- **WAL**: un modo de la base de datos que permite leer y escribir a la vez sin estorbarse.
 - **Widget**: un mini panel de una app en la pantalla de inicio.

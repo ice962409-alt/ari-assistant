@@ -9,14 +9,15 @@ Etiquetas:
 Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (https://claude.ai/artifact/7kCcA7Ppg1tGW1HDATrfyB) y se espera la respuesta ahí.
 
 ## En curso
-- [autónomo] Estabilidad, segunda ronda.
+- Nada en este momento: lo siguiente espera decisiones del usuario.
 
 ## Hecho recientemente
 - [autónomo] Respaldo cifrado de la memoria de Ari (0.3.0). Falta [prueba] en el teléfono.
+- [autónomo] Estabilidad, segunda ronda: pruebas automáticas, guardado en segundo plano, WAL.
 
 ## Siguiente
-- [autónomo] Una Ari para cada usuario: nombre del usuario y personalidad configurables en el primer uso.
-- [autónomo] Estabilidad, segunda ronda: base de datos fuera del hilo principal, historial largo sin lentitud, pruebas automáticas de las reglas de enrutamiento.
+- [autónomo] Una Ari para cada usuario: nombre del usuario y personalidad configurables en el primer uso. Espera la decisión sobre la personalidad.
+- [autónomo] Estabilidad, tercera ronda: historial largo sin lentitud (cargar por partes).
 
 ## Esperando al usuario
 - [decisión] Personalidad: qué significa "sin censura" (en el tablero). El cambio automático fue bloqueado por el sistema de permisos; se espera la opción del usuario.
