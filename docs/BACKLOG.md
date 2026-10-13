@@ -16,10 +16,12 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Estabilidad, segunda ronda: pruebas automáticas, guardado en segundo plano, WAL e historial por partes.
 - [decisión] Personalidad: franca, con groserías de vez en cuando (0.3.1).
 - [autónomo] Una Ari para cada usuario: nombre y tono por persona (0.4.0).
+- [autónomo] Recordatorios con notificación (0.5.0). Falta [prueba] en el teléfono.
 
 ## Siguiente
 
 ## Esperando al usuario
+- [decisión] Qué mensajes manda Ari sola, además de los recordatorios (en el tablero).
 - [decisión] Primer uso guiado: descargar el modelo exige que Ari se conecte a internet una vez (hoy no puede). Preguntar antes de empezar.
 - [prueba] APK 0.3.1 con la personalidad nueva (en el tablero).
 - [prueba] Laptop con Linux y equipo de modelos (en el tablero).

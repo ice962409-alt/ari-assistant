@@ -44,6 +44,9 @@ Respuestas según cómo funciona Ari hoy:
 - **Micrófono (RECORD_AUDIO)**: modo de voz, solo cuando el usuario lo activa.
 - **Internet y estado de red**: hablar con los modelos del equipo en la red local.
 - **Estado del Wi-Fi y ubicación precisa**: Android exige la ubicación para leer el nombre de la red Wi-Fi; Ari lo usa solo para saber si la red está aprobada. No se usa la ubicación.
+- **Notificaciones (POST_NOTIFICATIONS)**: avisar los recordatorios.
+- **Alarmas exactas (SCHEDULE_EXACT_ALARM)**: que los recordatorios lleguen a la hora pedida; si el usuario no lo activa, llegan con un posible retraso.
+- **Iniciar al encender (RECEIVE_BOOT_COMPLETED)**: volver a programar los recordatorios después de reiniciar.
 - **Tráfico sin cifrar (usesCleartextTraffic)**: Ollama y LM Studio solo hablan HTTP; Ari lo limita a direcciones privadas de redes aprobadas.
 
 ## 7. Requisitos técnicos [autónomo]

@@ -78,6 +78,21 @@ Importante:
 - El modelo Gemma no va en el respaldo (pesa 3.4 GB); en el teléfono nuevo hay que volver a seleccionarlo.
 - Por seguridad, al recuperar solo vuelven los equipos con direcciones de la red local.
 
+### Recordatorios
+
+Ari te avisa con una **notificación** a la hora que le pidas, aunque la app esté cerrada y sin internet. Escríbelo o díselo en el modo de voz:
+
+- "recuérdame mañana a las 9 llamar a mamá"
+- "recuérdame en 20 minutos sacar la ropa" (también "en 2 horas" o "en media hora")
+- "avísame el viernes a las 5 de la tarde que hay junta"
+- "recuérdame a las 4 y media la cita" o "a las 6:30 pm"
+- **"mis recordatorios"**: la lista de pendientes.
+- **"cancela el recordatorio de mamá"** o **"cancela todos los recordatorios"**.
+
+Cómo entiende la hora: si no dices "de la mañana" o "de la tarde", Ari elige la siguiente que todavía no pasó (a las 10 de la mañana, "a las 3" es a las 15:00). "Mañana a las 3" también es en la tarde. Si solo dices el día, avisa a las 9:00.
+
+La primera vez, Ari pide permiso para mandarte notificaciones. Si tu teléfono solo permite avisos aproximados, te ofrece activar "Alarmas y recordatorios" para que lleguen a la hora exacta. Si el teléfono estuvo apagado a la hora del aviso, te llega al encenderlo como "recordatorio atrasado". Los recordatorios también van en el respaldo cifrado.
+
 ### Modo de voz
 
 1. Toca el botón del micrófono, junto al de enviar. La primera vez, Ari pide permiso para usar el micrófono.
@@ -254,6 +269,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Recordatorios (0.5.0): "recuérdame mañana a las 9 …", "en 20 minutos", "el viernes a las 5 de la tarde"; lista y cancelación; notificación aunque Ari esté cerrada; se reprograman al reiniciar el teléfono.
 - Preparación para Google Play (0.4.2): sección Acerca de Ari y licencias, borrador de la política de privacidad y guía de publicación (docs/GOOGLE_PLAY.md).
 - Recordatorio de respaldo (0.4.1): si tienes recuerdos y hace una semana que no guardas un respaldo, Ari te lo dice al abrir. Guardar el respaldo en Drive ya funciona aunque Drive no acepte reescribir archivos, y "Ver mensajes anteriores" ya no te mueve de donde estabas leyendo.
 
@@ -268,11 +284,12 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 ## 6. Ideas pendientes
 
+- Mensajes de Ari sin que le hables: aviso de respaldo, saludo de la mañana o aviso si el equipo no responde (decisión en el tablero).
 - Siguientes fases del CEO:
   - Que Gemma ayude a decidir qué agente atiende cada mensaje.
   - Que Ari ponga a prueba a cada modelo para darle un puesto según lo que de verdad sabe hacer, no solo por su nombre.
   - Un canal para que Ari comparta sus reportes con Claude, por ejemplo a través de Drive.
-  - Agentes que hagan cosas en el teléfono, como recordatorios y alarmas, siempre pidiendo confirmación.
+  - Más agentes que hagan cosas en el teléfono (como los recordatorios), siempre pidiendo confirmación.
   - Más subordinados: otros bots o modelos, con permisos por agente.
 - Que Ari empiece a hablar mientras Gemma escribe, en vez de esperar la respuesta completa.
 - Elegir la voz y la velocidad de lectura.
@@ -282,6 +299,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **Profile.kt**: tu nombre, el tono de Ari y su personalidad.
+- **ReminderNotifier.kt** y **agents/ReminderAgent.kt**, **agents/ReminderParser.kt**: los recordatorios (entender la frase, programar la alarma y mostrar la notificación).
 - **AriBackup.kt** y **BackupCrypto.kt**: el respaldo y su cifrado con contraseña.
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.

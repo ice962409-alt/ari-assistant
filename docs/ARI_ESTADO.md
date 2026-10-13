@@ -232,3 +232,11 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Gemma 4 es Apache 2.0 (Google Open Source Blog, marzo de 2026); LiteRT-LM también.
 - `docs/GOOGLE_PLAY.md` (pasos) y `docs/POLITICA_PRIVACIDAD.md` (borrador con datos por completar).
 - Verificación de desarrolladores: vigente desde el 1 de octubre de 2026 en Brasil, Indonesia, Singapur y Tailandia; global en 2027. Existe cuenta de distribución limitada (hasta 20 dispositivos).
+
+## Recordatorios (versión 0.5.0)
+
+- `agents/ReminderParser.kt` (puro, probado en `ReminderParserTest`): prefijo recuérdame/recordame/avísame; "en N minutos/horas", "en media hora"; hoy/mañana/pasado mañana/el <día>; "a las H[:MM] [am/pm] [y media/cuarto]", "a la una"; "de la mañana/tarde/noche". Sin periodo: hoy, la siguiente hora futura entre H y H+12; otro día, 1-6 → tarde. Solo día → 9:00. Máximo un año.
+- `agents/ReminderAgent.kt` (ReminderStore + ReminderAlarms, probado en `ReminderAgentTest`): crear, "mis recordatorios", "cancela el recordatorio de X" (sin acentos) y "cancela todos los recordatorios". Va primero en el CEO.
+- Base de datos v3: tabla `reminders` (done 0/1/2), en el respaldo. `ReminderNotifier.kt`: `AlarmReminders` (exacta si `canScheduleExactAlarms`, si no `setAndAllowWhileIdle`), `ReminderReceiver`, `ReminderBootReceiver` (BOOT_COMPLETED, MY_PACKAGE_REPLACED). `rescheduleAll` al abrir, al reiniciar y tras recuperar un respaldo; los vencidos se avisan como atrasados.
+- Permisos nuevos: POST_NOTIFICATIONS (se pide tras el primer recordatorio), SCHEDULE_EXACT_ALARM (se ofrece una vez), RECEIVE_BOOT_COMPLETED. Icono `drawable/ic_notification.xml`.
+- Pendiente (tablero `mensajes-de-ari`): qué mensajes propios manda Ari (aviso de respaldo, saludo de la mañana, equipo caído).

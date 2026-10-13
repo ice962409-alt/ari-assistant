@@ -13,6 +13,7 @@ Ari es una asistente personal con inteligencia artificial que funciona dentro de
 - **Tus mensajes y las respuestas de Ari**: se guardan en tu teléfono para que la conversación continúe.
 - **Tus recuerdos**: lo que le pides a Ari que recuerde.
 - **Tu nombre y el tono que elegiste**: para personalizar a Ari.
+- **Tus recordatorios**: el texto y la hora, para avisarte con una notificación.
 - **Audio del micrófono**, solo mientras usas el modo de voz: lo convierte a texto el servicio de reconocimiento de voz de tu teléfono. Ari no guarda grabaciones.
 - **El nombre de tu red Wi-Fi**, solo si usas el equipo de modelos: Android exige el permiso de ubicación para leerlo. Ari no usa ni guarda tu ubicación.
 

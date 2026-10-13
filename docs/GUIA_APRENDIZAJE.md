@@ -173,6 +173,14 @@ Una app tiene un **hilo principal** que dibuja la pantalla y atiende tus toques.
 
 La base de datos usa además el modo **WAL** ("registro de escritura anticipada"): escribe los cambios en una libreta aparte y los pasa al archivo principal después. Así leer y escribir al mismo tiempo no se estorban.
 
+### Alarmas y notificaciones: cómo Ari te avisa estando cerrada
+
+Una app cerrada no puede "estar pendiente" de la hora: Android la detiene para ahorrar batería. Por eso Ari le pide al sistema una **alarma** (con el **AlarmManager**, el reloj despertador de Android): "despiértame el martes a las 9". A esa hora Android despierta a Ari solo un instante, ella muestra la **notificación** y vuelve a dormir. No hace falta internet ni que Gemma esté cargada.
+
+- **Alarma exacta o aproximada**: para cuidar la batería, Android a veces junta varios avisos y los retrasa unos minutos. Las alarmas exactas necesitan el permiso "Alarmas y recordatorios".
+- **Al reiniciar el teléfono, Android borra todas las alarmas.** Por eso Ari guarda los recordatorios en su base de datos y, al encender el teléfono, los vuelve a programar.
+- **Entender la frase**: "recuérdame mañana a las 3 pagar la luz" se separa en partes: el día ("mañana"), la hora ("a las 3", que se entiende como 15:00) y lo que queda ("pagar la luz"). A esto se le llama **analizar** (en inglés, *parsing*).
+
 ### Permisos de Android
 
 Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono y la ubicación.
@@ -268,4 +276,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Licencia Apache 2.0**: un permiso para usar software gratis, también en productos comerciales, incluyendo su texto.
 - **Política de privacidad**: el texto público que explica qué hace una app con tus datos.
 - **Desarrollador verificado**: quien demostró su identidad ante Google para distribuir apps.
+- **AlarmManager**: el despertador de Android; despierta a una app a una hora para que haga algo.
+- **Notificación**: el aviso que aparece arriba en la pantalla del teléfono.
+- **Analizar una frase (parsing)**: separar un texto en partes que el programa entiende, como el día, la hora y la tarea.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
