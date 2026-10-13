@@ -24,9 +24,22 @@ Ari es una asistente personal para Android que funciona con inteligencia artific
 
 Las siguientes veces, el modelo carga solo al abrir la app.
 
+### La interfaz
+
+Ari tiene una interfaz oscura parecida a la de Claude, con **color hielo** como acento:
+
+- Arriba: el punto hielo, "Ari", lo que está haciendo y los botones **Memoria** y **Modelo**.
+- Tus mensajes van en burbujas a la derecha. Los de Ari van sin burbuja, con su nombre arriba ("Ari", o "Ari · Agente de reloj" cuando responde un agente).
+- Mientras piensa ves "Pensando…" animado, y la respuesta aparece a medida que Gemma la escribe.
+- Las respuestas tienen formato: títulos, listas, **negritas**, cursivas y código. Puedes mantener presionado un mensaje para copiarlo.
+- Abajo está el campo para escribir, con el botón del micrófono y el botón circular de enviar.
+- Cuando todavía no hay mensajes, Ari te recibe con "Hola, soy Ari".
+
+El icono de la app es un anillo color hielo con un punto al centro y un pequeño satélite: Ari y su equipo. Ari Estado tiene el mismo anillo convertido en barra de progreso.
+
 ### Chat por texto
 
-Escribe y toca **Enviar**. Las conversaciones se guardan, y al abrir la app aparecen los últimos 100 mensajes.
+Escribe y toca el botón de enviar. Las conversaciones se guardan, y al abrir la app aparecen los últimos 100 mensajes.
 
 ### Memoria
 
@@ -40,15 +53,15 @@ El botón **Memoria** también deja ver, agregar y borrar recuerdos. Para borrar
 
 ### Modo de voz
 
-1. Toca **Voz** (el botón del micrófono). La primera vez, Ari pide permiso para usar el micrófono.
+1. Toca el botón del micrófono, junto al de enviar. La primera vez, Ari pide permiso para usar el micrófono.
 2. Habla. Ari escucha, responde con Gemma, lee la respuesta en voz alta y vuelve a escucharte.
-3. Toca **⏹ Detener** para terminar.
+3. Toca el mismo botón (ahora con un cuadrado) para terminar.
 
 El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un error con el micrófono o si sales de la app. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
 
 ### El widget de Ari
 
-Ari tiene un widget para tu pantalla de inicio, con sus colores. Va rotando mensajes animados: si está lista, cuántos recuerdos guarda, cuántos modelos tiene su equipo y una invitación a ver el progreso de Claude.
+Ari tiene un widget para tu pantalla de inicio, en color hielo como la app. Va rotando mensajes animados: si está lista, cuántos recuerdos guarda, cuántos modelos tiene su equipo y una invitación a ver el progreso de Claude.
 
 El widget no muestra el progreso de Claude directamente porque, para eso, la app tendría que conectarse a internet con tu cuenta, y Ari no sale de tu red. Por eso el progreso vive en el tablero, a un toque.
 
@@ -205,13 +218,14 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Revisión de código hecha: 10 problemas corregidos, entre ellos que "olvida eso" borraba recuerdos, un ciclo con el permiso de ubicación y cierres por respuestas enormes de la red.
 - Estabilidad: Ari ya no se cierra al girar el teléfono o cambiar el tema; libera la memoria al cambiar de modelo; aguanta errores de memoria; no deja archivos del modelo a medias; y si el equipo no responde, contesta ella con Gemma.
 - Widget animado para la pantalla de inicio, con acceso a Ari y al tablero de Claude (con barra de progreso).
+- Interfaz estilo Claude en color hielo: burbujas, texto con formato, "Pensando…" animado y respuesta en vivo. Iconos nuevos para Ari y Ari Estado, y widgets en color hielo.
 - App Ari Estado: widget "Claude trabajando" con la tarea, barra de progreso y avisos cuando Claude se detiene, leído del repositorio privado Ari-estado con una llave de solo lectura.
 - Compila correctamente; falta probarlo en el teléfono.
 
 ## 5. Plan hacia el lanzamiento
 
 - **Estabilidad y optimización**: primera ronda hecha; seguirá en cada cambio.
-- **Interfaz como la de Claude**: burbujas de chat, tema oscuro, texto con formato y respuestas que aparecen mientras se escriben.
+- **Interfaz como la de Claude**: hecha, en color hielo; se pulirán detalles con las pruebas.
 - **Primer uso sencillo**: que la app guíe la descarga del modelo, sin buscar el archivo a mano.
 - **Una Ari para cada usuario**: que cada persona que la instale tenga su propia Ari.
 - **Seguridad y nube privada**: repositorio privado, la laptop con Linux como casa principal de Ari, túnel cifrado (Tailscale), respaldos automáticos (laptop, teléfono y copia cifrada en Drive) y poder mudar a Ari a otra PC.
@@ -234,6 +248,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
 - **AriWidget.kt**: el widget de la pantalla de inicio.
+- **ui/**: la interfaz (colores en AriTheme.kt, formato del texto en Markdown.kt y la conversación en ChatView.kt).
 - **estado/**: la app Ari Estado (widget del progreso de Claude, llave cifrada y revisión cada 15 minutos).
 - **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt), los agentes de memoria y reloj, el equipo de modelos (TeamAgent.kt y Role.kt) y el guardia de red (NetworkGuard.kt).
 - **docs/ARI_ESTADO.md**: estado técnico, para que cualquier asistente pueda continuar.

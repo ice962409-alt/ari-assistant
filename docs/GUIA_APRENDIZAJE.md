@@ -122,6 +122,11 @@ Una **VPN** como Tailscale o WireGuard crea un **túnel cifrado** entre tus disp
 
 Android solo deja instalar una versión nueva **encima** de la anterior si las dos están firmadas con la misma clave. Por eso apareció el error "conflicto con un paquete": cada compilación usaba una clave distinta. Ahora Ari usa siempre la misma clave de depuración. Para publicarla en Google Play hará falta una clave oficial, guardada en secreto.
 
+### Iconos adaptativos y pantallas "borde a borde"
+
+- Un **icono adaptativo** tiene dos capas, fondo y figura. Así Android puede recortarlo en círculo, cuadrado o gota según el teléfono, y hasta pintarlo de un solo color si eliges iconos temáticos. El de Ari es un anillo hielo sobre fondo oscuro.
+- Desde Android 15, las apps se dibujan **de borde a borde**, también detrás de la barra de estado y del teclado. Por eso la app calcula esos márgenes ("insets") para que la barra superior y el campo de texto nunca queden tapados.
+
 ### Permisos de Android
 
 Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono y la ubicación.
