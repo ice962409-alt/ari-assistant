@@ -236,6 +236,14 @@ Tu teléfono tiene varios cerebros electrónicos:
 
 Ari intenta primero la GPU y, si tu teléfono no puede, usa la CPU. Como la GPU a veces falla de golpe en algunos teléfonos, Ari deja una marca de "estoy probando" antes de usarla: si la app se cierra, la siguiente vez ve la marca y usa la CPU, en vez de quedarse cerrándose.
 
+### Un modelo para cada teléfono: E4B y E2B
+
+Gemma 4 viene en tamaños. La "E" significa "efectivo": E4B trabaja como un modelo de unos 4 mil millones de parámetros y E2B como uno de 2 mil millones. Más parámetros es más listo, pero ocupa más memoria RAM y responde más lento.
+
+- La **RAM** es la mesa de trabajo del teléfono: el modelo tiene que caber ahí completo mientras piensa, junto con Android y las demás apps. Un teléfono "de 8 GB" en realidad le deja a Android unos 7.4.
+- El **espacio libre** es el cajón donde se guarda el archivo del modelo.
+- Ari mide ambos con lo que Android le dice (`ActivityManager` para la RAM, `StatFs` para el espacio) y recomienda el que cabe con holgura. Así no se cierra por falta de memoria en un teléfono más sencillo.
+
 ### Ari ve imágenes: modelos multimodales
 
 Un modelo **multimodal** entiende más de un tipo de cosa: texto, imágenes y hasta audio. Gemma 4 lo es. Por dentro tiene una parte extra, el **codificador de visión**, que convierte una foto en algo que el modelo puede "leer", como si la describiera con sus propios números. Por eso Ari carga a Gemma con la "vista" encendida: usa algo más de memoria, pero puede decirte qué hay en una foto, leer una receta o un recibo.
@@ -461,6 +469,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Falso positivo**: cuando un sistema dice que sí por error, por ejemplo confundir a otra persona contigo.
 - **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.
+- **RAM**: la memoria de trabajo del teléfono; se vacía al apagarlo. El modelo tiene que caber ahí para pensar.
 - **Proyección de medios (MediaProjection)**: la forma en que Android deja que una app vea o grabe la pantalla, siempre con tu permiso.
 - **Inyección de instrucciones**: texto escondido en una página, un documento o la pantalla que intenta darle órdenes a una IA.
 - **MessagingStyle**: el estilo de notificación de Android que muestra un chat y deja contestar ahí mismo.

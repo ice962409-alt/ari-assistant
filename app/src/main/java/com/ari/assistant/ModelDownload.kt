@@ -40,22 +40,32 @@ class ModelDownload(context: Context) {
 
     fun isRunning(): Boolean = prefs.getLong(KEY_ID, -1L) >= 0
 
-    fun start(): Start {
+    /** Espacio libre donde se guarda el modelo (0 si no se puede saber). */
+    fun freeSpace(): Long {
+        val dir = folder() ?: return 0L
+        dir.mkdirs()
+        return runCatching { StatFs(dir.path).availableBytes }.getOrDefault(0L)
+    }
+
+    /** Cuál de los modelos se descargó (null si se eligió a mano o es de antes de 0.16.0). */
+    fun downloadedModel(): ModelChoice.Model? = ModelChoice.Model.byId(prefs.getString(KEY_MODEL, null))
+
+    fun start(model: ModelChoice.Model): Start {
         val dir = folder() ?: return Start.Unavailable
         dir.mkdirs()
         val free = runCatching { StatFs(dir.path).availableBytes }.getOrDefault(0L)
-        if (free < ModelDownloadText.SPACE_NEEDED) return Start.NoSpace(free)
+        if (free < model.spaceNeeded) return Start.NoSpace(free)
         File(dir, PART_NAME).delete()
 
-        val request = DownloadManager.Request(Uri.parse(ModelDownloadText.URL))
+        val request = DownloadManager.Request(Uri.parse(model.url))
             .setTitle("Ari: descargando su modelo")
-            .setDescription("Gemma 4 E4B (unos 3.7 GB)")
+            .setDescription("${model.label} (unos ${ModelDownloadText.gb(model.bytes)} GB)")
             .setDestinationInExternalFilesDir(context, FOLDER, PART_NAME)
-            .setAllowedOverMetered(false) // 3.7 GB: solo por Wi-Fi, para no gastar tus datos.
+            .setAllowedOverMetered(false) // Gigas de descarga: solo por Wi-Fi, para no gastar tus datos.
             .setAllowedOverRoaming(false)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
         val id = manager.enqueue(request)
-        prefs.edit().putLong(KEY_ID, id).apply()
+        prefs.edit().putLong(KEY_ID, id).putString(KEY_DOWNLOADING, model.id).apply()
         return Start.Started
     }
 
@@ -71,7 +81,7 @@ class ModelDownload(context: Context) {
             val reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
             val done = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
             val total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-                .takeIf { it > 0 } ?: ModelDownloadText.EXPECTED_BYTES
+                .takeIf { it > 0 } ?: (ModelChoice.Model.byId(prefs.getString(KEY_DOWNLOADING, null)) ?: ModelChoice.Model.E4B).bytes
             return when (status) {
                 DownloadManager.STATUS_SUCCESSFUL -> finish()
                 DownloadManager.STATUS_FAILED -> {
@@ -87,6 +97,7 @@ class ModelDownload(context: Context) {
 
     /** Termina: el archivo a medias pasa a ser el modelo, solo si está completo. */
     private fun finish(): State {
+        val model = prefs.getString(KEY_DOWNLOADING, null)
         forget()
         val dir = folder() ?: return State.Failed(ModelDownloadText.REASON_TOO_SMALL)
         val part = File(dir, PART_NAME)
@@ -97,6 +108,7 @@ class ModelDownload(context: Context) {
         }
         final.delete()
         if (!part.renameTo(final)) return State.Failed(ModelDownloadText.REASON_TOO_SMALL)
+        prefs.edit().putString(KEY_MODEL, model).apply()
         return State.Done(final)
     }
 
@@ -110,15 +122,18 @@ class ModelDownload(context: Context) {
     /** Borra el modelo descargado (por ejemplo, si eliges otro archivo a mano). */
     fun deleteDownloaded() {
         folder()?.let { File(it, FILE_NAME).delete() }
+        prefs.edit().remove(KEY_MODEL).apply()
     }
 
     private fun forget() {
-        prefs.edit().remove(KEY_ID).apply()
+        prefs.edit().remove(KEY_ID).remove(KEY_DOWNLOADING).apply()
     }
 
     companion object {
         private const val PREFS = "ari_descarga"
         private const val KEY_ID = "id"
+        private const val KEY_DOWNLOADING = "bajando"
+        private const val KEY_MODEL = "modelo"
         private const val FOLDER = "modelos"
         private const val FILE_NAME = "gemma-model.litertlm"
         private const val PART_NAME = "gemma-model.litertlm.descarga"
@@ -127,13 +142,8 @@ class ModelDownload(context: Context) {
 
 /** Textos y reglas de la descarga, sin Android, para poder probarlos. */
 object ModelDownloadText {
-    /** Archivo oficial de Gemma 4 E4B para LiteRT-LM (licencia Apache 2.0). */
-    const val URL = "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm"
-    const val EXPECTED_BYTES = 3_659_530_240L
     /** Un archivo menor que esto no es el modelo (por ejemplo, una página de error). */
     const val MIN_VALID_BYTES = 1_000_000_000L
-    /** El modelo más un margen para que el teléfono no se quede sin espacio. */
-    const val SPACE_NEEDED = EXPECTED_BYTES + 500_000_000L
     const val REASON_TOO_SMALL = -1
 
     private const val GB = 1_000_000_000.0
@@ -156,13 +166,13 @@ object ModelDownloadText {
     /** Motivos de error: códigos HTTP (401, 403, 404…) o de DownloadManager (1006 sin espacio…). */
     fun failed(reason: Int): String = when (reason) {
         401, 403 -> "La página del modelo pide iniciar sesión. Descárgalo desde el navegador " +
-            "(huggingface.co/litert-community/gemma-4-E4B-it-litert-lm) y elígelo con Modelo → Elegir un archivo."
+            "(huggingface.co/litert-community, busca gemma-4) y elígelo con Modelo → Elegir un archivo."
         404 -> "No encontré el archivo del modelo en su página. Puede que lo hayan movido; elígelo a mano con Modelo → Elegir un archivo."
-        1006 -> "El teléfono se quedó sin espacio durante la descarga. Libera unos 4 GB e inténtalo de nuevo."
+        1006 -> "El teléfono se quedó sin espacio durante la descarga. Libera espacio e inténtalo de nuevo."
         REASON_TOO_SMALL -> "La descarga terminó, pero el archivo no está completo. Inténtalo de nuevo."
         else -> "La descarga falló (código $reason). Revisa tu Wi-Fi e inténtalo de nuevo."
     }
 
-    fun noSpace(free: Long): String =
-        "Necesito unos ${gb(SPACE_NEEDED)} GB libres y tu teléfono tiene ${gb(free)} GB. Libera espacio e inténtalo de nuevo."
+    fun noSpace(free: Long, needed: Long): String =
+        "Necesito unos ${gb(needed)} GB libres y tu teléfono tiene ${gb(free)} GB. Libera espacio e inténtalo de nuevo."
 }

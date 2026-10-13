@@ -33,6 +33,18 @@ Si sales de Ari mientras trabaja (una respuesta larga, una tarea del equipo o ca
 
 La primera vez que abres esta versión, Ari te pregunta **cómo te llamas** para llamarte por tu nombre. Puedes dejarlo para después con "Ahora no".
 
+### Instalar Ari en otro teléfono (versión básica)
+
+Ari se instala con el mismo APK en cualquier teléfono con Android 8 o más nuevo y procesador de 64 bits. Al tocar **Modelo**, Ari mide la memoria RAM y el espacio libre y pone primero el modelo que mejor corre ahí:
+
+- **Gemma 4 E4B** (3.7 GB): el más listo, para teléfonos con 8 GB de RAM o más (como el POCO).
+- **Gemma 4 E2B** (2.6 GB): más ligero y rápido, para teléfonos con 4 a 6 GB de RAM, o si el completo no cabe.
+- Con menos de 3 GB de RAM, Ari avisa que puede ir muy lenta o cerrarse.
+
+En teléfonos con menos de 7 GB de RAM, Ari usa su **versión básica**: no carga la "vista" (fotos, PDF y ver la pantalla), que ocupa mucha memoria. El chat, la voz, el modo live, los recordatorios, la memoria y las acciones en el teléfono funcionan igual.
+
+Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene nada tuyo, porque tus recuerdos y pláticas viven solo en tu teléfono.
+
 ### Ajustes: una Ari para cada persona
 
 El botón **Ajustes** (arriba, junto a Memoria y Modelo) tiene:
@@ -396,6 +408,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Ari elige su modelo según el teléfono (0.16.0): mide la RAM y el espacio y recomienda Gemma 4 E4B (3.7 GB) o el ligero E2B (2.6 GB). En teléfonos con menos de 7 GB de RAM usa su versión básica, sin la vista. Así ya se puede instalar en el teléfono de otra persona.
 - Ari ve tu pantalla y chat de notificaciones (0.15.0): dile "mira mi pantalla" desde otra app, tocas el aviso y "Permitir", y Ari mira una sola imagen y te contesta. Y cuando termina algo, te escribe en un chat de notificaciones al que puedes contestar sin abrir la app. Todo sin internet.
 - Reconocer voces (0.14.0): registras tu voz y la de otras personas (con su permiso) en Ajustes; en el modo live Ari sabe quién habla y, si no eres tú, no usa tus datos personales ni guarda esa plática en tu historial. Todo en el teléfono, cifrado y sin guardar grabaciones.
 - Esfera más elaborada (0.13.2): la carita de Ari tiene volumen (sombra y brillo de orilla), un remolino de luz que gira por dentro, brillo en los ojos, mejillas que se sonrojan cuando está feliz o platicando, cejas cuando piensa, destellos cuando está contenta y un tinte según su ánimo (cian al escucharte, lila al pensar). También en el widget.

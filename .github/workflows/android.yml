@@ -54,7 +54,6 @@ jobs:
             echo "== $model"
             curl -sSI "$url" | grep -iE "^HTTP|x-linked-size|x-linked-etag|^location" || true
           done
-          curl -sS "https://huggingface.co/api/models/litert-community/gemma-4-E2B-it-litert-lm/tree/main" | head -c 3000 || true
 
       - name: Pruebas automaticas
         run: ./gradlew :app:testDebugUnitTest

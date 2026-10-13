@@ -30,6 +30,7 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Gemma en la GPU (0.13.1), por "responde lento". Falta [prueba].
 - [autónomo] Esfera más elaborada (0.13.2), decisión del usuario. Falta [prueba].
 - [autónomo] Reconocer voces (0.14.0), decidido por el usuario. Falta [prueba] (sobre todo si el reconocedor del POCO acepta el audio de Ari).
+- [autónomo] Elegir el modelo según el teléfono y versión básica (0.16.0), pedido por el usuario (para el teléfono de otra persona). Falta [prueba] en otro teléfono.
 - [autónomo] Ari ve tu pantalla (0.15.0), pedido por el usuario. Falta [prueba].
 - [autónomo] Chat de Ari en las notificaciones (0.15.0), pedido por el usuario ("Mejor sin internet"). Falta [prueba].
 - [autónomo] Siguiente para voces: recuerdos propios de cada persona registrada.

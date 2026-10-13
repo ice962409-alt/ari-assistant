@@ -989,7 +989,10 @@ class MainActivity : Activity() {
     private fun loadSavedModel() {
         val modelFile = savedModelFile()
         if (modelFile == null) {
-            if (!modelDownload.isRunning()) status.text = "Toca Modelo para descargar a Gemma y empezar"
+            if (!modelDownload.isRunning()) {
+                val advice = ModelChoice.recommend(totalRam(), modelDownload.freeSpace())
+                status.text = "Toca Modelo para descargar a Gemma. Para este teléfono te recomiendo ${advice.model.label}."
+            }
             return
         }
 
@@ -1016,32 +1019,48 @@ class MainActivity : Activity() {
                 .show()
             return
         }
-        val options = arrayOf("Descargar Gemma 4 (3.7 GB, por Wi-Fi)", "Elegir un archivo del teléfono")
+        // Ari mide el teléfono y pone primero el modelo que mejor corre aquí.
+        val advice = ModelChoice.recommend(totalRam(), modelDownload.freeSpace())
+        val other = if (advice.model == ModelChoice.Model.E4B) ModelChoice.Model.E2B else ModelChoice.Model.E4B
+        fun option(model: ModelChoice.Model, note: String) =
+            "Descargar ${model.label} ($note, ${ModelDownloadText.gb(model.bytes)} GB)"
+        val options = arrayOf(
+            option(advice.model, if (advice.tooWeak) "el más ligero" else "recomendado"),
+            option(other, if (other == ModelChoice.Model.E4B) "el más listo" else "más ligero"),
+            "Elegir un archivo del teléfono"
+        )
         AlertDialog.Builder(this)
             .setTitle("Modelo de Ari")
-            .setItems(options) { _, which -> if (which == 0) confirmDownload() else pickModelFile() }
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> confirmDownload(advice.model, advice.reason)
+                    1 -> confirmDownload(other, advice.reason)
+                    else -> pickModelFile()
+                }
+            }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    private fun confirmDownload() {
+    private fun confirmDownload(model: ModelChoice.Model, reason: String) {
         AlertDialog.Builder(this)
-            .setTitle("¿Descargar a Gemma?")
+            .setTitle("¿Descargar ${model.label}?")
             .setMessage(
-                "Es la única vez que Ari usa internet: el gestor de descargas del teléfono baja el modelo " +
-                    "oficial (Gemma 4 E4B, unos 3.7 GB) desde Hugging Face. Tus conversaciones y recuerdos " +
-                    "no salen del teléfono.\n\n" +
+                "$reason\n\n" +
+                    "Es la única vez que Ari usa internet: el gestor de descargas del teléfono baja el modelo " +
+                    "oficial (${model.label}, unos ${ModelDownloadText.gb(model.bytes)} GB) desde Hugging Face. " +
+                    "Tus conversaciones y recuerdos no salen del teléfono.\n\n" +
                     "• Solo por Wi-Fi, para no gastar tus datos.\n" +
-                    "• Necesitas unos 4.2 GB libres.\n" +
+                    "• Necesitas unos ${ModelDownloadText.gb(model.spaceNeeded)} GB libres.\n" +
                     "• Puede tardar de 10 minutos a una hora, y sigue aunque cierres Ari."
             )
-            .setPositiveButton("Descargar") { _, _ -> startDownload() }
+            .setPositiveButton("Descargar") { _, _ -> startDownload(model) }
             .setNegativeButton("Ahora no", null)
             .show()
     }
 
-    private fun startDownload() {
-        when (val started = modelDownload.start()) {
+    private fun startDownload(model: ModelChoice.Model) {
+        when (val started = modelDownload.start(model)) {
             ModelDownload.Start.Started -> {
                 status.text = "Empezó la descarga de Gemma."
                 chat.addNote("Estoy descargando a Gemma. Te aviso cuando esté lista; puedes cerrar la app mientras.")
@@ -1050,7 +1069,7 @@ class MainActivity : Activity() {
                 }
                 watchDownload()
             }
-            is ModelDownload.Start.NoSpace -> chat.addNote(ModelDownloadText.noSpace(started.free))
+            is ModelDownload.Start.NoSpace -> chat.addNote(ModelDownloadText.noSpace(started.free, model.spaceNeeded))
             ModelDownload.Start.Unavailable ->
                 chat.addNote("No encuentro dónde guardar el modelo en este teléfono. Elígelo a mano con Modelo → Elegir un archivo.")
         }
@@ -1252,6 +1271,8 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE)
         if (prefs.getString(KEY_GPU, "") == GPU_TRYING) prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
         val tryGpu = prefs.getString(KEY_GPU, "") != GPU_FAILED
+        // Versión básica (menos de 7 GB de RAM): sin la "vista", que ocupa mucha memoria.
+        val basic = ModelChoice.basic(totalRam())
 
         fun config(backend: Backend, vision: Boolean) = EngineConfig(
             modelPath = modelFile.absolutePath,
@@ -1264,7 +1285,7 @@ class MainActivity : Activity() {
         if (tryGpu) {
             // commit (no apply): la marca tiene que quedar escrita antes de tocar la GPU.
             prefs.edit().putString(KEY_GPU, GPU_TRYING).commit()
-            runCatching { startEngine(config(Backend.GPU(), vision = true)) }.getOrNull()?.let {
+            (if (basic) null else runCatching { startEngine(config(Backend.GPU(), vision = true)) }.getOrNull())?.let {
                 prefs.edit().putString(KEY_GPU, GPU_OK).commit()
                 visionReady = true
                 engineLabel = "GPU, con vista"
@@ -1273,18 +1294,18 @@ class MainActivity : Activity() {
             runCatching { startEngine(config(Backend.GPU(), vision = false)) }.getOrNull()?.let {
                 prefs.edit().putString(KEY_GPU, GPU_OK).commit()
                 visionReady = false
-                engineLabel = "GPU, solo texto"
+                engineLabel = if (basic) "GPU, versión básica" else "GPU, solo texto"
                 return it
             }
             prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
         }
-        runCatching { startEngine(config(Backend.CPU(), vision = true)) }.getOrNull()?.let {
+        (if (basic) null else runCatching { startEngine(config(Backend.CPU(), vision = true)) }.getOrNull())?.let {
             visionReady = true
             engineLabel = "CPU, con vista"
             return it
         }
         visionReady = false
-        engineLabel = "CPU, solo texto"
+        engineLabel = if (basic) "CPU, versión básica" else "CPU, solo texto"
         return startEngine(config(Backend.CPU(), vision = false))
     }
 
@@ -1346,11 +1367,18 @@ class MainActivity : Activity() {
     }
 
     /** true si el teléfono tiene menos RAM de la recomendada para Gemma. */
-    private fun lowMemoryDevice(): Boolean {
-        val manager = getSystemService(android.app.ActivityManager::class.java) ?: return false
+    private fun lowMemoryDevice(): Boolean = totalRam() in 1 until ModelChoice.MIN_RAM
+
+    private fun visionMissing(what: String): String =
+        if (ModelChoice.basic(totalRam())) "En este teléfono uso mi versión básica, que ahorra memoria, así que no puedo ver $what."
+        else "Gemma cargó sin la vista en este teléfono, así que no puedo ver $what."
+
+    /** La memoria RAM del teléfono, en bytes (0 si no se puede saber). */
+    private fun totalRam(): Long {
+        val manager = getSystemService(android.app.ActivityManager::class.java) ?: return 0L
         val info = android.app.ActivityManager.MemoryInfo()
         manager.getMemoryInfo(info)
-        return info.totalMem < MIN_RECOMMENDED_RAM
+        return info.totalMem
     }
 
     private fun sendMessage() {
@@ -1521,7 +1549,7 @@ class MainActivity : Activity() {
         val reply = when {
             guestMode -> "Lo siento, solo la persona dueña de este teléfono puede pedirme ver la pantalla."
             !modelReady || conversation == null -> "Para ver tu pantalla, primero carga a Gemma (Modelo)."
-            !visionReady -> "Gemma cargó sin la vista en este teléfono, así que no puedo ver tu pantalla."
+            !visionReady -> visionMissing("tu pantalla")
             inForeground -> "Ahora mismo en tu pantalla estoy yo. Abre la app que quieres que vea y, en modo live, " +
                 "dime \"mira mi pantalla\"; también puedes escribírmelo desde mi notificación."
             !AlarmReminders.canNotify(this) -> "Para ver tu pantalla desde otra app necesito poder mandarte notificaciones. Actívalas en Ajustes."
@@ -1565,10 +1593,9 @@ class MainActivity : Activity() {
     private val screenListener = object : ScreenGlance.Listener {
         override fun onScreen(file: File?, message: String?) {
             val question = screenQuestion
-            val fresh = question != null &&
-                android.os.SystemClock.elapsedRealtime() - screenAskedAt < ScreenGlance.ASK_VALID_MS
             screenQuestion = null
-            if (isDestroyed || !fresh || question == null) {
+            val stale = android.os.SystemClock.elapsedRealtime() - screenAskedAt >= ScreenGlance.ASK_VALID_MS
+            if (isDestroyed || question == null || stale) {
                 file?.delete()
                 return
             }
@@ -1613,7 +1640,7 @@ class MainActivity : Activity() {
             return
         }
         if (attachment.needsVision && !visionReady) {
-            chat.addNote("Gemma cargó sin la vista en este teléfono, así que no puedo ver imágenes ni PDF. Los documentos de Word y de texto sí los leo.")
+            chat.addNote(visionMissing("imágenes ni PDF") + " Los documentos de Word y de texto sí los leo.")
             clearAttachment()
             return
         }
@@ -2720,7 +2747,6 @@ class MainActivity : Activity() {
         private const val CAMERA_AUTHORITY = "com.ari.assistant.camara"
         const val ACTION_SHARED = "com.ari.assistant.SHARED"
         private const val KEY_EXACT_ASKED = "alarmas_exactas_preguntado"
-        private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
         private const val AGENT_SETTINGS = "ari_agentes"
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
