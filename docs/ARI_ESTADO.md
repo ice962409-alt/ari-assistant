@@ -211,3 +211,10 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - `MainActivity.saveMessage()` guarda en el executor `storage` (un hilo, en orden); `onDestroy` cierra la base de datos en ese hilo. `AriDatabase` usa WAL.
 - `buildPrompt` ya no repite el mensaje actual en el historial; si `sendMessageAsync` falla, se restauran `historyPending`/`memoriesPending`.
 - Personalidad (0.3.1): el usuario eligió "Franca, con groserías de vez en cuando"; se agregó a `PERSONALITY`. La descarga guiada del modelo espera la decisión de si Ari puede usar internet una vez (tablero, `descarga-modelo`).
+
+## Una Ari para cada usuario (versión 0.4.0)
+
+- `Profile.kt`: `Profile(userName, tone, creator)` y `Tone` (FRANK_SWEARING, FRANK, PROFESSIONAL). `personality()` arma el texto que antes era la constante `PERSONALITY`. Se guarda en las preferencias `ari_perfil`.
+- Primer uso: si ya había mensajes, recuerdos o modelo (instalación del creador), `creator = true` y tono FRANK_SWEARING (su elección); si no, tono FRANK. Diálogo "¿Cómo te llamas?".
+- Botón Ajustes: nombre, tono, respaldo. Cambiar el perfil pone `historyPending = true` para reenviar la personalidad.
+- El respaldo incluye `profile` (nombre, tono, creador). Pruebas en `ProfileTest`.

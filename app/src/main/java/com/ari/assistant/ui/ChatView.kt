@@ -38,7 +38,7 @@ class ChatView(context: Context) : ScrollView(context) {
     }
 
     /** Pantalla de bienvenida cuando todavía no hay mensajes. */
-    fun showWelcome() {
+    fun showWelcome(userName: String = "") {
         if (welcome != null || column.childCount > 0) return
         val box = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -49,14 +49,15 @@ class ChatView(context: Context) : ScrollView(context) {
             background = AriTheme.circle(AriTheme.background, AriTheme.ice, dp(3f))
         }, LinearLayout.LayoutParams(dp(56f), dp(56f)).apply { bottomMargin = dp(20f) })
         box.addView(TextView(context).apply {
-            text = "Hola, soy Ari"
+            text = if (userName.isBlank()) "Hola, soy Ari" else "Hola, $userName"
             textSize = 28f
             setTypeface(Typeface.SERIF, Typeface.NORMAL)
             setTextColor(AriTheme.text)
             gravity = Gravity.CENTER
         })
         box.addView(TextView(context).apply {
-            text = "Tu asistente personal con IA local.\n¿En qué trabajamos hoy?"
+            text = (if (userName.isBlank()) "Tu asistente personal" else "Soy Ari, tu asistente personal") +
+                " con IA local.\n¿En qué trabajamos hoy?"
             textSize = 16f
             setTextColor(AriTheme.muted)
             gravity = Gravity.CENTER

@@ -24,16 +24,28 @@ Ari es una asistente personal para Android que funciona con inteligencia artific
 
 Las siguientes veces, el modelo carga solo al abrir la app.
 
+La primera vez que abres esta versión, Ari te pregunta **cómo te llamas** para llamarte por tu nombre. Puedes dejarlo para después con "Ahora no".
+
+### Ajustes: una Ari para cada persona
+
+El botón **Ajustes** (arriba, junto a Memoria y Modelo) tiene:
+
+- **Tu nombre**: cómo te llama Ari.
+- **Tono de Ari**: "Franca, con alguna grosería", "Franca, sin groserías" o "Profesional". El cambio se nota desde tu próximo mensaje.
+- **Respaldo de la memoria**: el mismo de Memoria → Respaldo.
+
+Cada persona que instala Ari tiene la suya: su nombre, su tono, sus recuerdos. Solo en tu teléfono Ari sabe que tú la creaste y que es la CEO de tu empresa; en una instalación nueva es la asistente personal de quien la usa y empieza con el tono "Franca, sin groserías". El respaldo cifrado también guarda tu nombre y tu tono.
+
 ### La interfaz
 
 Ari tiene una interfaz oscura parecida a la de Claude, con **color hielo** como acento:
 
-- Arriba: el punto hielo, "Ari", lo que está haciendo y los botones **Memoria** y **Modelo**.
+- Arriba: el punto hielo, "Ari", lo que está haciendo y los botones **Memoria**, **Modelo** y **Ajustes**.
 - Tus mensajes van en burbujas a la derecha. Los de Ari van sin burbuja, con su nombre arriba ("Ari", o "Ari · Agente de reloj" cuando responde un agente).
 - Mientras piensa ves "Pensando…" animado, y la respuesta aparece a medida que Gemma la escribe.
 - Las respuestas tienen formato: títulos, listas, **negritas**, cursivas y código. Puedes mantener presionado un mensaje para copiarlo.
 - Abajo está el campo para escribir, con el botón del micrófono y el botón circular de enviar.
-- Cuando todavía no hay mensajes, Ari te recibe con "Hola, soy Ari".
+- Cuando todavía no hay mensajes, Ari te recibe con tu nombre: "Hola, Javier".
 
 El icono de la app es un anillo color hielo con un punto al centro y un pequeño satélite: Ari y su equipo. Ari Estado tiene el mismo anillo convertido en barra de progreso.
 
@@ -124,7 +136,7 @@ Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari · Agente
 
 ### La personalidad de Ari
 
-Ari es mujer y es tu creación. Es cercana y con buen humor, pero seria cuando el tema lo pide. Es directa y breve; si no entiendes algo o le pides más, te lo explica con detalle, paso a paso. Es franca: dice lo que piensa sin rodeos y no endulza las malas noticias, y de vez en cuando suelta alguna grosería si el momento lo pide. Gemma recibe esta personalidad al empezar cada conversación.
+Ari es mujer y es tu creación. Es cercana y con buen humor, pero seria cuando el tema lo pide. Es directa y breve; si no entiendes algo o le pides más, te lo explica con detalle, paso a paso. Es franca: dice lo que piensa sin rodeos y no endulza las malas noticias, y de vez en cuando suelta alguna grosería si el momento lo pide. Gemma recibe esta personalidad al empezar cada conversación. El tono se puede cambiar en Ajustes.
 
 ### El equipo de modelos: los subordinados de Ari
 
@@ -239,13 +251,14 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Estabilidad, segunda ronda: 17 pruebas automáticas que se ejecutan en cada compilación (reglas de los agentes, puestos de los modelos, direcciones privadas y cifrado del respaldo); los mensajes se guardan en segundo plano; la base de datos es más rápida (modo WAL); el primer mensaje tras cargar el modelo ya no le llega repetido a Gemma; y el historial se carga por partes para que la app abra rápido.
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
+- Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 
 ## 5. Plan hacia el lanzamiento
 
 - **Estabilidad y optimización**: dos rondas hechas, con pruebas automáticas en cada compilación; seguirá en cada cambio.
 - **Interfaz como la de Claude**: hecha, en color hielo; se pulirán detalles con las pruebas.
 - **Primer uso sencillo**: que la app guíe la descarga del modelo, sin buscar el archivo a mano.
-- **Una Ari para cada usuario**: que cada persona que la instale tenga su propia Ari.
+- **Una Ari para cada usuario**: hecho en 0.4.0 (nombre y tono por persona).
 - **Seguridad y nube privada**: repositorio privado, la laptop con Linux como casa principal de Ari, túnel cifrado (Tailscale), respaldos automáticos (laptop, teléfono y copia cifrada en Drive) y poder mudar a Ari a otra PC.
 - **Requisitos de Google Play**: firma oficial, política de privacidad, justificación de permisos y revisión de la licencia de Gemma.
 
@@ -264,6 +277,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
+- **Profile.kt**: tu nombre, el tono de Ari y su personalidad.
 - **AriBackup.kt** y **BackupCrypto.kt**: el respaldo y su cifrado con contraseña.
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.

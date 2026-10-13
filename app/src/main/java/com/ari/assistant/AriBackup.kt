@@ -28,7 +28,12 @@ object AriBackup {
 
     data class Summary(val memories: Int, val messages: Int, val teams: Int, val networks: Int)
 
-    fun export(database: AriDatabase, settings: SharedPreferences, password: CharArray): Pair<ByteArray, Summary> {
+    fun export(
+        database: AriDatabase,
+        settings: SharedPreferences,
+        profilePrefs: SharedPreferences,
+        password: CharArray
+    ): Pair<ByteArray, Summary> {
         val data = database.exportData()
         val team = JSONObject()
         settings.all.forEach { (key, value) ->
@@ -41,6 +46,13 @@ object AriBackup {
             .put("data", data)
             .put("team", team)
             .put("approved_networks", networks)
+        if (Profile.isConfigured(profilePrefs)) {
+            val profile = Profile.load(profilePrefs)
+            json.put(
+                "profile",
+                JSONObject().put("name", profile.userName).put("tone", profile.tone.name).put("creator", profile.creator)
+            )
+        }
         val summary = Summary(
             data.getJSONArray("memories").length(),
             data.getJSONArray("messages").length(),
@@ -51,7 +63,13 @@ object AriBackup {
     }
 
     /** Lee el archivo, comprueba la contraseña y reemplaza los datos actuales de Ari. */
-    fun restore(source: InputStream, database: AriDatabase, settings: SharedPreferences, password: CharArray): Summary {
+    fun restore(
+        source: InputStream,
+        database: AriDatabase,
+        settings: SharedPreferences,
+        profilePrefs: SharedPreferences,
+        password: CharArray
+    ): Summary {
         val json = JSONObject(String(BackupCrypto.decrypt(readLimited(source), password), Charsets.UTF_8))
         if (json.optInt("version") > FORMAT_VERSION) {
             throw IllegalStateException("Este respaldo es de una versión más nueva de Ari. Actualiza la app.")
@@ -76,6 +94,14 @@ object AriBackup {
         val approved = (0 until networks.length()).map { networks.getString(it) }.filter { it.isNotBlank() }.toSet()
         editor.putStringSet(KEY_APPROVED, approved)
         editor.apply()
+
+        json.optJSONObject("profile")?.let { saved ->
+            Profile(
+                Profile.cleanName(saved.optString("name")),
+                Profile.toneNamed(saved.optString("tone")) ?: Tone.FRANK,
+                saved.optBoolean("creator")
+            ).save(profilePrefs)
+        }
 
         return Summary(
             data.getJSONArray("memories").length(),

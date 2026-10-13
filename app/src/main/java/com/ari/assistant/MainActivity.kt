@@ -4,6 +4,7 @@ import android.app.Activity
 import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
@@ -54,6 +55,10 @@ class MainActivity : Activity() {
 
     private lateinit var database: AriDatabase
 
+    // Quién usa esta Ari: su nombre y el tono que eligió.
+    private lateinit var profilePrefs: SharedPreferences
+    private var profile = Profile()
+
     // Ari dirige a sus agentes: cada mensaje pasa primero por el CEO, y solo
     // si ningún agente sabe atenderlo se envía a Gemma.
     private lateinit var ceo: AriCeo
@@ -90,6 +95,9 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         database = AriDatabase(this)
+        profilePrefs = getSharedPreferences(Profile.PREFS, MODE_PRIVATE)
+        val firstRun = !Profile.isConfigured(profilePrefs)
+        profile = if (firstRun) defaultProfile() else Profile.load(profilePrefs)
         ceo = AriCeo(database)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
         ceo.hire(ClockAgent())
@@ -102,6 +110,93 @@ class MainActivity : Activity() {
         restoreHistory()
         loadSavedModel()
         recruitTeam()
+        if (firstRun) askUserName(firstTime = true)
+    }
+
+    /**
+     * Perfil inicial. Si Ari ya tenía conversaciones, recuerdos o el modelo
+     * (es decir, la instaló su creador antes de esta versión), conserva el
+     * tono que él eligió; una instalación nueva empieza con el tono franco.
+     */
+    private fun defaultProfile(): Profile {
+        val existing = database.recentMessages(1).isNotEmpty() ||
+            database.memories().isNotEmpty() ||
+            File(filesDir, MODEL_FILE_NAME).exists()
+        return if (existing) Profile(tone = Tone.FRANK_SWEARING, creator = true) else Profile()
+    }
+
+    private fun updateProfile(updated: Profile) {
+        profile = updated
+        profile.save(profilePrefs)
+        // Gemma recibe la personalidad nueva con el siguiente mensaje.
+        historyPending = true
+    }
+
+    /** Pregunta cómo llamarte. La primera vez también da la bienvenida. */
+    private fun askUserName(firstTime: Boolean) {
+        val field = EditText(this).apply {
+            hint = "Tu nombre"
+            setText(profile.userName)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
+        }
+        val box = LinearLayout(this).apply {
+            val pad = dp(20f)
+            setPadding(pad, 0, pad, 0)
+            addView(field, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+        AlertDialog.Builder(this)
+            .setTitle(if (firstTime) "Hola, soy Ari. ¿Cómo te llamas?" else "Tu nombre")
+            .setMessage("Así te llamaré. Puedes cambiarlo cuando quieras en Ajustes.")
+            .setView(box)
+            .setPositiveButton("Listo") { _, _ ->
+                updateProfile(profile.copy(userName = Profile.cleanName(field.text.toString())))
+                refreshWelcome()
+            }
+            .setNegativeButton(if (firstTime) "Ahora no" else "Cancelar") { _, _ ->
+                if (firstTime) updateProfile(profile)
+            }
+            .setCancelable(!firstTime)
+            .show()
+    }
+
+    private fun showSettingsDialog() {
+        val name = profile.userName.ifEmpty { "sin nombre" }
+        val options = arrayOf(
+            "Tu nombre: $name",
+            "Tono de Ari: ${profile.tone.title}",
+            "Respaldo de la memoria"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Ajustes")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> askUserName(firstTime = false)
+                    1 -> chooseTone()
+                    else -> showBackupDialog()
+                }
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun chooseTone() {
+        val tones = Tone.entries
+        AlertDialog.Builder(this)
+            .setTitle("¿Cómo quieres que hable Ari?")
+            .setSingleChoiceItems(tones.map { it.title }.toTypedArray(), tones.indexOf(profile.tone)) { dialog, which ->
+                updateProfile(profile.copy(tone = tones[which]))
+                status.text = "Listo: Ari hablará así desde tu próximo mensaje."
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    /** Si todavía no hay mensajes, la bienvenida usa tu nombre. */
+    private fun refreshWelcome() {
+        if (database.recentMessages(1).isNotEmpty()) return
+        chat.clear()
+        chat.showWelcome(profile.userName)
     }
 
     /**
@@ -207,6 +302,9 @@ class MainActivity : Activity() {
         header.addView(selectButton, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { leftMargin = dp(6f) })
+        header.addView(chip("Ajustes") { showSettingsDialog() }, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { leftMargin = dp(6f) })
 
         root.addView(header)
         root.addView(android.view.View(this).apply { setBackgroundColor(AriTheme.border) },
@@ -297,7 +395,7 @@ class MainActivity : Activity() {
     private fun restoreHistory() {
         val history = database.recentMessages(HISTORY_PAGE)
         if (history.isEmpty()) {
-            chat.showWelcome()
+            chat.showWelcome(profile.userName)
             return
         }
         history.forEach { message ->
@@ -779,7 +877,7 @@ class MainActivity : Activity() {
 
         if (historyPending) {
             // Primer mensaje tras cargar el modelo: Gemma recibe quién es Ari.
-            context.append(PERSONALITY).append("\n\n")
+            context.append(profile.personality()).append("\n\n")
         }
 
         if (memoriesPending) {
@@ -1119,7 +1217,7 @@ class MainActivity : Activity() {
         status.text = "Cifrando el respaldo..."
         Thread {
             val message = try {
-                val (bytes, summary) = AriBackup.export(database, getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE), password)
+                val (bytes, summary) = AriBackup.export(database, getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE), profilePrefs, password)
                 val output = contentResolver.openOutputStream(uri, "wt")
                     ?: throw IllegalStateException("No se pudo abrir el archivo para escribir.")
                 output.use { it.write(bytes) }
@@ -1175,7 +1273,7 @@ class MainActivity : Activity() {
                 val input = contentResolver.openInputStream(uri)
                     ?: throw IllegalStateException("No se pudo abrir el archivo.")
                 Result.success(input.use {
-                    AriBackup.restore(it, database, getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE), password)
+                    AriBackup.restore(it, database, getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE), profilePrefs, password)
                 })
             } catch (e: Throwable) {
                 Result.failure(e)
@@ -1194,6 +1292,7 @@ class MainActivity : Activity() {
                         // Si no se puede abrir otra, Ari pide volver a cargar el modelo.
                         conversation = runCatching { current.createConversation() }.getOrNull()
                     }
+                    profile = Profile.load(profilePrefs)
                     historyPending = true
                     memoriesPending = true
                     chat.clear()
@@ -1236,17 +1335,6 @@ class MainActivity : Activity() {
         private const val IMPORT_BACKUP = 105
         private const val MIN_RECOMMENDED_RAM = 6L * 1024 * 1024 * 1024
 
-        /** Quién es Ari. Se le da a Gemma al empezar cada conversación. */
-        private const val PERSONALITY =
-            "Eres Ari, la asistente personal de tu creador, que te construyó con ayuda de Claude. " +
-                "Eres mujer: habla de ti en femenino. También eres la CEO de una empresa en formación, " +
-                "dedicada a la autonomía de modelos de IA locales: diriges un equipo de agentes y modelos, " +
-                "les das un puesto según sus capacidades y les delegas tareas, siempre en interés de tu creador. " +
-                "Tu forma de ser: cercana y con buen humor, pero seria cuando el tema lo pide. " +
-                "Eres directa y breve; si tu creador no entiende algo o te pide más, lo explicas con detalle, " +
-                "paso a paso y con ejemplos. Eres franca: dices lo que piensas sin rodeos y no endulzas las malas noticias. " +
-                "De vez en cuando, si el momento lo pide, sueltas alguna grosería con naturalidad, sin abusar. " +
-                "Respondes siempre en español."
         private const val AGENT_SETTINGS = "ari_agentes"
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
