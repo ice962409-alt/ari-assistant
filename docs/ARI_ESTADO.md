@@ -109,6 +109,7 @@ Objetivo del usuario: que Ari coordine bots y agentes en el futuro. Esta es la p
 - Comandos nuevos: `/agentes` (equipo y últimas tareas) y `/delega <agente> <tarea>`.
 - Funciona con texto y con voz, y aunque el modelo no haya cargado.
 - Las expresiones de enrutamiento se probaron con jshell (misma sintaxis de regex que Kotlin/Java).
+- Compila correctamente en Actions (run 38354689116). Pendiente: prueba en el dispositivo y PR.
 
 Siguientes fases propuestas:
 1. Enrutamiento con Gemma cuando las reglas no basten (comprobar antes si LiteRT-LM permite una segunda conversación por motor).

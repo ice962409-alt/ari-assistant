@@ -44,6 +44,20 @@ El botón **Memoria** también deja ver, agregar y borrar recuerdos. Para borrar
 
 El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un error con el micrófono o si sales de la app. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
 
+### Ari como CEO de sus agentes
+
+Ari dirige un equipo de agentes. Cada mensaje pasa primero por Ari, que decide si lo atiende un agente o lo responde Gemma. Los agentes contestan al instante y funcionan con texto y con voz, aunque el modelo no haya cargado.
+
+- **Agente de memoria**: entiende frases normales, sin "/". Ejemplos: "recuerda que me gusta el café", "anota que mañana hay junta", "olvida café", "qué recuerdas de mí".
+- **Agente de reloj**: dice la hora y la fecha del teléfono, que Gemma no conoce. Ejemplos: "qué hora es", "qué día es hoy".
+
+Comandos:
+
+- **/agentes**: muestra el equipo, qué hace cada agente y las últimas tareas.
+- **/delega** seguido del agente y la tarea: encarga la tarea a un agente concreto. Ejemplo: /delega reloj qué hora es
+
+Cuando responde un agente, el chat muestra su nombre, por ejemplo "Ari (Agente de reloj)". Cada tarea queda registrada en una bitácora dentro del teléfono.
+
 ## 3. Cómo instalar versiones nuevas
 
 1. Cada cambio que llega a main se compila solo en GitHub Actions: https://github.com/javierhedzd-ops/ari-assistant/actions
@@ -73,10 +87,20 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un erro
 - Documentación para el usuario exportada a Google Drive y CLAUDE.md con las reglas para Claude.
 - Probado en el teléfono: funciona.
 
+### Ari como CEO de agentes (en prueba, pendiente de PR)
+
+- Contrato común para agentes y coordinador (AriCeo) que reparte las tareas antes de recurrir a Gemma.
+- Agente de memoria con frases normales y agente de reloj.
+- Bitácora de tareas en la base de datos y comandos /agentes y /delega.
+- Compila correctamente; falta probarlo en el teléfono.
+
 ## 5. Ideas pendientes
 
+- Siguientes fases del CEO:
+  - Que Gemma ayude a decidir qué agente atiende cada mensaje.
+  - Agentes que hagan cosas en el teléfono, como recordatorios y alarmas, siempre pidiendo confirmación.
+  - Conectar bots externos, con permisos por agente.
 - Que Ari empiece a hablar mientras Gemma escribe, en vez de esperar la respuesta completa.
-- Comandos por voz sin decir "/": "recuerda…", "olvida…".
 - Elegir la voz y la velocidad de lectura.
 
 ## 6. Archivos principales del código
@@ -84,7 +108,8 @@ El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un erro
 - **MainActivity.kt**: interfaz, chat, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.
+- **agents/**: el CEO (AriCeo.kt), el contrato de los agentes (Agent.kt) y los agentes de memoria y reloj.
 - **docs/ARI_ESTADO.md**: estado técnico, para que cualquier asistente pueda continuar.
 - **.github/workflows/android.yml**: compilación automática del APK.
 
-Los tres archivos .kt están en app/src/main/java/com/ari/assistant/.
+El código está en app/src/main/java/com/ari/assistant/.
