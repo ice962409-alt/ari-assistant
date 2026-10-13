@@ -45,7 +45,7 @@ class StatusWidget : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_estado)
             val status = StatusStore.status(context)
             val error = StatusStore.error(context)
-            val green = context.getColor(R.color.green)
+            val green = context.getColor(R.color.ice)
             val orange = context.getColor(R.color.orange)
 
             when {

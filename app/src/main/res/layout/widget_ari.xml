@@ -28,7 +28,7 @@
             android:layout_marginStart="8dp"
             android:letterSpacing="0.15"
             android:text="ARI"
-            android:textColor="@color/ari_green"
+            android:textColor="@color/ari_ice"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -99,7 +99,7 @@
             android:background="@drawable/widget_button"
             android:gravity="center"
             android:text="Ver a Claude"
-            android:textColor="@color/ari_green"
+            android:textColor="@color/ari_ice"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>

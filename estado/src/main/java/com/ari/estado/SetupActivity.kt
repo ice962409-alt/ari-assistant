@@ -24,9 +24,9 @@ class SetupActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var tokenInput: EditText
 
-    private val bg = Color.rgb(18, 18, 24)
-    private val green = Color.rgb(120, 220, 170)
-    private val muted = Color.rgb(184, 188, 196)
+    private val bg = Color.rgb(22, 24, 28)
+    private val green = Color.rgb(158, 216, 238)
+    private val muted = Color.rgb(154, 166, 178)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

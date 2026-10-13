@@ -189,3 +189,9 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Nota: `ari-assistant` ya era privado; la comprobación anterior con curl pasaba por el proxy autenticado de la sesión. Para saber la visibilidad hay que leer el campo `private` de la API.
 - Corrección 0.1.1: Ari Estado se cerraba al programar la revisión, porque Android 14+ exige `ACCESS_NETWORK_STATE` para `setRequiredNetworkType`. Añadido el permiso; programar va protegido con try/catch; `AriEstadoApp` guarda el último cierre inesperado y la pantalla de la app lo muestra.
 - `estado.json` tiene `sesion` (enlace a la sesión de Claude Code). La notificación y el aviso naranja del widget lo abren. El usuario había escrito "sigue" en un chat normal de Claude por error.
+
+## Interfaz estilo Claude, color hielo (versión 0.2.0)
+- Decisión del usuario: interfaz parecida a la de Claude, pero con color hielo en lugar del naranja.
+- `ui/AriTheme.kt` (colores: fondo #16181C, superficie #1F2227, burbuja #2A2F36, hielo #9ED8EE, hielo profundo #5FB8DA), `ui/Markdown.kt` (títulos, listas, negritas, cursivas y código) y `ui/ChatView.kt` (burbujas del usuario a la derecha, Ari sin burbuja con su etiqueta, "Pensando…" animado, respuesta en vivo, pantalla de bienvenida, notas).
+- `MainActivity`: barra superior (punto hielo, "Ari", estado, botones Memoria y Modelo), campo redondeado con micrófono y botón de enviar circular. Tema oscuro (los diálogos también), barras del sistema oscuras y márgenes para el borde a borde de Android 15 y el teclado.
+- Iconos adaptativos: Ari (anillo hielo, punto central y un "satélite") y Ari Estado (anillo convertido en barra de progreso). Los widgets pasaron de verde a hielo.

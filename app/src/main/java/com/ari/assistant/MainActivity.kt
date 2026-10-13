@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -21,6 +22,8 @@ import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.ari.assistant.agents.NetworkGuard
 import com.ari.assistant.agents.TeamAgent
+import com.ari.assistant.ui.AriTheme
+import com.ari.assistant.ui.ChatView
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Engine
@@ -62,8 +65,7 @@ class MainActivity : Activity() {
     private var memoriesPending = true
 
     private lateinit var status: TextView
-    private lateinit var chat: TextView
-    private lateinit var scroll: ScrollView
+    private lateinit var chat: ChatView
     private lateinit var input: EditText
     private lateinit var sendButton: Button
     private lateinit var selectButton: Button
@@ -77,10 +79,6 @@ class MainActivity : Activity() {
     private var voiceMode = false
     private var silentAttempts = 0
 
-    private val backgroundColorValue = Color.rgb(18, 18, 24)
-    private val green = Color.rgb(120, 220, 170)
-    private val white = Color.WHITE
-    private val muted = Color.LTGRAY
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,7 +111,7 @@ class MainActivity : Activity() {
                 status.text = result.reply
             } else {
                 database.addMessage(ROLE_ARI, result.reply)
-                appendChat("\n\nAri: ${result.reply}")
+                chat.addAri(result.reply)
             }
             offerCandidates()
         }
@@ -140,140 +138,163 @@ class MainActivity : Activity() {
                         "Solo reciben las tareas que les paso, nunca tus recuerdos."
                 }
                 database.addMessage(ROLE_ARI, reply)
-                appendChat("\n\nAri: $reply")
+                chat.addAri(reply)
             }
             .setNegativeButton("A nadie") { _, _ -> team.rejectCandidates(network) }
             .setCancelable(false)
             .show()
     }
 
+    /** Interfaz al estilo de Claude, oscura y con el color hielo de Ari. */
     private fun buildInterface() {
+        window.statusBarColor = AriTheme.background
+        window.navigationBarColor = AriTheme.background
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(24, 24, 24, 16)
-            setBackgroundColor(backgroundColorValue)
+            setBackgroundColor(AriTheme.background)
+        }
+        // Android 15 dibuja la app detrás de las barras del sistema y del teclado:
+        // el margen se ajusta para que nada quede tapado.
+        root.setOnApplyWindowInsetsListener { view, insets ->
+            val bars = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                val i = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.ime())
+                intArrayOf(i.left, i.top, i.right, i.bottom)
+            } else {
+                @Suppress("DEPRECATION")
+                intArrayOf(insets.systemWindowInsetLeft, insets.systemWindowInsetTop, insets.systemWindowInsetRight, insets.systemWindowInsetBottom)
+            }
+            view.setPadding(bars[0], bars[1], bars[2], bars[3])
+            insets
         }
 
-        val title = TextView(this).apply {
-            text = "ARI"
-            textSize = 32f
-            setTextColor(white)
-            gravity = Gravity.CENTER
+        // Barra superior: punto hielo, "Ari", su estado y los accesos.
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16f), dp(12f), dp(8f), dp(12f))
         }
+        header.addView(android.view.View(this).apply {
+            background = AriTheme.circle(AriTheme.ice)
+        }, LinearLayout.LayoutParams(dp(10f), dp(10f)).apply { rightMargin = dp(10f) })
 
-        val subtitle = TextView(this).apply {
-            text = "Tu asistente personal · IA local"
-            textSize = 15f
-            setTextColor(muted)
-            gravity = Gravity.CENTER
-        }
-
+        val titles = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        titles.addView(TextView(this).apply {
+            text = "Ari"
+            textSize = 20f
+            setTypeface(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL)
+            setTextColor(AriTheme.text)
+        })
         status = TextView(this).apply {
-            text = "Selecciona tu modelo Gemma (.litertlm)"
-            textSize = 14f
-            setTextColor(green)
-            setPadding(0, 16, 0, 12)
+            text = "Selecciona tu modelo Gemma para empezar"
+            textSize = 12f
+            setTextColor(AriTheme.muted)
+            maxLines = 2
         }
+        titles.addView(status)
+        header.addView(titles, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
-        selectButton = Button(this).apply {
-            text = "Seleccionar modelo"
-            setOnClickListener { selectModel() }
+        memoryButton = chip("Memoria") { showMemoriesDialog() }
+        selectButton = chip("Modelo") { selectModel() }
+        header.addView(memoryButton)
+        header.addView(selectButton, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { leftMargin = dp(6f) })
+
+        root.addView(header)
+        root.addView(android.view.View(this).apply { setBackgroundColor(AriTheme.border) },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1))
+
+        chat = ChatView(this)
+        root.addView(chat, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+
+        // Campo para escribir, redondeado como el de Claude, con micrófono y enviar.
+        val composer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = AriTheme.rounded(this@MainActivity, AriTheme.surface, 26f, AriTheme.border)
+            setPadding(dp(16f), dp(10f), dp(8f), dp(8f))
         }
-
-        memoryButton = Button(this).apply {
-            text = "Memoria"
-            setOnClickListener { showMemoriesDialog() }
-        }
-
-        val buttonRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            addView(
-                selectButton,
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            )
-            addView(
-                memoryButton,
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            )
-        }
-
-        chat = TextView(this).apply {
-            text = "Ari está esperando que cargues el modelo."
-            textSize = 16f
-            setTextColor(white)
-            setPadding(8, 12, 8, 12)
-        }
-
-        scroll = ScrollView(this).apply {
-            addView(
-                chat,
-                ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            )
-        }
-
         input = EditText(this).apply {
-            hint = "Escribe un mensaje..."
-            setHintTextColor(Color.GRAY)
-            setTextColor(white)
+            hint = "Escribe a Ari…"
+            setHintTextColor(AriTheme.muted)
+            setTextColor(AriTheme.text)
             textSize = 16f
-            setSingleLine(false)
-            setBackgroundColor(Color.rgb(35, 35, 44))
-            setPadding(12, 8, 12, 8)
+            background = null
+            setPadding(0, dp(6f), 0, dp(6f))
+            minLines = 1
+            maxLines = 6
+            inputType = InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         }
+        composer.addView(input)
 
-        sendButton = Button(this).apply {
-            text = "Enviar"
-            setOnClickListener { sendMessage() }
-        }
-
-        voiceButton = Button(this).apply {
-            text = VOICE_START_LABEL
-            setOnClickListener { toggleVoiceMode() }
-        }
-
-        val bottomRow = LinearLayout(this).apply {
+        val actions = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(
-                sendButton,
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            )
-            addView(
-                voiceButton,
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            )
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
         }
+        voiceButton = roundButton(VOICE_START_LABEL, filled = false) { toggleVoiceMode() }
+        sendButton = roundButton("↑", filled = true) { sendMessage() }
+        actions.addView(voiceButton, LinearLayout.LayoutParams(dp(44f), dp(44f)).apply { rightMargin = dp(8f) })
+        actions.addView(sendButton, LinearLayout.LayoutParams(dp(44f), dp(44f)))
+        composer.addView(actions, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ))
 
-        root.addView(title)
-        root.addView(subtitle)
-        root.addView(status)
-        root.addView(buttonRow)
-        root.addView(
-            scroll,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                0,
-                1f
-            )
-        )
-        root.addView(input)
-        root.addView(bottomRow)
+        root.addView(composer, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { setMargins(dp(12f), dp(4f), dp(12f), dp(12f)) })
 
         setContentView(root)
     }
 
+    private fun dp(value: Float) = AriTheme.dp(this, value)
+
+    /** Botón pequeño de la barra superior. */
+    private fun chip(label: String, onClick: () -> Unit) = Button(this).apply {
+        text = label
+        isAllCaps = false
+        textSize = 13f
+        setTextColor(AriTheme.text)
+        background = AriTheme.rounded(this@MainActivity, AriTheme.surface, 16f, AriTheme.border)
+        minWidth = 0
+        minimumWidth = 0
+        minHeight = 0
+        minimumHeight = 0
+        setPadding(dp(12f), dp(6f), dp(12f), dp(6f))
+        stateListAnimator = null
+        setOnClickListener { onClick() }
+    }
+
+    /** Botón circular del campo de texto: enviar (hielo) o micrófono (contorno). */
+    private fun roundButton(label: String, filled: Boolean, onClick: () -> Unit) = Button(this).apply {
+        text = label
+        textSize = 18f
+        isAllCaps = false
+        setTextColor(if (filled) AriTheme.onIce else AriTheme.text)
+        background = if (filled) {
+            AriTheme.circle(AriTheme.ice)
+        } else {
+            AriTheme.circle(AriTheme.surface, AriTheme.border, dp(1f))
+        }
+        minWidth = 0
+        minimumWidth = 0
+        minHeight = 0
+        minimumHeight = 0
+        setPadding(0, 0, 0, 0)
+        stateListAnimator = null
+        setOnClickListener { onClick() }
+    }
+
     private fun restoreHistory() {
         val history = database.recentMessages(HISTORY_DISPLAY_LIMIT)
-        if (history.isEmpty()) return
-
-        chat.text = ""
-        history.forEach { message ->
-            val speaker = if (message.role == ROLE_USER) "Tú" else "Ari"
-            chat.append("\n\n$speaker: ${message.content}")
+        if (history.isEmpty()) {
+            chat.showWelcome()
+            return
         }
-        scrollToBottom()
+        history.forEach { message ->
+            if (message.role == ROLE_USER) chat.addUser(message.content) else chat.addAri(message.content)
+        }
     }
 
     private fun loadSavedModel() {
@@ -283,15 +304,6 @@ class MainActivity : Activity() {
         status.text = "Cargando el modelo guardado..."
         selectButton.isEnabled = false
         executor.execute { initializeModel(modelFile) }
-    }
-
-    private fun scrollToBottom() {
-        scroll.post { scroll.scrollTo(0, chat.bottom) }
-    }
-
-    private fun appendChat(text: String) {
-        chat.append(text)
-        scrollToBottom()
     }
 
     private fun selectModel() {
@@ -424,7 +436,11 @@ class MainActivity : Activity() {
                 historyPending = true
                 memoriesPending = true
                 status.text = "Gemma cargado. Ari está lista."
-                appendChat("\n\nAri: ¡Hola! Ya estoy lista. ¿En qué trabajamos hoy?")
+                if (database.recentMessages(1).isEmpty()) {
+                    status.text = "Lista para ayudarte"
+                } else {
+                    chat.addNote("Gemma cargado. Ari está lista.")
+                }
                 selectButton.isEnabled = true
             }
         } catch (e: Throwable) {
@@ -486,7 +502,8 @@ class MainActivity : Activity() {
 
         input.text.clear()
         database.addMessage(ROLE_USER, text)
-        appendChat("\n\nTú: $text\n\nAri: ")
+        chat.addUser(text)
+        chat.startAri()
         askGemma(text)
     }
 
@@ -494,7 +511,8 @@ class MainActivity : Activity() {
     private fun askGemma(text: String) {
         val activeConversation = conversation
         if (!modelReady || activeConversation == null) {
-            appendChat("El modelo aún no está listo.")
+            chat.appendAri("El modelo aún no está listo.")
+            chat.finishAri()
             return
         }
 
@@ -511,7 +529,7 @@ class MainActivity : Activity() {
                     runOnUiThread {
                         if (isDestroyed) return@runOnUiThread
                         response.append(chunk)
-                        appendChat(chunk)
+                        chat.appendAri(chunk)
                     }
                 }
 
@@ -519,6 +537,7 @@ class MainActivity : Activity() {
                     runOnUiThread {
                         if (isDestroyed) return@runOnUiThread
                         saveResponse(response)
+                        chat.finishAri()
                         busy = false
                         sendButton.isEnabled = true
                         if (voiceMode) {
@@ -537,7 +556,8 @@ class MainActivity : Activity() {
                         busy = false
                         status.text =
                             "Error de respuesta: ${throwable.message}"
-                        appendChat("\n[Error al generar la respuesta]")
+                        chat.appendAri("\n\n_No pude terminar la respuesta._")
+                        chat.finishAri()
                         sendButton.isEnabled = true
                         if (voiceMode) voice.speak("Hubo un error al generar la respuesta.")
                     }
@@ -550,7 +570,8 @@ class MainActivity : Activity() {
             busy = false
             sendButton.isEnabled = true
             status.text = "Error de respuesta: ${e.message ?: e.javaClass.simpleName}"
-            appendChat("[Error al generar la respuesta]")
+            chat.appendAri("_No pude generar la respuesta._")
+            chat.finishAri()
         }
     }
 
@@ -649,7 +670,8 @@ class MainActivity : Activity() {
     private fun answerLocally(text: String, reply: String) {
         database.addMessage(ROLE_USER, text)
         database.addMessage(ROLE_ARI, reply)
-        appendChat("\n\nTú: $text\n\nAri: $reply")
+        chat.addUser(text)
+        chat.addAri(reply)
         if (voiceMode) voice.speak(reply)
     }
 
@@ -658,7 +680,8 @@ class MainActivity : Activity() {
         val agent = delegation.agent
         input.text.clear()
         database.addMessage(ROLE_USER, text)
-        appendChat("\n\nTú: $text\n\nAri (${agent.name}): ")
+        chat.addUser(text)
+        chat.startAri(agent.name)
         status.text = "${agent.name} está trabajando..."
         busy = true
         sendButton.isEnabled = false
@@ -670,13 +693,16 @@ class MainActivity : Activity() {
 
             // Si Ari delegó por su cuenta y el equipo falló, contesta ella con Gemma.
             if (!result.success && delegation.task.automatic && modelReady) {
-                appendChat("(El equipo no respondió; te contesto yo.)\n\nAri: ")
+                chat.finishAri()
+                chat.addNote("El equipo no respondió; te contesto yo.")
+                chat.startAri()
                 askGemma(text)
                 return@run
             }
 
             database.addMessage(ROLE_ARI, result.reply)
-            appendChat(result.reply)
+            chat.appendAri(result.reply)
+            chat.finishAri()
             if (voiceMode) {
                 status.text = "Ari está hablando..."
                 voice.speak(result.reply)
@@ -798,7 +824,8 @@ class MainActivity : Activity() {
                 "/agentes, /delega <agente> <tarea> o /equipo."
         }
 
-        appendChat("\n\nTú: $command\n\nAri: $reply")
+        chat.addUser(command)
+        chat.addAri(reply)
         return reply
     }
 
@@ -1003,8 +1030,8 @@ class MainActivity : Activity() {
         private const val AGENT_SETTINGS = "ari_agentes"
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
-        private const val VOICE_START_LABEL = "🎤 Voz"
-        private const val VOICE_STOP_LABEL = "⏹ Detener"
+        private const val VOICE_START_LABEL = "🎙"
+        private const val VOICE_STOP_LABEL = "■"
         private const val MODEL_FILE_NAME = "gemma-model.litertlm"
         private const val ROLE_USER = "user"
         private const val ROLE_ARI = "ari"
