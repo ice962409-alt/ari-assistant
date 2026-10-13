@@ -76,7 +76,7 @@ Ari es un asistente Android local que utiliza Gemma 4 E4B-it mediante LiteRT-LM.
 - Eliminado `build-apk.yml` de la raíz (YAML inválido y fuera de `.github/workflows`, nunca se ejecutaba).
 
 ### Estado de verificación
-- La compilación se verifica únicamente en GitHub Actions (el entorno de Claude no tiene acceso al Android SDK). Ver el resultado del workflow en la rama de trabajo antes de dar el cambio por bueno.
+- Compilación confirmada en GitHub Actions: run #10 (commit e29b123) terminó con éxito y generó el artefacto `ari-debug-apk`. El entorno de Claude no tiene Android SDK, así que GitHub Actions es la única verificación de compilación.
 - Pendiente de prueba en el dispositivo: restauración del historial, carga automática, comandos y ventana de recuerdos.
 
 ### Notas
