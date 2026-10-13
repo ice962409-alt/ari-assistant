@@ -91,3 +91,7 @@ Pendiente de verificar:
 - La respuesta se limpia de Markdown antes de leerla y se divide en frases si es muy larga.
 - Permiso `RECORD_AUDIO` (se pide al tocar Voz por primera vez) y `<queries>` para ver los servicios de voz en Android 11+.
 - Compila correctamente en Actions (run 38352930025). Pendiente: prueba en el dispositivo.
+
+## Documentación en Google Drive
+- El usuario pidió una copia legible de la documentación en su Drive, actualizada siempre que se termine un cambio.
+- Fuente: `docs/ARI_DOCUMENTACION.md`. Carpeta de Drive: "Ari - Documentación de Claude". El procedimiento está en `CLAUDE.md`.
