@@ -192,6 +192,15 @@ Para bajar a Gemma (3.7 GB), Ari no se conecta ella misma: le pide la descarga a
 
 Es la única puerta a internet que Ari abre, y solo cuando tú la pides: tus conversaciones nunca pasan por ahí.
 
+### Cómo se logra una plática fluida por voz
+
+En una conversación entre personas, nadie espera a tener toda la respuesta pensada para empezar a hablar. Ari hace lo mismo:
+
+- **Por frases**: Gemma escribe la respuesta poco a poco (a esto se le llama *streaming*). En cuanto termina la primera frase, Ari la dice en voz alta mientras Gemma sigue con la siguiente. Así contesta en uno o dos segundos en vez de esperar todo.
+- **Respuestas cortas**: en voz, Ari le pide a Gemma contestar en una a tres frases, sin listas ni formato, como en una plática.
+- **Turnos**: cuando dejas de hablar un segundo, Ari entiende que terminaste y contesta. Cuando ella termina, te vuelve a escuchar sola.
+- **Interrumpir**: si la tocas mientras habla, se calla y te escucha. (Que te escuche *mientras* habla sería más natural, pero el micrófono oiría su propia voz; por eso por ahora es con un toque.)
+
 ### Intents: cómo una app le pide algo a otra
 
 En Android, las apps no se tocan entre sí directamente: se mandan **intents**, que son como notas de encargo. Ari no sabe usar WhatsApp por dentro; le manda a Android la nota "abre WhatsApp con este chat y este mensaje", y WhatsApp hace el resto. Lo mismo para "marca este número" (lo abre el teléfono), "pon una alarma a las 7" (la crea el reloj) o "busca esto" (lo abre el navegador).
@@ -320,4 +329,5 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Gestor de descargas (DownloadManager)**: el servicio de Android que baja archivos grandes, aunque la app esté cerrada.
 - **AppFunctions**: funciones que una app ofrece a los asistentes de IA para que las usen de forma segura.
 - **SMS**: los mensajes de texto normales del teléfono.
+- **Streaming**: recibir una respuesta poco a poco, a medida que se genera, en lugar de esperarla completa.
 - **Widget**: un mini panel de una app en la pantalla de inicio.

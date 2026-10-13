@@ -55,7 +55,7 @@ Ari tiene una interfaz oscura parecida a la de Claude, con **color hielo** como 
 - Abajo está el campo para escribir, con el botón del micrófono y el botón circular de enviar.
 - Cuando todavía no hay mensajes, Ari te recibe por tu nombre ("Hola, …").
 
-El icono de la app es un anillo color hielo con un punto al centro y un pequeño satélite: Ari y su equipo. Ari Estado tiene el mismo anillo convertido en barra de progreso.
+El icono de la app es la carita de Ari: una esfera color hielo con ojos y sonrisa. Con los iconos temáticos de Android se pinta de un solo color con la misma silueta. Ari Estado conserva su anillo con barra de progreso. En la bienvenida del chat, Ari aparece animada.
 
 ### Chat por texto
 
@@ -121,22 +121,30 @@ Ari abre tus apps y te prepara acciones. Por seguridad, **nunca llama ni envía 
 
 Funciona escribiendo o con el modo de voz. Al abrir otra app, el modo de voz se detiene.
 
-### Modo de voz
+### Modo live: platicar con Ari en voz
 
-1. Toca el botón del micrófono, junto al de enviar. La primera vez, Ari pide permiso para usar el micrófono.
-2. Habla. Ari escucha, responde con Gemma, lee la respuesta en voz alta y vuelve a escucharte.
-3. Toca el mismo botón (ahora con un cuadrado) para terminar.
+1. Toca el botón del micrófono (junto al de enviar), o **Hablar** o la cara de Ari en el widget. Se abre el modo live: Ari a pantalla completa. La primera vez pide permiso para usar el micrófono.
+2. Ari te saluda por tu nombre y te escucha. Mientras hablas, brilla con tu voz y ves tus palabras abajo.
+3. Mientras piensa, mira de un lado a otro. En cuanto Gemma escribe la primera frase, **Ari empieza a hablar**, sin esperar la respuesta completa, y mueve la boca.
+4. En voz, Ari contesta corto y natural, como en una plática, y al final puede ofrecerte más detalle.
+5. **Para interrumpirla**, tócala (o toca "Interrumpir"): se calla y te escucha, como cuando le interrumpes a alguien.
+6. Al terminar de hablar, vuelve a escucharte sola. Para salir, toca el cuadrado o "Escribir".
 
 El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un error con el micrófono o si sales de la app. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
 
 ### El widget de Ari
 
-Ari tiene un widget para tu pantalla de inicio, en color hielo como la app. Va rotando mensajes animados: si está lista, cuántos recuerdos guarda, cuántos modelos tiene su equipo y una invitación a ver el progreso de Claude.
+Ari tiene un widget para tu pantalla de inicio con **su carita animada**: un círculo color hielo con ojos y sonrisa que respira y parpadea. Es una caricatura provisional hasta tener su diseño definitivo.
+
+- **Tocar su cara o "Hablar"**: abre el modo live para platicar en voz.
+- **Tocar sus mensajes**: le haces "cosquillas"; pone cara feliz y te saluda unos segundos.
+- **Escribir**: abre el chat.
+- **Claude**: abre tu tablero.
+- Sus mensajes van rotando: si está lista, cuántos recuerdos guarda, cuántos modelos tiene su equipo y cómo hablar con ella.
 
 El widget no muestra el progreso de Claude directamente porque, para eso, la app tendría que conectarse a internet con tu cuenta, y Ari no sale de tu red. Por eso el progreso vive en el tablero, a un toque.
 
-- **Hablar con Ari**: abre la app.
-- **Ver a Claude**: abre tu tablero en el navegador. Arriba verás si Claude está trabajando o en pausa, una barra con el progreso de su tarea (por ejemplo "Paso 2 de 4") y, abajo, lo que te necesita. Si dice "En pausa", escribe "sigue" en la sesión de Claude.
+El tablero muestra si Claude está trabajando o en pausa, una barra con el progreso de su tarea y lo que te necesita. Si dice "En pausa", escribe "sigue" en la sesión de Claude.
 
 Para agregarlo: mantén presionado un espacio vacío de la pantalla de inicio → Widgets → busca "Ari" → arrástralo a la pantalla.
 
@@ -298,6 +306,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Ari con cara y voz fluida (0.10.0): modo live a pantalla completa con Ari animada, habla frase por frase mientras Gemma escribe, respuestas cortas en voz, se puede interrumpir, saludo al abrir; widget con su carita que respira, parpadea y saluda; icono nuevo.
 - Más acciones seguras (0.9.0): música, YouTube, SMS, correo y citas en el calendario. Propuesta por etapas para el control total de apps.
 - Contactos (0.8.0): "llama a mamá" y "manda un WhatsApp a Juan que diga …" buscan el número en tus contactos.
 - Descarga de Gemma desde la app (0.7.0): Modelo → Descargar, solo por Wi-Fi, con avance y carga automática al terminar. Aviso con notificación cuando Ari termina algo mientras estás fuera de la app.
@@ -328,7 +337,6 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
   - Un canal para que Ari comparta sus reportes con Claude, por ejemplo a través de Drive.
   - Más agentes que hagan cosas en el teléfono (como los recordatorios), siempre pidiendo confirmación.
   - Más subordinados: otros bots o modelos, con permisos por agente.
-- Que Ari empiece a hablar mientras Gemma escribe, en vez de esperar la respuesta completa.
 - Elegir la voz y la velocidad de lectura.
 
 ## 7. Archivos principales del código
@@ -339,6 +347,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **ReminderNotifier.kt** y **agents/ReminderAgent.kt**, **agents/ReminderParser.kt**: los recordatorios (entender la frase, programar la alarma y mostrar la notificación).
 - **AndroidPhone.kt**, **agents/PhoneAgent.kt** y **agents/PhoneCommands.kt**: abrir apps y preparar acciones en el teléfono.
 - **ModelDownload.kt**: la descarga del modelo.
+- **ui/AriOrbView.kt**: la cara animada de Ari. **SpeechChunker.kt**: corta la respuesta en frases para hablar mientras se escribe.
 - **AriBackup.kt** y **BackupCrypto.kt**: el respaldo y su cifrado con contraseña.
 - **app/src/test/**: las pruebas automáticas.
 - **VoiceController.kt**: reconocimiento de voz y lectura en voz alta.

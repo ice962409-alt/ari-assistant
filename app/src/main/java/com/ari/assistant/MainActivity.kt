@@ -114,6 +114,9 @@ class MainActivity : Activity() {
     private lateinit var liveStatus: TextView
     private lateinit var liveCaption: TextView
 
+    // Al abrir el modo live, Ari saluda antes de escucharte, como al contestar una llamada.
+    private var greetOnStart = false
+
     // Contraseña del respaldo mientras el usuario elige el archivo. Se borra al usarla.
     private var backupPassword: CharArray? = null
 
@@ -550,7 +553,10 @@ class MainActivity : Activity() {
         liveOrb.mood = AriOrbView.Mood.IDLE
         liveCaption.text = if (modelReady) "" else "Todavía no cargo a Gemma: puedo hacer recordatorios, abrir apps y más, pero para platicar toca Modelo."
         liveStatus.text = "Toca a Ari para hablar"
-        if (!voiceMode) toggleVoiceMode()
+        if (!voiceMode) {
+            greetOnStart = true
+            toggleVoiceMode()
+        }
     }
 
     private fun closeLive() {
@@ -568,6 +574,16 @@ class MainActivity : Activity() {
             }
             !busy -> listen()
         }
+    }
+
+    private fun liveGreeting(): String {
+        val name = profile.userName.trim()
+        val options = if (name.isNotEmpty()) {
+            listOf("Hola, $name. Te escucho.", "¿Qué onda, $name? Dime.", "Aquí estoy, $name. ¿En qué te ayudo?")
+        } else {
+            listOf("Hola. Te escucho.", "¿Qué onda? Dime.", "Aquí estoy. ¿En qué te ayudo?")
+        }
+        return options.random()
     }
 
     private fun setLive(mood: AriOrbView.Mood, statusText: String? = null, caption: String? = null) {
@@ -1431,9 +1447,15 @@ class MainActivity : Activity() {
         voiceMode = true
         silentAttempts = 0
         voiceButton.text = VOICE_STOP_LABEL
+        val greet = greetOnStart
+        greetOnStart = false
         if (busy) {
             // Cuando termine la respuesta en curso, Ari la leerá y escuchará.
             status.text = "Modo voz activo. Esperando la respuesta de Ari..."
+        } else if (greet) {
+            val hello = liveGreeting()
+            setLive(AriOrbView.Mood.HAPPY, "Hola", hello)
+            voice.speak(hello)
         } else {
             listen()
         }

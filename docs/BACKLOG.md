@@ -20,12 +20,14 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Ari abre apps y prepara acciones (0.6.0). Falta [prueba] en el teléfono.
 - [autónomo] Descarga de Gemma desde la app y aviso de tareas terminadas (0.7.0). Falta [prueba].
 - [autónomo] Llamar y escribir a contactos por nombre (0.8.0). Falta [prueba].
+- [autónomo] Ari con cara, modo live y voz fluida (0.10.0). Falta [prueba].
 - [autónomo] Investigación de control total (docs/CONTROL_APPS.md) y acciones de música, YouTube, SMS, correo y calendario (0.9.0).
 
 ## Siguiente
 - [autónomo] Revisar AppFunctions cada cierto tiempo (etapa 2 del control de apps).
 
 ## Esperando al usuario
+- [decisión] Diseño definitivo de la caricatura de Ari (hoy es un círculo con carita provisional).
 - [decisión] Etapa 3 del control de apps: rutinas con Accesibilidad (en el tablero).
 - [prueba] APK más reciente (en el tablero).
 - [prueba] Laptop con Linux y equipo de modelos (en el tablero).

@@ -268,3 +268,11 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Investigación en `docs/CONTROL_APPS.md`: la política de Google Play prohíbe usar Accesibilidad para que una app planee y ejecute acciones de forma autónoma (salvo herramientas de accesibilidad; sí permite automatización con guion fijo escrito por una persona). AppFunctions (Android 16+) está en vista previa y por ahora solo para apps privilegiadas. Plan: etapa 1 (intents, hecha), etapa 2 (AppFunctions cuando abra), etapa 3 (rutinas del usuario con Accesibilidad, versión aparte, solo si el usuario lo decide; tablero `control-etapas`).
 - Acciones nuevas en `PhoneCommands`: `Sms`/`SmsContact`, `Email`, `PlayMusic` (MEDIA_PLAY_FROM_SEARCH con paquete opcional), `YouTube`, `CalendarEvent` (ACTION_INSERT; fecha con `ReminderParser.parse(…, order = CALENDAR)`).
 - WhatsApp y SMS comparten `message()`: sin número ni "que diga" devuelven null para que Gemma redacte. Correo igual sin dirección ni "que diga".
+
+## Ari con cara y voz fluida (versión 0.10.0)
+
+- `ui/AriOrbView.kt`: Canvas animado (moods IDLE, LISTENING con `level` de RMS, THINKING, SPEAKING, HAPPY); parpadeo aleatorio; se usa en el modo live y en la bienvenida del chat.
+- Modo live: overlay a pantalla completa en `MainActivity` (`buildLive`, `openLive`, `closeLive`, `onLiveOrbTapped`). Lo abren el botón de micrófono y el widget (`ACTION_LIVE`, `launchMode=singleTop`, `onNewIntent`). Saludo hablado al abrir (`liveGreeting`).
+- Voz por frases: `SpeechChunker` (probado) + `VoiceController.beginStream/streamSentence/endStream`; `askGemma` habla cada frase al llegar si el modo voz estaba activo al empezar. `VOICE_STYLE` pide respuestas cortas. Interrumpir: `stopSpeaking()`; si Gemma sigue escribiendo, `endStream()` devuelve false y se vuelve a escuchar al terminar. Silencio de fin de frase pedido: 1000 ms.
+- Widget: `ViewFlipper` con 5 cuadros vectoriales (`ari_face_open/glow/blink`) cada 900 ms; tocar mensajes envía `WIDGET_POKE` → `ari_face_happy` y saludo 4 s (`goAsync`). Detecta también el modelo descargado.
+- Icono: `ic_launcher_foreground` con la cara (zona segura 66 dp), `ic_launcher_monochrome` con ojos y sonrisa recortados, fondo con brillo radial.
