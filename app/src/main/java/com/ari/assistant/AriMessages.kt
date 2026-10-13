@@ -2,8 +2,8 @@ package com.ari.assistant
 
 /**
  * Mensajes entre Ari, por SMS y sin internet: "dile a mi mamá que llego a las 8".
- * Tu Ari manda un SMS con la marca "[Ari de Javier]" y la Ari de tu mamá lo reconoce
- * y se lo dice. Si tu mamá no tiene Ari, le llega como un SMS normal que se entiende.
+ * Tu Ari prepara un SMS con la marca "[Ari de Javier]"; tu mamá se lo comparte (o lo pega)
+ * a su Ari y ella lo reconoce y se lo dice. Si no tiene Ari, le llega como un SMS normal.
  * (Sin Android, para probarlo.)
  */
 object AriMessages {
@@ -47,6 +47,11 @@ object AriMessages {
         if (text.isEmpty()) return null
         return Incoming(match.groupValues[1].trim().ifEmpty { null }, text)
     }
+
+    /** Un recado que te compartieron o pegaste: Ari no sabe de qué número vino, así que lo aclara. */
+    fun announceShared(incoming: Incoming): String =
+        if (incoming.claimedSender != null) "Recado de la Ari de ${incoming.claimedSender}: ${incoming.text}"
+        else "Recado de otra Ari: ${incoming.text}"
 
     /**
      * Cómo lo dice la Ari que recibe. El nombre que sale es el de tus contactos (el SMS

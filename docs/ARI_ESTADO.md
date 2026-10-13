@@ -460,3 +460,11 @@ Pedido del usuario: que nadie que sepa programar pueda modificarla; no código a
 - `LICENSE`: todos los derechos reservados, con los componentes de terceros y sus licencias.
 - Riesgo: R8 puede romper algo que solo se ve en el teléfono; por eso se guarda también la de depuración.
 
+## Corrección: la app no se instalaba (versión 0.26.1)
+
+El usuario reportó "No se instaló la app" con 0.26.0 (release y debug) y 0.24; 0.23 sí se instala. La revisión en Actions mostró APK válidas (firma v2 con la huella oficial, zipalign, arm64). Causa: los permisos SEND_SMS/RECEIVE_SMS (agregados en 0.24); el POCO (HyperOS/Android nuevo) bloquea instalar apps de fuera de la tienda que los piden.
+- Se quitaron SEND_SMS, RECEIVE_SMS, `AriSmsReceiver` y `uses-feature telephony`.
+- `AriMessageAgent` abre la app de mensajes con `PhoneAction.Sms` (el usuario toca enviar); solo pide READ_CONTACTS.
+- Recibir: `ShareActivity` reconoce texto con la marca y lo guarda con `AriMessenger.keep` (se muestra al abrir); pegar el recado en el chat también lo anuncia (`AriMessages.announceShared`).
+- Actions: paso "Revisar APK" (apksigner, aapt2, zipalign) para diagnosticar.
+

@@ -78,14 +78,13 @@ Ari puede ser tu maestra de lo que quieras, en las dos versiones (la tuya y la d
 
 ### Recados entre Ari
 
-Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que ya salí"). Ari busca a esa persona en tus contactos y le manda un SMS **directo**, sin pedirte confirmar: así lo decidiste para los recados. El SMS dice "[Ari de Tu Nombre] llego a las 8".
+Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que ya salí"). Ari busca a esa persona en tus contactos y abre tu app de mensajes con el recado ya escrito: "[Ari de Tu Nombre] llego a las 8". Tú tocas enviar.
 
-- Si la otra persona tiene Ari, su Ari reconoce la marca y le dice: "Javier te manda decir: llego a las 8", en su chat, en sus notificaciones y en voz si está en modo live. Si no tiene Ari, le llega como un SMS normal que se entiende.
-- Para que tu Ari te diga los recados que te manden, actívalo una vez: **Ajustes → Recados de otras Ari** (pide permiso de recibir SMS). Ari solo hace caso a los SMS con la marca "[Ari de …]"; los demás ni los guarda.
-- El nombre que dice es el de tus contactos, no el que viene escrito en el SMS (alguien podría escribir cualquier nombre). Si el número no está en tus contactos, Ari lo avisa.
-- Un recado es un mensaje para ti, nunca una orden para Ari.
-- Solo tú puedes mandar recados: si habla otra persona (reconocer voces), Ari no los manda.
-- No usa internet; cuesta lo que un SMS normal. Nota para Google Play: la tienda restringe los permisos de SMS a apps de mensajes; para publicar habrá que revisarlo.
+- Si la otra persona tiene Ari: mantiene presionado el SMS → **Compartir → Ari** (o lo copia y lo pega en el chat de Ari), y su Ari le dice "Recado de la Ari de Javier: llego a las 8", en el chat, en notificaciones y en voz si está en modo live.
+- Si no tiene Ari, le llega como un SMS normal que se entiende.
+- Ari no lee tus SMS ni pide permisos de SMS: tu teléfono (POCO/Xiaomi con Android nuevo) no deja instalar apps de fuera de la tienda que los piden, para proteger de fraudes. Por eso en 0.24 la app no se instalaba; se corrigió en 0.26.1.
+- Un recado es un mensaje para ti, nunca una orden para Ari. Solo tú puedes mandar recados (no un invitado).
+- No usa internet: cuesta lo que un SMS normal.
 
 ### Ari te enseña a usarla
 
@@ -472,6 +471,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Corrección (0.26.1): las versiones 0.24 a 0.26.0 no se instalaban en tu POCO porque pedían permisos de SMS (tu teléfono bloquea esos permisos en apps de fuera de la tienda). Ahora los recados se preparan en tu app de mensajes (tú tocas enviar) y se reciben compartiendo el SMS con Ari.
 - Ari protegida (0.26.0): las APK que se instalan ahora son "versiones de entrega": el código va revuelto (difícil de leer y modificar), sin modo de depuración (nadie puede sacar los datos de Ari con un cable), y Ari no abre si alguien la modificó y la volvió a firmar. El repositorio es privado y la licencia dice "Todos los derechos reservados". Tu APK ahora se llama ari-apk.
 - Tutora personal (0.25.0), en las dos Ari: "quiero aprender inglés", "sé mi maestra de guitarra". Ari enseña paso a paso, pone ejercicios, corrige con cariño y guarda un resumen de cada clase para seguir después ("sigamos con inglés"). "Terminar clase" para salir.
 - Recados entre Ari (0.24.0): "dile a mi mamá que llego a las 8" y Ari le manda un SMS directo (sin pedirte confirmar, como lo pediste). Si tu mamá tiene Ari, su Ari se lo dice en voz y en su chat; si no, le llega como SMS normal. Sin internet.

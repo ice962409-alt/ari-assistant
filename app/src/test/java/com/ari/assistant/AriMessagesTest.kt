@@ -44,6 +44,11 @@ class AriMessagesTest {
     }
 
     @Test
+    fun recadoCompartidoDiceDeQuienDiceSer() {
+        assertEquals("Recado de la Ari de Javier: hola", AriMessages.announceShared(AriMessages.Incoming("Javier", "hola")))
+    }
+
+    @Test
     fun recortaLoLargo() {
         assertTrue(AriMessages.encode("Ana", "x".repeat(1000)).length <= AriMessages.MAX_TEXT + 20)
     }

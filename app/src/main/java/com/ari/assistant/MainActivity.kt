@@ -193,7 +193,7 @@ class MainActivity : Activity() {
         reminderAlarms = AlarmReminders(this)
         reminders = ReminderAgent(database, reminderAlarms)
         // Primero los recados ("dile a mi mamá que…"): su frase es muy precisa.
-        messageAgent = AriMessageAgent(this, AndroidPhone(this)) { profile.userName }
+        messageAgent = AriMessageAgent(AndroidPhone(this)) { profile.userName }
         ceo.hire(messageAgent)
         // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
         ceo.hire(reminders)
@@ -495,21 +495,14 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this)
             .setTitle("Recados entre Ari")
             .setMessage(
-                "Puedes decirme \"dile a mi mamá que llego a las 8\" y le mando un SMS. Si tu mamá tiene Ari, " +
-                    "su Ari se lo dice; si no, le llega como un SMS normal.\n\n" +
-                    "Para que yo te diga los recados que te manden otras Ari, necesito permiso de recibir SMS. " +
-                    "Solo hago caso a los que empiezan con la marca \"[Ari de …]\"; los demás ni los guardo.\n\n" +
-                    "No usa internet: cuesta lo que un SMS normal."
+                "Para mandar: dime \"dile a mi mamá que llego a las 8\". Abro tu app de mensajes con el recado listo " +
+                    "y tú tocas enviar. Si tu mamá no tiene Ari, le llega como un SMS normal.\n\n" +
+                    "Para recibir: cuando te llegue un SMS que empieza con \"[Ari de …]\", mantenlo presionado → " +
+                    "Compartir → Ari (o cópialo y pégalo en mi chat), y te lo digo.\n\n" +
+                    "No leo tus SMS ni uso internet: tu teléfono no deja instalar apps de fuera de la tienda " +
+                    "que piden permisos de SMS, para protegerte de fraudes."
             )
-            .setPositiveButton(if (AriMessenger.canReceive(this)) "Ya está activado" else "Activar") { _, _ ->
-                if (!AriMessenger.canReceive(this)) {
-                    requestPermissions(
-                        arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_CONTACTS),
-                        REQUEST_RECEIVE_SMS
-                    )
-                }
-            }
-            .setNegativeButton("Cerrar", null)
+            .setPositiveButton("Entendido", null)
             .show()
     }
 
@@ -582,7 +575,7 @@ class MainActivity : Activity() {
             "Reconocer voces",
             "Color de Ari: ${currentColor.name}",
             "Aprender a usar Ari",
-            "Recados de otras Ari: ${if (AriMessenger.canReceive(this)) "activados" else "desactivados"}",
+            "Recados entre Ari",
             "Reportar un problema",
             "Acerca de Ari y licencias"
         )
@@ -1803,6 +1796,13 @@ class MainActivity : Activity() {
             return
         }
 
+        // Un recado de otra Ari pegado en el chat: Ari lo dice, no se lo manda a Gemma.
+        AriMessages.decode(text)?.let { incoming ->
+            input.text.clear()
+            showAriMessage(AriMessages.announceShared(incoming))
+            return
+        }
+
         if (!guestMode && handleTutor(text)) return
 
         if (AriLessons.asks(text)) {
@@ -2348,7 +2348,7 @@ class MainActivity : Activity() {
                 messageAgent.needsPermission = false
                 pendingMessageRequest = text
                 requestPermissions(
-                    arrayOf(Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_CONTACTS),
+                    arrayOf(Manifest.permission.READ_CONTACTS),
                     REQUEST_SMS
                 )
             }
@@ -2522,19 +2522,12 @@ class MainActivity : Activity() {
         if (requestCode == REQUEST_SMS) {
             val request = pendingMessageRequest
             pendingMessageRequest = null
-            if (AriMessenger.canSend(this) && request != null && !busy) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED && request != null && !busy) {
                 input.setText(request)
                 sendMessage()
-            } else if (!AriMessenger.canSend(this)) {
-                chat.addNote("Sin permiso de SMS no puedo mandar recados. Puedes activarlo en Ajustes del teléfono → Apps → Ari → Permisos.")
+            } else if (grantResults.firstOrNull() != PackageManager.PERMISSION_GRANTED) {
+                chat.addNote("Sin permiso de contactos no sé a quién mandarle el recado.")
             }
-            return
-        }
-        if (requestCode == REQUEST_RECEIVE_SMS) {
-            chat.addNote(
-                if (AriMessenger.canReceive(this)) "Listo: cuando otra Ari te mande un recado, te lo digo."
-                else "Sin el permiso de SMS no puedo reconocer los recados de otras Ari."
-            )
             return
         }
         if (requestCode == REQUEST_CONTACTS) {
@@ -3107,7 +3100,6 @@ class MainActivity : Activity() {
         private const val REQUEST_NOTIFICATIONS_QUIET = 107
         private const val REQUEST_CONTACTS = 108
         private const val REQUEST_SMS = 113
-        private const val REQUEST_RECEIVE_SMS = 114
         private const val PICK_IMAGE = 109
         private const val PICK_DOCUMENT = 110
         private const val TAKE_PHOTO = 111

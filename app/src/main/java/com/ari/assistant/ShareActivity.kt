@@ -24,6 +24,16 @@ class ShareActivity : Activity() {
             finish()
             return
         }
+        // Un recado de otra Ari ("[Ari de Javier] …"): Ari se lo dice, no es un adjunto.
+        if (shared == null) AriMessages.decode(text)?.let { incoming ->
+            AriMessenger.keep(this, AriMessages.announceShared(incoming))
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            )
+            finish()
+            return
+        }
         Toast.makeText(this, "Preparando para Ari…", Toast.LENGTH_SHORT).show()
         Thread {
             val result = try {
