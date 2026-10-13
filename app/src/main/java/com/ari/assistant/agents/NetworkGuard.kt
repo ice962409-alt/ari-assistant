@@ -27,7 +27,8 @@ class NetworkGuard(
         /** Red compartida desde el teléfono (hotspot o USB). */
         data class Hotspot(val interfaces: List<String>) : Network()
 
-        data class Wifi(val name: String, val interfaceName: String?) : Network()
+        /** [open]: red sin contraseña; cualquiera puede crear una con el mismo nombre. */
+        data class Wifi(val name: String, val interfaceName: String?, val open: Boolean = false) : Network()
 
         /** Wi-Fi cuyo nombre no se puede leer (sin permiso o con la ubicación apagada). */
         object UnknownWifi : Network()
@@ -48,19 +49,23 @@ class NetworkGuard(
             if (!hasLocationPermission()) return Network.UnknownWifi
             val name = wifiName() ?: return Network.UnknownWifi
             val interfaceName = connectivity.getLinkProperties(active)?.interfaceName
-            return Network.Wifi(name, interfaceName)
+            return Network.Wifi(name, interfaceName, isOpenWifi())
         }
 
-        val hotspot = NetworkInterface.getNetworkInterfaces().toList()
+        val hotspot = interfaces()
             .filter { it.isUp && HOTSPOT_PREFIXES.any { prefix -> it.name.startsWith(prefix) } }
             .filter { privateSubnetsOf(it).isNotEmpty() }
             .map { it.name }
         return if (hotspot.isNotEmpty()) Network.Hotspot(hotspot) else Network.None
     }
 
+    /**
+     * Las redes sin contraseña nunca se aprueban: la aprobación se guarda por
+     * nombre, y cualquiera puede crear una red abierta con el nombre de otra.
+     */
     fun isApproved(network: Network): Boolean = when (network) {
         is Network.Hotspot -> true
-        is Network.Wifi -> network.name in approvedNetworks()
+        is Network.Wifi -> !network.open && network.name in approvedNetworks()
         else -> false
     }
 
@@ -97,9 +102,23 @@ class NetworkGuard(
             else -> emptyList()
         }
         return names
-            .mapNotNull { NetworkInterface.getByName(it) }
+            .mapNotNull { runCatching { NetworkInterface.getByName(it) }.getOrNull() }
             .flatMap { privateSubnetsOf(it) }
             .distinct()
+    }
+
+    /** La lista de interfaces puede ser null o fallar en algunos teléfonos. */
+    private fun interfaces(): List<NetworkInterface> =
+        runCatching { NetworkInterface.getNetworkInterfaces()?.toList() }.getOrNull().orEmpty()
+
+    /** true si la Wi-Fi actual no tiene contraseña. Solo se puede saber en Android 12 o más. */
+    @Suppress("DEPRECATION")
+    private fun isOpenWifi(): Boolean {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) return false
+        val info = context.applicationContext.getSystemService(WifiManager::class.java)?.connectionInfo
+            ?: return false
+        return info.currentSecurityType == android.net.wifi.WifiInfo.SECURITY_TYPE_OPEN ||
+            info.currentSecurityType == android.net.wifi.WifiInfo.SECURITY_TYPE_OWE
     }
 
     @Suppress("DEPRECATION")
@@ -110,7 +129,7 @@ class NetworkGuard(
     }
 
     private fun privateSubnetsOf(networkInterface: NetworkInterface): List<String> =
-        networkInterface.inetAddresses.toList()
+        runCatching { networkInterface.inetAddresses.toList() }.getOrDefault(emptyList())
             .filterIsInstance<Inet4Address>()
             .filter { it.isSiteLocalAddress }
             .map { it.hostAddress.orEmpty().substringBeforeLast('.') }

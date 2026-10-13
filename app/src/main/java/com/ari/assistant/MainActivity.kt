@@ -368,10 +368,12 @@ class MainActivity : Activity() {
                 initializeModel(modelFile)
             } catch (e: Throwable) {
                 File(filesDir, "$MODEL_FILE_NAME.tmp").delete()
+                // Si la copia falló antes de liberar el modelo anterior, sigue usable.
+                if (engine != null && conversation != null) modelReady = true
                 runOnUiThread {
                     if (isDestroyed) return@runOnUiThread
                     status.text =
-                        "Error al preparar el modelo: ${e.message}"
+                        "Error al preparar el modelo: ${e.message ?: e.javaClass.simpleName}"
                     selectButton.isEnabled = true
                 }
             }
@@ -593,11 +595,19 @@ class MainActivity : Activity() {
                     onAllowed()
                     return
                 }
+                if (network.open) {
+                    onDenied(
+                        "La red «${network.name}» no tiene contraseña, así que no trabajo con el equipo ahí. " +
+                            "Activa el hotspot de tu teléfono y conecta la laptop a él."
+                    )
+                    return
+                }
                 AlertDialog.Builder(this)
                     .setTitle("¿Trabajar con el equipo en esta red?")
                     .setMessage(
                         "Ari hablará con los modelos de tu equipo por la red Wi-Fi «${network.name}» y les pasará " +
-                            "tus preguntas y recuerdos sin cifrar. Apruébala solo si confías en quienes " +
+                            "las tareas que les encargue, sin cifrar (tus recuerdos nunca salen del teléfono). " +
+                            "Apruébala solo si confías en quienes " +
                             "están conectados: tu casa o una red privada. En redes públicas usa el " +
                             "hotspot de tu teléfono."
                     )
@@ -822,10 +832,12 @@ class MainActivity : Activity() {
         if (requestCode == REQUEST_LOCATION) {
             val action = pendingNetworkAction
             pendingNetworkAction = null
-            if (grantResults.any { it == PackageManager.PERMISSION_GRANTED }) {
+            // Android solo deja leer el nombre de la Wi-Fi con la ubicación precisa;
+            // con la aproximada no se vuelve a preguntar (evita un ciclo de permisos).
+            if (guard.hasLocationPermission()) {
                 action?.invoke()
             } else {
-                status.text = "Sin el permiso de ubicación, Ari no puede reconocer la red Wi-Fi."
+                status.text = "Ari necesita la ubicación precisa (no la aproximada) para reconocer la red Wi-Fi."
             }
             return
         }

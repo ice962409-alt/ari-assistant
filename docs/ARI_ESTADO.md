@@ -158,3 +158,18 @@ Siguientes fases propuestas:
 ### Revisión de seguridad (security-review)
 - Hallazgo: `TeamAgent.discover()` contrataba a cualquier servidor de la red sin confirmación y `systemPrompt` le enviaba todos los recuerdos del usuario; cualquier equipo de una red aprobada podía hacerse pasar por subordinado y recibirlos.
 - Corrección: los modelos encontrados quedan como candidatos (`candidates|<red>`) y `MainActivity.offerCandidates()` pregunta al usuario a quién contratar; `/equipo http://...` (dirección escrita por el usuario) contrata directo. Los subordinados ya no reciben recuerdos. `instanceFollowRedirects = false` en las peticiones.
+
+### Revisión de código (code-review)
+Corregido:
+- Si falla la copia de un modelo nuevo, el anterior sigue usable (`modelReady` se restaura).
+- Permiso de ubicación: se exige la precisa; con la aproximada ya no se repite la solicitud en bucle.
+- "olvida eso", "olvida lo que te dije" y "olvida todo" ya no borran recuerdos (van a Gemma); el borrado busca palabras completas ("café" no borra "cafetería").
+- Las respuestas de los equipos de la red se leen con un tope de 2 MB, y los errores se atrapan como `Throwable`.
+- `AriCeo.run` atrapa `Throwable` y la bitácora no puede impedir que llegue el resultado.
+- `NetworkGuard` tolera que la lista de interfaces sea null o falle.
+- Las redes Wi-Fi sin contraseña no se pueden aprobar (en Android 12+, donde se puede saber).
+- El tope de 12 modelos se aplica después de quitar a los conocidos.
+- `/equipo` consulta cada servidor una sola vez.
+- El diálogo de aprobación ya no dice que se envían recuerdos.
+- Las palabras clave de cada puesto se compilan una sola vez.
+Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En una red con contraseña, otra red con el mismo nombre necesitaría esa contraseña para que el teléfono se conecte solo; la solución completa es el túnel cifrado (Tailscale) previsto en la nube privada.

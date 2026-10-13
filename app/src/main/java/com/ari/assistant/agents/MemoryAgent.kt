@@ -32,7 +32,12 @@ class MemoryAgent(
 
         FORGET_PATTERN.matchEntire(message.trim())?.let { found ->
             val content = cleanArgument(found.groupValues[1])
-            if (content.isNotEmpty()) return AgentTask(message, ACTION_FORGET, content)
+            // "olvida eso", "olvida lo que te dije": es conversación, no una orden
+            // de borrar; se lo deja a Gemma en lugar de borrar recuerdos a ciegas.
+            val vague = VAGUE_FORGET.containsMatchIn(normalizeForAgents(content))
+            if (content.length >= MIN_FORGET_LENGTH && !vague) {
+                return AgentTask(message, ACTION_FORGET, content)
+            }
         }
 
         return null
@@ -93,6 +98,13 @@ class MemoryAgent(
         private val FORGET_PATTERN = Regex(
             "${PREFIX}olvida(?:\\s+que)?\\s+(.+)$",
             setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+        )
+
+        private const val MIN_FORGET_LENGTH = 3
+
+        // Argumentos de "olvida" que no nombran un recuerdo concreto.
+        private val VAGUE_FORGET = Regex(
+            "^(?:eso|esto|aquello|lo (?:que|de|anterior|ultimo)|todo|que te dije)\\b"
         )
 
         // Se compara con el texto normalizado (sin acentos ni signos).

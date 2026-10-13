@@ -125,10 +125,16 @@ class AriDatabase(context: Context) :
         writableDatabase.delete("memories", "id = ?", arrayOf(id.toString()))
     }
 
-    /** Borra los recuerdos que contienen [text] (sin distinguir mayúsculas). */
+    /**
+     * Borra los recuerdos que contienen [text] como palabra o frase completa,
+     * sin distinguir mayúsculas: "olvida café" no borra "cafetería".
+     */
     fun deleteMemoriesMatching(text: String): Int {
-        val needle = text.lowercase()
-        val matches = memories().filter { it.content.lowercase().contains(needle) }
+        val needle = Regex(
+            "(?<![\\p{L}\\p{N}])" + Regex.escape(text.trim()) + "(?![\\p{L}\\p{N}])",
+            RegexOption.IGNORE_CASE
+        )
+        val matches = memories().filter { needle.containsMatchIn(it.content) }
         matches.forEach { deleteMemory(it.id) }
         return matches.size
     }

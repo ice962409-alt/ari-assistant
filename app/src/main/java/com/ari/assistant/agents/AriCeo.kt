@@ -52,12 +52,18 @@ class AriCeo(private val database: AriDatabase) {
     fun run(delegation: Delegation, onResult: (AgentResult) -> Unit) {
         val (agent, task) = delegation
         worker.execute {
+            // Throwable: un error (falta de memoria, base de datos cerrada) no
+            // debe tumbar la app ni dejar a Ari esperando un resultado que no llega.
             val result = try {
                 agent.execute(task)
-            } catch (e: Exception) {
-                AgentResult("${agent.name} tuvo un error: ${e.message}", success = false)
+            } catch (e: Throwable) {
+                AgentResult("${agent.name} tuvo un error: ${e.message ?: e.javaClass.simpleName}", success = false)
             }
-            database.addAgentTask(agent.id, task.request, result.reply, result.success)
+            try {
+                database.addAgentTask(agent.id, task.request, result.reply, result.success)
+            } catch (_: Throwable) {
+                // La bitácora es secundaria: si no se puede escribir, el resultado igual llega.
+            }
             mainThread.post { onResult(result) }
         }
     }

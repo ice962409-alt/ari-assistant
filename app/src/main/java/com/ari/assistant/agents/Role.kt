@@ -38,6 +38,12 @@ enum class Role(
         emptyList()
     );
 
+    /** Las palabras clave en una sola expresión, compilada una vez. */
+    private val keywordPattern: Regex? by lazy {
+        if (keywords.isEmpty()) null
+        else Regex("\\b(?:" + keywords.joinToString("|") { Regex.escape(it) } + ")\\b")
+    }
+
     companion object {
         /** Orden de preferencia cuando la tarea no es de ninguna especialidad. */
         val GENERAL_PREFERENCE = listOf(ANALYSIS, GENERAL, QUICK, DEVELOPMENT)
@@ -65,7 +71,7 @@ enum class Role(
         /** Puesto especializado que pide el mensaje, si lo hay. [normalized] va sin acentos. */
         fun requestedBy(normalized: String): Role? =
             listOf(DEVELOPMENT, ANALYSIS).firstOrNull { role ->
-                role.keywords.any { Regex("\\b${Regex.escape(it)}\\b").containsMatchIn(normalized) }
+                role.keywordPattern?.containsMatchIn(normalized) == true
             }
 
         private val EMBEDDING_HINTS = listOf("embed", "bge-", "minilm", "nomic-embed")

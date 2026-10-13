@@ -78,7 +78,7 @@ class TeamAgent(
                     ?: return@mapNotNull null
                 Subordinate(item.getString("url"), item.getString("model"), role)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             emptyList()
         }
     }
@@ -149,8 +149,10 @@ class TeamAgent(
                 success = false
             )
         }
+        // Una sola consulta por servidor, aunque tenga varios modelos.
+        val online = team.map { it.url }.distinct().associateWith { findModels(it) != null }
         val lines = team.joinToString("\n") { member ->
-            val state = if (findModels(member.url) != null) "disponible" else "no responde"
+            val state = if (online[member.url] == true) "disponible" else "no responde"
             "• ${member.role.title}: ${member.model}, en ${member.url} ($state)"
         }
         return AgentResult("Mi equipo en ${guard.describe(network)}:\n$lines")
@@ -192,7 +194,7 @@ class TeamAgent(
             } else {
                 AgentResult("[${member.label}]\n$reply")
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AgentResult(
                 "No pude hablar con ${member.label} en ${member.url}: ${e.message}. ¿Sigue encendido y en la misma red?",
                 success = false
@@ -261,7 +263,7 @@ class TeamAgent(
             pool.shutdownNow()
         }
 
-        val hired = servers.flatMap { hire(it).orEmpty() }.take(MAX_TEAM)
+        val hired = servers.flatMap { hire(it).orEmpty() }
         if (hired.isEmpty()) {
             return AgentResult(
                 "No encontré modelos en la red. Abre Ollama, LM Studio o llama.cpp en la computadora o el celular " +
@@ -271,7 +273,8 @@ class TeamAgent(
         }
 
         val known = team(network).map { it.url to it.model }.toSet()
-        val fresh = hired.filter { (it.url to it.model) !in known }
+        // El tope se aplica después de quitar a los conocidos, para no perder a los nuevos.
+        val fresh = hired.filter { (it.url to it.model) !in known }.take(MAX_TEAM)
         if (fresh.isEmpty()) {
             return AgentResult("No encontré modelos nuevos; tu equipo de esta red sigue igual.")
         }
@@ -294,7 +297,7 @@ class TeamAgent(
     private fun findModels(url: String): List<String>? = try {
         val data = JSONObject(request("$url/v1/models", null, PROBE_TIMEOUT_MS)).getJSONArray("data")
         (0 until data.length()).map { data.getJSONObject(it).getString("id") }
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         null
     }
 
@@ -310,7 +313,7 @@ class TeamAgent(
     private fun isPortOpen(host: String, port: Int): Boolean = try {
         Socket().use { it.connect(InetSocketAddress(host, port), CONNECT_TIMEOUT_MS) }
         true
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         false
     }
 
@@ -330,10 +333,30 @@ class TeamAgent(
             }
             val code = connection.responseCode
             if (code !in 200..299) throw IllegalStateException("respuesta HTTP $code")
-            return connection.inputStream.bufferedReader().use { it.readText() }
+            return readLimited(connection)
         } finally {
             connection.disconnect()
         }
+    }
+
+    /**
+     * Lee la respuesta con un tope de tamaño: los equipos de la red no son de
+     * confianza, y una respuesta enorme agotaría la memoria y cerraría Ari.
+     */
+    private fun readLimited(connection: HttpURLConnection): String {
+        val buffer = java.io.ByteArrayOutputStream()
+        connection.inputStream.use { input ->
+            val chunk = ByteArray(16 * 1024)
+            while (true) {
+                val read = input.read(chunk)
+                if (read < 0) break
+                if (buffer.size() + read > MAX_RESPONSE_BYTES) {
+                    throw IllegalStateException("respuesta demasiado grande")
+                }
+                buffer.write(chunk, 0, read)
+            }
+        }
+        return buffer.toString(Charsets.UTF_8.name())
     }
 
     companion object {
@@ -346,6 +369,7 @@ class TeamAgent(
         private const val KEY_TEAM = "team"
         private const val KEY_CANDIDATES = "candidates"
         private const val MAX_TEAM = 12
+        private const val MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 
         /** 11434: Ollama. 1234: LM Studio. 8080: servidor de llama.cpp. */
         private val KNOWN_PORTS = listOf(11434, 1234, 8080)
