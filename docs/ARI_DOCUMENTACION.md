@@ -8,6 +8,8 @@ Este documento lo mantiene Claude. Su fuente está en el repositorio, en docs/AR
 
 Ari es una asistente personal para Android que funciona con inteligencia artificial local: el modelo Gemma 4 E4B-it, mediante LiteRT-LM. Las conversaciones y los recuerdos no salen del teléfono y no se usan APIs de pago.
 
+**Primer objetivo de la empresa:** lanzar Ari oficialmente. El nombre de la empresa se decidirá cuando Ari esté bien diseñada.
+
 - Repositorio: https://github.com/javierhedzd-ops/ari-assistant
 - Teléfono de prueba: POCO X8 Pro Max (12 GB de RAM)
 - Modelo: gemma-4-E4B-it.litertlm (unos 3.4 GB)
@@ -164,9 +166,19 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Equipo de modelos: Ari busca todos los modelos de la red (PC o celulares), les asigna un puesto según su capacidad y les delega las tareas de su especialidad.
 - Protección de red: solo en el hotspot del teléfono o en redes aprobadas, y solo direcciones locales.
 - Personalidad de Ari: mujer, cercana, con buen humor, seria cuando hace falta, directa y detallada si hace falta.
+- Estabilidad: Ari ya no se cierra al girar el teléfono o cambiar el tema; libera la memoria al cambiar de modelo; aguanta errores de memoria; no deja archivos del modelo a medias; y si el equipo no responde, contesta ella con Gemma.
 - Compila correctamente; falta probarlo en el teléfono.
 
-## 5. Ideas pendientes
+## 5. Plan hacia el lanzamiento
+
+- **Estabilidad y optimización**: primera ronda hecha; seguirá en cada cambio.
+- **Interfaz como la de Claude**: burbujas de chat, tema oscuro, texto con formato y respuestas que aparecen mientras se escriben.
+- **Primer uso sencillo**: que la app guíe la descarga del modelo, sin buscar el archivo a mano.
+- **Una Ari para cada usuario**: que cada persona que la instale tenga su propia Ari.
+- **Seguridad y nube privada**: repositorio privado, la laptop con Linux como casa principal de Ari, túnel cifrado (Tailscale), respaldos automáticos (laptop, teléfono y copia cifrada en Drive) y poder mudar a Ari a otra PC.
+- **Requisitos de Google Play**: firma oficial, política de privacidad, justificación de permisos y revisión de la licencia de Gemma.
+
+## 6. Ideas pendientes
 
 - Siguientes fases del CEO:
   - Que Gemma ayude a decidir qué agente atiende cada mensaje.
@@ -174,12 +186,10 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
   - Un canal para que Ari comparta sus reportes con Claude, por ejemplo a través de Drive.
   - Agentes que hagan cosas en el teléfono, como recordatorios y alarmas, siempre pidiendo confirmación.
   - Más subordinados: otros bots o modelos, con permisos por agente.
-- Interfaz como la de Claude: burbujas de chat, tema oscuro, texto con formato y respuestas que aparecen mientras se escriben.
-- Optimización y estabilidad en Android.
 - Que Ari empiece a hablar mientras Gemma escribe, en vez de esperar la respuesta completa.
 - Elegir la voz y la velocidad de lectura.
 
-## 6. Archivos principales del código
+## 7. Archivos principales del código
 
 - **MainActivity.kt**: interfaz, chat, comandos y conexión con Gemma.
 - **AriDatabase.kt**: base de datos SQLite con los mensajes y los recuerdos.
