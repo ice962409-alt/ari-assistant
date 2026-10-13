@@ -257,3 +257,8 @@ Limitación conocida: la aprobación de una red se guarda por nombre (SSID). En 
 - Avisos (tablero `mensajes-de-ari`, "avísame cuando termine una tarea"): `TaskNotifier` en `ReminderNotifier.kt`, canal "avisos". Se usa al terminar Gemma, un agente (menos el del teléfono) o la carga del modelo, solo si Ari no está en primer plano.
 - Control total con Accesibilidad: el usuario eligió "solo acciones seguras por ahora", pero quiere que se siga buscando una forma segura (tarea de investigación en BACKLOG).
 - Google Play: más adelante; primero pruebas.
+
+## Contactos (versión 0.8.0)
+
+- `PhoneAction.DialContact(name)` ("llama a mamá", hasta 3 palabras) y `WhatsAppContact(name, text)` ("manda un WhatsApp a Juan que diga …"). `PhoneCommands.pickContact` usa la misma búsqueda que las apps (igual, empieza con, contiene, todas las palabras), sin acentos; un contacto con varios números aparece una vez (gana el principal: IS_SUPER_PRIMARY, IS_PRIMARY).
+- `PhoneLauncher.contacts()` devuelve null sin permiso: `PhoneAgent.needsContactsPermission = true` y `MainActivity` pide READ_CONTACTS (REQUEST_CONTACTS = 108); al aceptarlo repite la orden con `sendMessage()`.

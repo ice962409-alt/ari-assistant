@@ -210,7 +210,7 @@ Por eso Ari empieza solo con intents, y el control total queda como decisión tu
 
 ### Permisos de Android
 
-Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono y la ubicación.
+Una app tiene que pedir permiso para usar el micrófono, la ubicación y otras funciones sensibles. Es buena práctica pedirlos **solo en el momento en que hacen falta** y explicar para qué, como hace Ari con el micrófono, la ubicación, las notificaciones y los contactos. Así, si dices que no, el resto de Ari sigue funcionando: sin el permiso de contactos, por ejemplo, puedes llamar diciendo el número.
 
 ### Por qué el widget no muestra el progreso de Claude
 

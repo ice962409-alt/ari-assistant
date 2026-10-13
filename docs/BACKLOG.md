@@ -19,13 +19,13 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Recordatorios con notificación (0.5.0). Falta [prueba] en el teléfono.
 - [autónomo] Ari abre apps y prepara acciones (0.6.0). Falta [prueba] en el teléfono.
 - [autónomo] Descarga de Gemma desde la app y aviso de tareas terminadas (0.7.0). Falta [prueba].
+- [autónomo] Llamar y escribir a contactos por nombre (0.8.0). Falta [prueba].
 
 ## Siguiente
 - [autónomo] Investigar una forma segura de control total de apps (Accesibilidad limitada a apps elegidas, confirmación en cada paso, sin leer apps sensibles). El usuario la quiere a futuro.
-- [autónomo] Llamar y escribir por nombre de contacto (requiere [permiso] de contactos al usarlo).
 
 ## Esperando al usuario
-- [prueba] APK 0.3.1 con la personalidad nueva (en el tablero).
+- [prueba] APK más reciente (en el tablero).
 - [prueba] Laptop con Linux y equipo de modelos (en el tablero).
 
 ## Más adelante

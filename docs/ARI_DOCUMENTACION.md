@@ -105,8 +105,9 @@ La primera vez, Ari pide permiso para mandarte notificaciones. Si tu teléfono s
 Ari abre tus apps y te prepara acciones. Por seguridad, **nunca llama ni envía nada sola**: deja todo listo y tú confirmas en la app (tocar "llamar" o "enviar").
 
 - **Abrir apps**: "abre WhatsApp", "abre Spotify", "abre la app de Google Maps". Si hay varias parecidas (WhatsApp y WhatsApp Business), Ari pregunta cuál.
-- **Llamar**: "llama al 55 1234 5678". Ari deja el número marcado. Por ahora necesita el número; los contactos vendrán después.
-- **WhatsApp**: "manda un WhatsApp al 55 1234 5678 que diga ya voy" abre el chat con el mensaje escrito. Sin número ("manda un WhatsApp que diga hola"), eliges el chat tú.
+- **Llamar**: "llama a mamá", "márcale a Juan Pérez" o "llama al 55 1234 5678". Ari deja el número marcado.
+- **WhatsApp**: "manda un WhatsApp a Juan que diga ya voy" o "envíale un WhatsApp a mi hermana diciendo llego a las 8" abre el chat con el mensaje escrito. También con número ("al 55 1234 5678 que diga …"). Sin nombre ni número ("manda un WhatsApp que diga hola"), eliges el chat tú.
+- **Contactos**: la primera vez que nombras a alguien, Ari pide permiso para leer tus contactos y, si aceptas, repite la orden sola. Busca sin importar acentos ("mama" encuentra "Mamá"); si hay varios parecidos (Juan Pérez y Juan Carlos), te pregunta cuál. Solo lee nombres y números, no los guarda ni salen del teléfono. Si no das el permiso, sigue funcionando con números.
 - **Alarmas y temporizadores**: "pon una alarma a las 7", "despiértame mañana a las 6 y media", "pon un temporizador de 10 minutos". Se crean en la app de reloj del teléfono.
 - **Buscar**: "busca en Google recetas de pozole".
 - **Mapas**: "cómo llego al aeropuerto", "llévame a casa de mi abuela".
@@ -291,6 +292,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Contactos (0.8.0): "llama a mamá" y "manda un WhatsApp a Juan que diga …" buscan el número en tus contactos.
 - Descarga de Gemma desde la app (0.7.0): Modelo → Descargar, solo por Wi-Fi, con avance y carga automática al terminar. Aviso con notificación cuando Ari termina algo mientras estás fuera de la app.
 - Ari usa tu teléfono (0.6.0): abre apps, deja marcados números, prepara mensajes de WhatsApp, pone alarmas y temporizadores, busca en Google, abre rutas, la cámara y los ajustes; tú confirmas el último paso.
 - Recordatorios (0.5.0): "recuérdame mañana a las 9 …", "en 20 minutos", "el viernes a las 5 de la tarde"; lista y cancelación; notificación aunque Ari esté cerrada; se reprograman al reiniciar el teléfono.
@@ -309,7 +311,6 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 ## 6. Ideas pendientes
 
 - Que Ari toque botones dentro de otras apps (permiso de Accesibilidad): por ahora solo acciones seguras; Claude sigue buscando una forma segura de hacerlo.
-- Llamar o escribir por el nombre del contacto ("llama a mamá"), con permiso de contactos.
 - Más avisos de Ari: saludo de la mañana o aviso si el equipo de la laptop no responde.
 - Siguientes fases del CEO:
   - Que Gemma ayude a decidir qué agente atiende cada mensaje.
