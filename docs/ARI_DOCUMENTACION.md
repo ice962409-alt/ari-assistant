@@ -46,6 +46,17 @@ El botón **Memoria** también deja ver, agregar y borrar recuerdos. Para borrar
 
 El modo de voz se detiene solo si no te escucha 3 veces seguidas, si hay un error con el micrófono o si sales de la app. Para que te entienda sin internet, instala el paquete de español sin conexión: Ajustes → Sistema → Idiomas → Reconocimiento de voz.
 
+### El widget de Ari
+
+Ari tiene un widget para tu pantalla de inicio, con sus colores. Va rotando mensajes animados: si está lista, cuántos recuerdos guarda, cuántos modelos tiene su equipo y un recordatorio de tus pendientes con Claude.
+
+- **Hablar con Ari**: abre la app.
+- **Pendientes**: abre tu tablero de pendientes con Claude en el navegador.
+
+Para agregarlo: mantén presionado un espacio vacío de la pantalla de inicio → Widgets → busca "Ari" → arrástralo a la pantalla.
+
+Por privacidad, el widget no muestra el texto de tus conversaciones ni de tus recuerdos, porque cualquiera que vea tu pantalla los leería. Tampoco se conecta a internet. Se actualiza al salir de Ari y cada 30 minutos.
+
 ### Ari como CEO de sus agentes
 
 Ari dirige un equipo de agentes. Cada mensaje pasa primero por Ari, que decide si lo atiende un agente o lo responde Gemma. Los agentes contestan al instante y funcionan con texto y con voz, aunque el modelo no haya cargado.
@@ -169,6 +180,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Seguridad: revisión de seguridad hecha; Ari ya no contrata modelos sin tu aprobación ni les pasa tus recuerdos, y no aprueba redes sin contraseña.
 - Revisión de código hecha: 10 problemas corregidos, entre ellos que "olvida eso" borraba recuerdos, un ciclo con el permiso de ubicación y cierres por respuestas enormes de la red.
 - Estabilidad: Ari ya no se cierra al girar el teléfono o cambiar el tema; libera la memoria al cambiar de modelo; aguanta errores de memoria; no deja archivos del modelo a medias; y si el equipo no responde, contesta ella con Gemma.
+- Widget animado para la pantalla de inicio, con acceso a Ari y a los pendientes.
 - Compila correctamente; falta probarlo en el teléfono.
 
 ## 5. Plan hacia el lanzamiento
