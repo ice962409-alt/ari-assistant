@@ -40,6 +40,7 @@ El botón **Ajustes** (arriba, junto a Memoria y Modelo) tiene:
 - **Tu nombre**: cómo te llama Ari.
 - **Tono de Ari**: "Franca, con alguna grosería", "Franca, sin groserías" o "Profesional". El cambio se nota desde tu próximo mensaje.
 - **Respaldo de la memoria**: el mismo de Memoria → Respaldo. Si hace una semana que no guardas uno, Ari te lo recuerda al abrir.
+- **Velocidad de Gemma**: "Rápida (GPU)" usa el procesador gráfico del teléfono y contesta varias veces más rápido; es la que Ari usa sola. "Segura (CPU)" es más lenta, pero sirve si con la GPU Ari se cierra o contesta raro. Al cargar, Ari dice con cuál quedó, por ejemplo "Gemma cargado (GPU, con vista)".
 - **Acerca de Ari y licencias**: la versión, un resumen de privacidad y las licencias de Gemma 4 y LiteRT-LM (Apache 2.0).
 
 Cada persona que instala Ari tiene la suya: su nombre, su tono, sus recuerdos. Solo en tu teléfono Ari sabe que tú la creaste y que es la CEO de tu empresa; en una instalación nueva es la asistente personal de quien la usa y empieza con el tono "Franca, sin groserías". El respaldo cifrado también guarda tu nombre y tu tono.
@@ -348,6 +349,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Personalidad ajustada a tu elección (0.3.1): franca y con alguna grosería de vez en cuando.
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
+- Más rápida (0.13.1): Gemma corre en la GPU del teléfono si se puede, con vuelta automática a la CPU. Si la GPU llegara a cerrar la app al cargar, la siguiente vez Ari usa la CPU sola. Ajustes → Velocidad de Gemma para cambiarlo.
 - Libreta de personas (0.13.0): Ari recuerda a quien le mencionas ("mi primo Luis es dentista", "Luis cumple el 5 de mayo"), te cuenta lo que sabe ("qué sabes de Luis"), lista a quién conoce y los próximos cumpleaños. Gemma también la recibe.
 - Revisión de código de todo lo nuevo (0.12.3): 10 correcciones antes de tu prueba. Entre ellas, que una foto compartida con Ari cerrada ya no se borra al abrir, que el modo live no se traba si la voz del teléfono falla, que otra app no puede usar "Compartir → Ari" para que Ari lea sus propios archivos privados, que abrir y cerrar el modo live muy rápido ya no puede cerrar la app, y que la pantalla se puede apagar cuando el modo live se pausa solo.
 - Pláticas largas sin errores (0.12.2): cuando la memoria de la conversación de Gemma se llena, Ari empieza una conversación nueva sola, con tus recuerdos y los últimos mensajes, y vuelve a intentar. Antes había que cerrar la app.

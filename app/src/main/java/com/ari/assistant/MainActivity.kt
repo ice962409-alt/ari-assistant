@@ -264,6 +264,7 @@ class MainActivity : Activity() {
             "Tu nombre: $name",
             "Tono de Ari: ${profile.tone.title}",
             "Respaldo de la memoria",
+            "Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}",
             "Acerca de Ari y licencias"
         )
         AlertDialog.Builder(this)
@@ -273,11 +274,44 @@ class MainActivity : Activity() {
                     0 -> askUserName(firstTime = false)
                     1 -> chooseTone()
                     2 -> showBackupDialog()
+                    3 -> chooseEngine()
                     else -> showAbout()
                 }
             }
             .setNegativeButton("Cerrar", null)
             .show()
+    }
+
+    private fun gpuAllowed() =
+        getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE).getString(KEY_GPU, "") != GPU_FAILED
+
+    /** Si con la GPU Ari se cierra o contesta raro, aquí se vuelve a la CPU (y al revés). */
+    private fun chooseEngine() {
+        AlertDialog.Builder(this)
+            .setTitle("Velocidad de Gemma")
+            .setMessage(
+                "Ahora: $engineLabel.\n\n" +
+                    "Rápida: Gemma usa la GPU del teléfono y contesta varias veces más rápido.\n" +
+                    "Segura: usa la CPU. Es más lenta, pero sirve si con la GPU Ari se cierra o contesta raro.\n\n" +
+                    "El cambio se aplica al volver a cargar a Gemma."
+            )
+            .setPositiveButton("Rápida (GPU)") { _, _ -> setEngine(gpu = true) }
+            .setNegativeButton("Segura (CPU)") { _, _ -> setEngine(gpu = false) }
+            .setNeutralButton("Cancelar", null)
+            .show()
+    }
+
+    private fun setEngine(gpu: Boolean) {
+        getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE).edit()
+            .putString(KEY_GPU, if (gpu) "" else GPU_FAILED).apply()
+        val file = savedModelFile()
+        if (file == null || busy) {
+            status.text = "Listo. Se usará al volver a cargar a Gemma."
+            return
+        }
+        status.text = "Volviendo a cargar a Gemma…"
+        modelReady = false
+        executor.execute { initializeModel(file) }
     }
 
     /** Versión, privacidad y licencias (Google Play pide mostrar las de terceros). */
@@ -981,6 +1015,59 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Con qué está corriendo Gemma, para mostrarlo: "GPU, con vista", "CPU, solo texto". */
+    @Volatile
+    private var engineLabel = "CPU"
+
+    /**
+     * Carga a Gemma de la forma más rápida que aguante el teléfono: primero en la GPU
+     * (el procesador gráfico, varias veces más rápido para la IA) y, si no se puede, en la CPU.
+     * En cada una intenta con la "vista" (fotos y PDF) y, si no, solo con texto.
+     *
+     * Si la GPU llegara a cerrar la app de golpe (algunos teléfonos fallan sin aviso), la
+     * siguiente vez Ari lo nota por la marca "probando" y ya no la intenta: no se queda
+     * cerrándose al abrir.
+     */
+    private fun startFastestEngine(modelFile: File): Engine {
+        val prefs = getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE)
+        if (prefs.getString(KEY_GPU, "") == GPU_TRYING) prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
+        val tryGpu = prefs.getString(KEY_GPU, "") != GPU_FAILED
+
+        fun config(backend: Backend, vision: Boolean) = EngineConfig(
+            modelPath = modelFile.absolutePath,
+            backend = backend,
+            visionBackend = if (vision) Backend.CPU() else null,
+            maxNumImages = if (vision) AttachmentReader.MAX_PDF_PAGES else null,
+            cacheDir = cacheDir.absolutePath
+        )
+
+        if (tryGpu) {
+            // commit (no apply): la marca tiene que quedar escrita antes de tocar la GPU.
+            prefs.edit().putString(KEY_GPU, GPU_TRYING).commit()
+            runCatching { startEngine(config(Backend.GPU(), vision = true)) }.getOrNull()?.let {
+                prefs.edit().putString(KEY_GPU, GPU_OK).commit()
+                visionReady = true
+                engineLabel = "GPU, con vista"
+                return it
+            }
+            runCatching { startEngine(config(Backend.GPU(), vision = false)) }.getOrNull()?.let {
+                prefs.edit().putString(KEY_GPU, GPU_OK).commit()
+                visionReady = false
+                engineLabel = "GPU, solo texto"
+                return it
+            }
+            prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
+        }
+        runCatching { startEngine(config(Backend.CPU(), vision = true)) }.getOrNull()?.let {
+            visionReady = true
+            engineLabel = "CPU, con vista"
+            return it
+        }
+        visionReady = false
+        engineLabel = "CPU, solo texto"
+        return startEngine(config(Backend.CPU(), vision = false))
+    }
+
     /** Crea e inicia el motor; si falla, lo cierra para no dejar memoria ocupada. */
     private fun startEngine(config: EngineConfig): Engine {
         val candidate = Engine(config)
@@ -1004,26 +1091,7 @@ class MainActivity : Activity() {
         }
         releaseModel()
         try {
-            // Primero con la "vista" para que Gemma entienda imágenes; si el modelo no la trae
-            // o el teléfono no puede, carga solo con texto.
-            val withVision = EngineConfig(
-                modelPath = modelFile.absolutePath,
-                backend = Backend.CPU(),
-                visionBackend = Backend.CPU(),
-                maxNumImages = AttachmentReader.MAX_PDF_PAGES,
-                cacheDir = cacheDir.absolutePath
-            )
-            val textOnly = EngineConfig(
-                modelPath = modelFile.absolutePath,
-                backend = Backend.CPU(),
-                cacheDir = cacheDir.absolutePath
-            )
-            val newEngine = try {
-                startEngine(withVision).also { visionReady = true }
-            } catch (e: Exception) {
-                visionReady = false
-                startEngine(textOnly)
-            }
+            val newEngine = startFastestEngine(modelFile)
             val newConversation = newEngine.createConversation()
 
             engine = newEngine
@@ -1034,12 +1102,12 @@ class MainActivity : Activity() {
                 if (isDestroyed) return@runOnUiThread
                 historyPending = true
                 memoriesPending = true
-                status.text = "Gemma cargado. Ari está lista."
+                status.text = "Gemma cargado ($engineLabel). Ari está lista."
                 notifyIfAway("Ari está lista", "Gemma terminó de cargar. Ya puedes hablar con Ari.")
                 if (database.recentMessages(1).isEmpty()) {
                     status.text = "Lista para ayudarte"
                 } else {
-                    chat.addNote("Gemma cargado. Ari está lista.")
+                    chat.addNote("Gemma cargado ($engineLabel). Ari está lista.")
                 }
                 selectButton.isEnabled = true
             }
@@ -2192,6 +2260,11 @@ class MainActivity : Activity() {
         private val AGENT_COMMANDS = setOf("/delega", "/equipo", "/laptop")
         private const val MAX_SILENT_ATTEMPTS = 3
         private const val FILLER_DELAY_MS = 1800L
+        private const val ENGINE_PREFS = "ari_motor"
+        private const val KEY_GPU = "gpu"
+        private const val GPU_TRYING = "probando"
+        private const val GPU_OK = "ok"
+        private const val GPU_FAILED = "falla"
         // Que la libreta no llene la memoria de Gemma (ver la ventana de contexto en la guía).
         private const val MAX_PEOPLE_IN_PROMPT = 25
         private const val PERSON_PROMPT_CHARS = 160

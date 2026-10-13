@@ -226,6 +226,16 @@ Gemma no lee letras sino **tokens**: pedacitos de palabra (en español, una pala
 - Por eso un documento muy largo no cabe completo: Ari solo le pasa unas 1 000 palabras (unas 3 páginas).
 - Una pizarra más grande gastaría mucha más memoria del teléfono; es un equilibrio entre recordar más y no trabar el celular.
 
+### CPU, GPU y NPU: dónde "piensa" Gemma
+
+Tu teléfono tiene varios cerebros electrónicos:
+
+- **CPU**: el procesador general. Hace de todo, pero pocas cosas a la vez.
+- **GPU**: el procesador gráfico, hecho para dibujar millones de puntos de la pantalla al mismo tiempo. La IA también es hacer millones de cuentas iguales a la vez, así que en la GPU Gemma contesta varias veces más rápido.
+- **NPU**: un procesador hecho solo para IA. Es el más rápido y el que menos batería gasta, pero cada marca de teléfono lo hace distinto y los modelos tienen que prepararse para cada uno.
+
+Ari intenta primero la GPU y, si tu teléfono no puede, usa la CPU. Como la GPU a veces falla de golpe en algunos teléfonos, Ari deja una marca de "estoy probando" antes de usarla: si la app se cierra, la siguiente vez ve la marca y usa la CPU, en vez de quedarse cerrándose.
+
 ### Ari ve imágenes: modelos multimodales
 
 Un modelo **multimodal** entiende más de un tipo de cosa: texto, imágenes y hasta audio. Gemma 4 lo es. Por dentro tiene una parte extra, el **codificador de visión**, que convierte una foto en algo que el modelo puede "leer", como si la describiera con sus propios números. Por eso Ari carga a Gemma con la "vista" encendida: usa algo más de memoria, pero puede decirte qué hay en una foto, leer una receta o un recibo.
@@ -404,6 +414,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Ajustes rápidos**: los botones del panel que bajas desde arriba de la pantalla.
 - **Tarea (en Android)**: la pila de pantallas que una app tiene abiertas; es lo que ves en "recientes".
 - **Ayudante confundido (confused deputy)**: cuando un programa con permisos hace algo indebido porque otro sin permisos se lo pidió.
+- **CPU, GPU y NPU**: el procesador general, el gráfico (rápido para la IA) y el especial para IA del teléfono.
 - **Token**: un pedacito de palabra; es la unidad con la que lee y escribe un modelo de IA.
 - **Ventana de contexto**: cuántos tokens puede tener en mente un modelo a la vez, como el tamaño de su pizarra.
 - **Multimodal**: un modelo de IA que entiende varios tipos de cosas, como texto, imágenes y audio.

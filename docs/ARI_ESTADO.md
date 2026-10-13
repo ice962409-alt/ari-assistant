@@ -339,3 +339,11 @@ Pedido del usuario: "Ari puede conocer a personas nuevas a través de chats" →
 - `AriDatabase` versión 4: tabla `people` (name, relation, facts por línea, birthday "MM-DD"); entra en el respaldo (`TABLES`).
 - `buildPrompt` agrega hasta 25 personas (160 caracteres cada una) junto con los recuerdos.
 
+## Más rápida: Gemma en la GPU (versión 0.13.1)
+
+El usuario probó 0.12.3 y dijo que responde lento. Hasta aquí Gemma corría con `Backend.CPU()`.
+- `startFastestEngine`: intenta GPU+visión (visión en CPU), GPU solo texto, CPU+visión, CPU solo texto. `engineLabel` se muestra al cargar.
+- Protección contra cierres nativos (no se pueden atrapar): preferencia `ari_motor/gpu` = "probando" (escrita con `commit` antes de tocar la GPU) → "ok" o "falla". Si al abrir dice "probando", la vez anterior se cerró: se marca "falla" y ya no se intenta.
+- Ajustes → Velocidad de Gemma: "Rápida (GPU)" borra la marca; "Segura (CPU)" la pone en "falla"; recarga el modelo.
+- Revisado en LiteRT-LM: el modo "pensar" de Gemma 4 solo se activa si la plantilla recibe `enable_thinking`; Ari no lo manda, así que no hay razonamiento oculto que la haga lenta.
+
