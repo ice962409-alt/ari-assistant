@@ -483,3 +483,10 @@ Primer informe por correo (14/10, de contrerasasael33@gmail.com, tester): "Ari s
 - Ajustes → Velocidad → Rápida (GPU) después de una falla vuelve a probar la GPU con la memoria normal.
 - 0.30.0: boceto del usuario para la burbuja: `AriBubbleService.openPanel` (ventana enfocable con FLAG_NOT_TOUCH_MODAL + WATCH_OUTSIDE_TOUCH; campo que manda por `AriChat.controller`, o abre Ari con `ACTION_WRITE` + `EXTRA_TEXT`; botón Claude según `R.bool.ari_ceo`, true solo en `src/completa/res/values/ceo.xml`).
 
+## Ari CEO exclusiva del dueño (versión 0.31.0)
+
+Pedido del usuario: "La Ari CEO es exclusiva para mí. Más nadie puede tenerla".
+- `DeviceLock` (pruebas en `DeviceLockTest`): código del teléfono = primeros 8 hex de SHA-256("ari-ceo:" + ANDROID_ID). Se ve en Acerca de Ari.
+- `R.array.ari_ceo_telefonos` en `src/completa/res/values/ceo.xml`: si tiene códigos, la Ari CEO solo abre en esos teléfonos ("Esta Ari es exclusiva de su dueño"). Vacío mientras el dueño no mande su código (arranque). En la Ari para otros, la lista está vacía y `ari_ceo` es false: sin candado.
+- PENDIENTE: el código del POCO del dueño (lo lee en Ajustes → Acerca de Ari de la 0.31.0) y agregarlo a la lista.
+

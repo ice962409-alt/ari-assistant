@@ -8,4 +8,6 @@
     <string name="report_email" translatable="false">javierhedzd@gmail.com</string>
     <!-- true solo en la Ari CEO (se cambia en src/completa/res/values/ceo.xml). -->
     <bool name="ari_ceo">false</bool>
+    <!-- La Ari para otros no tiene candado de teléfono. -->
+    <string-array name="ari_ceo_telefonos" />
 </resources>

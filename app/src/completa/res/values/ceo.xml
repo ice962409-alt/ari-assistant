@@ -2,4 +2,7 @@
 <resources>
     <!-- Solo la Ari CEO (la del dueño) muestra el botón de Claude en su burbuja. -->
     <bool name="ari_ceo">true</bool>
+    <!-- Códigos de los teléfonos del dueño (Ajustes → Acerca de Ari). Solo ahí abre la Ari CEO. -->
+    <string-array name="ari_ceo_telefonos">
+    </string-array>
 </resources>

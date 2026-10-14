@@ -185,6 +185,17 @@ class MainActivity : Activity() {
                 .show()
             return
         }
+        // La Ari CEO solo abre en los teléfonos del dueño.
+        if (!DeviceLock.allowed(this)) {
+            tampered = true
+            AlertDialog.Builder(this)
+                .setTitle("Esta Ari es exclusiva de su dueño")
+                .setMessage("Esta versión de Ari solo funciona en el teléfono de su dueño. Desinstálala y pide la Ari para otros.")
+                .setPositiveButton("Cerrar") { _, _ -> finish() }
+                .setCancelable(false)
+                .show()
+            return
+        }
         pendingPhoto = savedInstanceState?.getString(KEY_PHOTO)
         database = AriDatabase(this)
         AriChat.controller = chatController
@@ -1019,7 +1030,8 @@ class MainActivity : Activity() {
     /** Versión, privacidad y licencias (Google Play pide mostrar las de terceros). */
     private fun showAbout() {
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
-        val text = "Ari $version\n\n" +
+        val text = "Ari $version\n" +
+            "Código de este teléfono: ${DeviceLock.code(this)}\n\n" +
             "Privacidad: tus conversaciones, recuerdos y respaldos se quedan en tu teléfono. " +
             "Ari no tiene cuentas, no usa publicidad ni envía tus datos a internet. Solo habla con " +
             "los equipos de tu red local que tú apruebas, y a ellos no les pasa tus recuerdos.\n\n" +

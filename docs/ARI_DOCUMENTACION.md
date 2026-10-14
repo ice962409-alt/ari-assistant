@@ -58,6 +58,8 @@ Si la Ari es para otra persona, empieza vacía: le pregunta su nombre y no tiene
 
 ### Seguridad: Ari no es código abierto
 
+- **Tu Ari CEO es solo tuya**: cada teléfono tiene un código propio (Ajustes → Acerca de Ari → "Código de este teléfono"). La Ari CEO lleva guardado el código de tu teléfono y no abre en ningún otro. Si cambias de teléfono (o lo restableces de fábrica), pásale a Claude el código nuevo para la siguiente versión.
+
 - **Repositorio privado**: solo tú (y Claude con tu permiso) ven el código.
 - **Licencia**: el archivo LICENSE dice "Todos los derechos reservados": nadie puede copiar, modificar, distribuir ni descompilar Ari sin tu permiso por escrito. Quien recibe la APK solo puede usarla.
 - **Código revuelto (R8)**: en las APK de entrega, los nombres del código se cambian por letras sin sentido y se quita lo que no se usa. Sigue funcionando igual, pero leerlo o cambiarlo es mucho más difícil.
@@ -498,6 +500,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Ari CEO exclusiva (0.31.0): la Ari CEO solo abre en los teléfonos del dueño (por su código de teléfono, en Ajustes → Acerca de Ari). En otro teléfono dice "Esta Ari es exclusiva de su dueño" y no abre.
 - Tarjeta de la burbuja (0.30.0): al tocar la burbuja se abre la tarjeta del boceto del dueño, con campo para escribir y botones Escribir, Hablar y Claude (solo CEO).
 - Burbuja flotante e interrumpir hablando (0.29.0): la carita de Ari flota sobre tus apps (reemplaza al widget; Ajustes → Burbuja flotante, Ari te enseña a dar el permiso). En modo live, si le hablas mientras habla, se calla y te escucha.
 - Ari aprende de ti (0.28.0): guarda lo que descubre de ti al platicar (en Memoria, como "(Aprendido)"; viaja en el respaldo como un cerebro portátil) y se adapta a tu forma de hablar. Platica más natural. Tu Ari CEO es totalmente franca con sus opiniones y propone mejoras; y te avisa en voz cuando termina algo (Ajustes → Avisarme en voz).
