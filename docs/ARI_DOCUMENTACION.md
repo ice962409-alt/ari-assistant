@@ -508,6 +508,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
 - Ari Estado 0.2.0: notificación con barra de progreso de lo que Claude está haciendo (tarea, paso y porcentaje). Se actualiza cada 15 minutos.
+- Base de la Ari comercial (0.52.0): la Ari para otras personas tiene su propio paquete (com.ari.asistente), la pantalla "Ari Premium" (gratis + Premium) y tu ARI anota mejoras para ella ("anota una mejora para Ari: …").
 - ARI con internet (0.51.0): "¿quién fue…?", "busca en internet qué es…" (Wikipedia) y "¿cómo está el clima en…?". Solo sale lo que buscas.
 - ARI más honesta (0.50.0): ya no inventa menús ni funciones, no te llama "Ari", y "accede a WhatsApp" abre la app. Con Qwen te avisa que se equivoca más.
 - ARI descarga Qwen (0.49.0): en Modelo aparecen Qwen2.5 1.5B y Qwen3 0.6B; ARI los baja por Wi-Fi y los integra sola.

@@ -636,3 +636,11 @@ Pedido del usuario (cambia la regla "sin internet" para la ARI del dueño): prim
 - `AriWeb.kt` (frases puras; pruebas en `AriWebTest`): "busca en internet/Wikipedia …", "¿quién fue …?" → búsqueda y resumen de Wikipedia en español; "¿cómo está el clima en …?" → Open-Meteo (geocodificación + pronóstico del día). Sin cuentas ni llaves; solo sale el texto buscado.
 - MainActivity: `handleWeb` (solo CEO, no invitados) en otro hilo; si no hay red, lo dice.
 - Siguiente: más fuentes (noticias, búsqueda web) por partes.
+
+## Base de la Ari comercial (versión 0.52.0)
+
+Decisión del usuario: la Ari para otros se vuelve app comercial (gratis + Premium; APK directo y luego Google Play; nombre Ari sujeto a cambios).
+- Sabor `otros`: `applicationId = "com.ari.asistente"` (convive con la ARI del dueño; los testers deben reinstalar). El proveedor de la cámara usa `${applicationId}.camara` (`CaptureProvider.authority`).
+- `AriPremium.kt` (pruebas en `AriPremiumTest`): lista de gratis y Premium; `has()` = dueño o compra (todavía no hay compras: Play Billing pendiente). Contactos de recados sin límite ya depende de Premium. Ajustes → "Ari Premium" (solo en la comercial).
+- `AriImprovements`: "anota una mejora para Ari: …" guarda la nota con la etiqueta "[Ari comercial]".
+- `docs/GOOGLE_PLAY.md`: decisiones del dueño. Pendiente: firma oficial (clave de subida en secretos de GitHub), cuenta de Play Console, política de privacidad pública, Play Billing.

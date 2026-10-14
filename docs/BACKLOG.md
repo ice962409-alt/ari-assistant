@@ -1,6 +1,6 @@
 # Lista de trabajo de Ari
 
-> Prioridad del usuario (14/10/2026): por ahora solo la Ari CEO. La Ari para otros queda en pausa para más adelante (no se le agregan funciones; solo debe seguir compilando).
+> Prioridad del usuario (14/10/2026): la ARI del dueño primero. La Ari para otros pasa a ser la **app comercial** (gratis + Premium, APK directo y después Google Play; ver docs/GOOGLE_PLAY.md).
 
 Etiquetas:
 - **[autónomo]**: Claude lo hace sin esperar al usuario.

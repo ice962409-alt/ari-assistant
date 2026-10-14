@@ -1187,6 +1187,13 @@ class MainActivity : Activity() {
         if (ceo) items += item("Leer mis notificaciones: ${if (AriRecados.enabled(this)) "sí" else "no"}") { setupInbox() }
         if (ceo) items += item("Agenda y fotos") { setupAgendaAndPhotos() }
         if (ceo) items += item("Uso del teléfono y pasos") { setupUsage() }
+        if (!ceo) items += item("Ari Premium") {
+            AlertDialog.Builder(this)
+                .setTitle("Ari Premium")
+                .setMessage(AriPremium.description())
+                .setPositiveButton("Entendido", null)
+                .show()
+        }
         items += item("Recados entre Ari") { setupAriMessages() }
         items += item("Reportar un problema") { askProblemReport() }
         items += item("Acerca de Ari y licencias") { showAbout() }
@@ -2398,7 +2405,7 @@ class MainActivity : Activity() {
             val photo = pendingPhoto?.let { File(it) }
             pendingPhoto = null
             if (resultCode == RESULT_OK && photo != null && photo.length() > 0) {
-                loadAttachment(Uri.parse("content://$CAMERA_AUTHORITY/${photo.name}"))
+                loadAttachment(Uri.parse("content://${CaptureProvider.authority(this)}/${photo.name}"))
             } else {
                 photo?.delete()
             }
@@ -2853,7 +2860,7 @@ class MainActivity : Activity() {
                 Result.failure(Exception("No pude abrir ese archivo (${e.message ?: e.javaClass.simpleName})."))
             }
             // La foto original de la cámara ya no hace falta: Ari se queda con una copia reducida.
-            if (uri.authority == CAMERA_AUTHORITY) CaptureProvider.clean(this)
+            if (uri.authority == CaptureProvider.authority(this)) CaptureProvider.clean(this)
             runOnUiThread {
                 if (isDestroyed) {
                     result.getOrNull()?.delete()
@@ -4266,7 +4273,6 @@ class MainActivity : Activity() {
         private const val PICK_DOCUMENT = 110
         private const val TAKE_PHOTO = 111
         private const val KEY_PHOTO = "foto_pendiente"
-        private const val CAMERA_AUTHORITY = "com.ari.assistant.camara"
         const val ACTION_SHARED = "com.ari.assistant.SHARED"
         private const val KEY_EXACT_ASKED = "alarmas_exactas_preguntado"
 

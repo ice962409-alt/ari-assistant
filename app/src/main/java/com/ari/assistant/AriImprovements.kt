@@ -21,6 +21,9 @@ object AriImprovements {
     }
 
     private val NOTE = Regex("^(?:anota|apunta|guarda) (?:una |esta )?(?:mejora|idea de mejora)[:,]?\\s+(.+)$|^mejora:\\s*(.+)$")
+    /** Mejoras para la Ari comercial (la de las demás personas): ARI trabaja también sobre ella. */
+    private val NOTE_COMMERCIAL = Regex("^(?:anota|apunta|guarda) (?:una |esta )?(?:mejora|idea)(?: de mejora)? para (?:la )?ari(?: comercial)?[:,]?\\s+(.+)$")
+    const val COMMERCIAL_TAG = "[Ari comercial] "
     private val PROPOSE = Regex(
         "^(?:proponme|propon|dame|haz|arma|escribe)(?: unas| las| tus)? (?:mejoras|propuestas? de mejora|propuesta para claude)$" +
             "|^que (?:mejorarias|te mejorarias|te falta|le falta a ari)$|^(?:tus |mis )?(?:mejoras|propuestas de mejora)$"
@@ -41,6 +44,10 @@ object AriImprovements {
             .filter { it.length >= 5 }
 
     fun parse(normalized: String): Request? {
+        NOTE_COMMERCIAL.matchEntire(normalized)?.let { match ->
+            val note = match.groupValues[1].trim()
+            return if (note.length >= 5) Request.Note((COMMERCIAL_TAG + note).take(MAX_CHARS)) else null
+        }
         NOTE.matchEntire(normalized)?.let { match ->
             val note = match.groupValues.drop(1).firstOrNull { it.isNotBlank() }?.trim().orEmpty()
             return if (note.length >= 5) Request.Note(note.take(MAX_CHARS)) else null

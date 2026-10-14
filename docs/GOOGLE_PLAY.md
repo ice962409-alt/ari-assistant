@@ -1,5 +1,12 @@
 # Publicar Ari en Google Play
 
+## Decisiones del dueño (14/10/2026)
+
+- Modelo de negocio: **gratis + Premium**. Gratis: platicar sin internet, recordatorios, alarmas, agenda, llamadas, mensajes, abrir apps, recados con hasta 4 contactos y lecciones. Premium (con Play Billing): contactos de recados sin límite, tutora de varios temas, rutinas sin límite, responder a su nombre y todos los colores.
+- Distribución: **primero APK directo, al final Google Play**. Todo lo nuevo debe cumplir desde ya las políticas de Google Play.
+- Nombre: **Ari**, sujeto a cambios (está en el recurso `ari_name`; el paquete `com.ari.asistente` no cambia aunque cambie el nombre).
+- La ARI del dueño trabaja sobre la Ari comercial con "anota una mejora para Ari: …" → "propón mejoras" → Claude programa.
+
 Lista de pasos para el lanzamiento. Lo marcado [autónomo] lo hace Claude; lo demás necesita al usuario.
 
 ## Por qué importa

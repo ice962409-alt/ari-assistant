@@ -42,7 +42,8 @@ object QuickContacts {
     private const val KEY = "lista"
 
     /** null: sin límite (Ari CEO). */
-    fun limit(context: Context): Int? = if (context.resources.getBoolean(R.bool.ari_ceo)) null else QuickContactRules.LIMIT_OTHERS
+    fun limit(context: Context): Int? =
+        if (AriPremium.has(context, AriPremium.Feature.UNLIMITED_RECADO_CONTACTS)) null else QuickContactRules.LIMIT_OTHERS
 
     fun all(context: Context): List<QuickContact> = runCatching {
         val array = JSONArray(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, "[]"))

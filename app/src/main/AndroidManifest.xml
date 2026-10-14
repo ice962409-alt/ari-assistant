@@ -155,7 +155,7 @@
              solo la cámara recibe permiso temporal para esa foto. -->
         <provider
             android:name=".CaptureProvider"
-            android:authorities="com.ari.assistant.camara"
+            android:authorities="${applicationId}.camara"
             android:exported="false"
             android:grantUriPermissions="true" />
 

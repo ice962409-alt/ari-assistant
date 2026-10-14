@@ -54,7 +54,8 @@ class CaptureProvider : ContentProvider() {
     override fun update(uri: Uri, values: ContentValues?, selection: String?, args: Array<out String>?) = 0
 
     companion object {
-        private const val AUTHORITY = "com.ari.assistant.camara"
+        /** Cada app (ARI y la Ari comercial) tiene la suya, para poder instalar las dos. */
+        fun authority(context: Context) = context.packageName + ".camara"
         private val NAME = Regex("foto-[0-9a-f-]+\\.jpg")
 
         private fun folder(context: Context) = File(context.cacheDir, "camara").apply { mkdirs() }
@@ -62,7 +63,7 @@ class CaptureProvider : ContentProvider() {
         /** Un archivo vacío para la próxima foto y la dirección que se le presta a la cámara. */
         fun newPhoto(context: Context): Pair<File, Uri> {
             val name = "foto-${java.util.UUID.randomUUID()}.jpg"
-            return File(folder(context), name) to Uri.parse("content://$AUTHORITY/$name")
+            return File(folder(context), name) to Uri.parse("content://${authority(context)}/$name")
         }
 
         /** Borra las fotos de la cámara que ya no se usan (las de hace más de [minutes] minutos). */
