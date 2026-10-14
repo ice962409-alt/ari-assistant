@@ -73,6 +73,16 @@ La lección: **nunca confíes en algo solo porque responde como esperas**. Por e
 - **Privado**: solo tú y quienes invites.
 - Para una empresa, lo normal es privado. Se cambia en GitHub: Settings → Danger Zone → Change visibility.
 
+### Un repositorio público solo para lo que no es secreto
+
+Desde Ari Estado 0.3.0 hay dos repositorios con reglas distintas:
+- **ari-assistant** (el código de Ari) sigue **privado**: ahí está lo que no se comparte.
+- **Ari-estado** pasó a **público**: solo tiene `estado.json`, con el avance del trabajo de Claude. Como cualquiera puede leerlo, ahí nunca va nada sensible (ni llaves, ni datos tuyos, ni pláticas).
+- Ventaja: el widget lee el estado **sin llave**. Una llave que no existe no se puede perder, vencer ni robar.
+- Si alguna vez vuelve a ser privado, Ari Estado acepta la llave en "Opciones avanzadas". Si GitHub rechaza la llave (401, 403 o 404), la app vuelve a intentar sin ella.
+
+Regla práctica: separa lo público de lo privado en lugares distintos, en vez de meter todo en un solo lugar con candado.
+
 ### Lo básico que protege todo
 
 - **Verificación en dos pasos** en GitHub y Google: aunque alguien robe tu contraseña, no puede entrar sin tu teléfono.
@@ -604,3 +614,4 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Inyección de instrucciones**: texto escondido en una página, un documento o la pantalla que intenta darle órdenes a una IA.
 - **MessagingStyle**: el estilo de notificación de Android que muestra un chat y deja contestar ahí mismo.
 - **Receptor (BroadcastReceiver)**: una parte de la app que despierta para atender un aviso de Android.
+- **Código 401, 403, 404**: respuestas de un servidor como GitHub. 401: la llave no sirve. 403: no tienes permiso o hiciste demasiadas consultas. 404: no existe, o es privado y no puedes verlo.
