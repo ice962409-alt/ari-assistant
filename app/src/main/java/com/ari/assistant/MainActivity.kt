@@ -1002,10 +1002,10 @@ class MainActivity : Activity() {
     private fun setEngine(gpu: Boolean) {
         val prefs = getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE)
         val gpuHadFailed = prefs.getString(KEY_GPU, "") == GPU_FAILED
-        prefs.edit().putString(KEY_GPU, if (gpu) "" else GPU_FAILED).apply {
-            // Si la GPU ya había fallado, se vuelve a probar con la memoria normal (más segura).
-            if (gpu && gpuHadFailed) putString(KEY_GPU_LARGE, GPU_FAILED)
-        }.apply()
+        val editor = prefs.edit().putString(KEY_GPU, if (gpu) "" else GPU_FAILED)
+        // Si la GPU ya había fallado, se vuelve a probar con la memoria normal (más segura).
+        if (gpu && gpuHadFailed) editor.putString(KEY_GPU_LARGE, GPU_FAILED)
+        editor.apply()
         val file = savedModelFile()
         if (file == null || busy) {
             status.text = "Listo. Se usará al volver a cargar a Gemma."
