@@ -74,4 +74,8 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Burbuja flotante sobre otras apps en lugar del widget (permiso "mostrar sobre otras apps", Ari enseña a darlo).
 - [autónomo] Interrumpir a Ari hablando: deja de hablar y escucha (cancelación de eco).
 - [autónomo] Conversación más fluida y humana (instrucciones de conversación natural).
+- [autónomo] Ari se mejora sola (decisión del usuario: "las 3"):
+  - B: rutinas y comandos nuevos que el usuario le enseña, guardados como datos (sin reinstalar). Ambas Ari.
+  - A: Ari CEO detecta qué mejorar y redacta propuestas técnicas para Claude (botón Claude).
+  - D: programar con el equipo de modelos de la laptop cuando tenga Linux (espera a laptop-linux).
 - [autónomo] Siempre atenta en segundo plano y responde a "Ari": hecho en 0.37.0 con palabra personal (dices "Ari" 3 veces). Falta [prueba] en el teléfono para ajustar qué tan fácil despierta.
