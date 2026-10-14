@@ -34,6 +34,31 @@ cd ios && xcodegen generate
 open Ari.xcodeproj
 ```
 
+## Probarla gratis en un iPhone (Sideloadly, desde Windows)
+
+Sirve para una prueba sin cuenta de Apple Developer. La app deja de abrir a los 7 días (se reinstala igual y los datos se conservan) y no tiene el permiso de memoria extra: en un iPhone con mucha RAM (por ejemplo, 17 Pro Max con 12 GB) debería cargar Gemma igual, pero no está garantizado.
+
+**Lo que hace falta:** una computadora con Windows (o Mac), el cable del iPhone y un Apple ID. Conviene crear uno aparte, gratis, en appleid.apple.com, porque Sideloadly pide su contraseña.
+
+**En la computadora:**
+1. Instala **iTunes** e **iCloud** desde apple.com (no desde la Microsoft Store).
+2. Instala **Sideloadly** desde sideloadly.io.
+3. En GitHub → Actions → "Build Ari iOS", abre la ejecución más reciente en verde y descarga **ari-ios-sin-firmar**. Descomprímelo: adentro está `ari-ios-sin-firmar.ipa`. Se guarda 90 días; si ya no está, se vuelve a generar con "Run workflow".
+
+**Instalar:**
+1. Conecta el iPhone con el cable, desbloquéalo y toca **Confiar**.
+2. En Sideloadly arrastra el `.ipa`, elige el iPhone, escribe el Apple ID y toca **Start**.
+
+**En el iPhone:**
+1. **Ajustes → Privacidad y seguridad → Modo de desarrollador:** actívalo y reinicia.
+2. **Ajustes → General → VPN y gestión de dispositivos:** toca el Apple ID y **Confiar**.
+3. Abre Ari, pon tu nombre y tono, y toca **Descargar ahora** (por Wi-Fi).
+4. Acepta los **informes de fallos**: si algo falla, llega a `ari-informes`.
+
+**Si algo falla:** si Sideloadly no ve el iPhone, abre iTunes una vez y prueba otro cable o puerto. Si Ari se cierra al cargar Gemma, prueba el modelo E2B en Modelo.
+
+En Linux no funciona Sideloadly; existe "Sideloader" (github.com/Dadoum/Sideloader), menos probado.
+
 ## Cómo instalarla en iPhones (TestFlight)
 
 Apple no deja pasar apps como un APK: para que tú y otras personas la instalen hace falta TestFlight.
