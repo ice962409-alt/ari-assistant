@@ -525,3 +525,11 @@ Decisión del usuario en el tablero (palabra-ari): "A: siempre, con modelo de vo
 - `AriWakeWord`: guarda solo los MFCC en `files/ari_nombre.bin`, sensibilidad (más fácil 1.25, normal 1.0, más estricta 0.8). Se enciende al abrir Ari (Android no deja encender el micrófono desde atrás); si Android cierra el proceso, vuelve al abrir Ari.
 - Ajustes → Responder a "Ari": enseñar (3 grabaciones con `VoiceCapture`), encender/apagar, sensibilidad, olvidar. Ambas versiones.
 - Pendiente de [prueba] en el teléfono: ajustar el límite con voz real (la prueba con voz sintética separó "Ari" de otras palabras, pero con poco margen en "Ahí" y "Oye").
+
+## Rutinas: Ari aprende órdenes nuevas sin reinstalar (versión 0.38.0)
+
+Decisión del usuario sobre "Ari se mejora sola": las 3 (A, B y D). Esta es la B.
+- `AriRoutines.kt` (lógica pura; pruebas en `AriRoutinesTest`): "cuando te diga X, paso1 y paso2, luego paso3" → `Routine(trigger, steps)`. Los pasos se parten en comas, "y", "luego" y "después", pero un pedazo que no empieza con una orden conocida se pega al anterior ("pon música de Juan y Juanes"). Protecciones: el primer paso debe ser una orden, el disparador tiene máximo 6 palabras y no puede ser una palabra común ("sí", "no", "ok"…). Máximo 30 rutinas y 6 pasos.
+- "mis rutinas" / "qué rutinas tienes" las lista; "olvida la rutina X" la borra. La rutina se dispara solo si el mensaje entero es la frase.
+- MainActivity: `handleRoutine` (solo el dueño, no invitados) antes de la tutora; `runNextRoutineStep` mete cada paso por `sendMessage` como si lo escribieras, esperando a que Ari termine el anterior (máximo 2 minutos por paso). Un paso no puede disparar otra rutina.
+- Se guardan en los ajustes `ari_agentes` (clave `rutinas`) y viajan en el respaldo (`routines`).

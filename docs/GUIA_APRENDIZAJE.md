@@ -331,6 +331,14 @@ Cuando sales de una app, Android la "duerme" para cuidar la batería y tu privac
 - El micrófono en segundo plano solo se puede encender **mientras Ari está en pantalla**. Por eso el modo live empieza en Ari, y si Android cierra la app, no vuelve a escuchar sola.
 - Un detalle práctico: si pones música, el micrófono oiría la canción y Ari la tomaría por órdenes. Por eso, si algo está sonando, Ari espera a que toques "Hablar".
 
+### Rutinas: enseñarle a Ari sin cambiar su código
+
+Una app normalmente solo hace lo que su código dice; para cambiarla hay que programar, compilar e instalar de nuevo. Las **rutinas** son otra forma de enseñarle cosas: en lugar de código, se guardan **datos** (texto) que Ari ya sabe usar.
+
+- "Cuando te diga buenos días, dime qué tengo hoy y pon música" se guarda como una frase (el **disparador**) y una lista de **pasos**.
+- Al oír el disparador, Ari hace cada paso como si tú lo dijeras, uno tras otro, esperando a que termine el anterior.
+- Es más seguro que dejar que Ari cambie su propio código: una rutina solo puede pedir lo que tú ya podrías pedirle, y se borra con "olvida la rutina…".
+
 ### Que Ari responda a su nombre: la palabra de activación
 
 "Oye Siri" u "Ok Google" son **palabras de activación**: el teléfono escucha todo el tiempo, pero solo busca esa palabra, sin entender lo demás.
@@ -491,6 +499,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 ## 8. Glosario rápido
 
 - **APK**: el archivo instalador de una app de Android.
+- **Rutina**: una frase que dispara varios pasos que Ari ya sabe hacer.
+- **Disparador**: la frase que pone en marcha una rutina.
 - **Palabra de activación**: la palabra que despierta a un asistente (como "Ari").
 - **MFCC**: números que describen la forma de un sonido, cada 10 milésimas de segundo.
 - **DTW**: una forma de comparar dos sonidos aunque uno se diga más rápido que el otro.

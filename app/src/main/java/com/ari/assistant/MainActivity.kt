@@ -2312,6 +2312,8 @@ class MainActivity : Activity() {
             return
         }
 
+        if (!guestMode && handleRoutine(text)) return
+
         if (!guestMode && handleTutor(text)) return
 
         if (AriNews.asksCommands(text)) {
@@ -2818,6 +2820,87 @@ class MainActivity : Activity() {
     }
 
     /** Muestra (y lee, en modo voz) una respuesta de Ari que no pasó por ningún agente. */
+    // Rutinas: los pasos de una rutina se dicen uno por uno, como si los escribieras tú.
+    private val routineQueue = ArrayDeque<String>()
+    private var runningRoutine = false
+    private var routineWaits = 0
+
+    private fun routinePrefs() = getSharedPreferences(AGENT_SETTINGS, MODE_PRIVATE)
+
+    /** Enseñar, ver u olvidar rutinas, o hacer una si el mensaje es su frase. Solo el dueño. */
+    private fun handleRoutine(text: String): Boolean {
+        if (runningRoutine) return false
+        when (val request = AriRoutines.parse(text)) {
+            is AriRoutines.Request.Teach -> {
+                input.text.clear()
+                val routine = request.routine
+                AriRoutines.save(routinePrefs(), AriRoutines.add(AriRoutines.load(routinePrefs()), routine))
+                val steps = routine.steps.mapIndexed { i, step -> "${i + 1}. $step" }.joinToString("\n")
+                answerLocally(
+                    text,
+                    "¡Aprendido! Cuando me digas \"${routine.trigger}\", hago esto:\n$steps\n\n" +
+                        "Para verlas: \"mis rutinas\". Para borrarla: \"olvida la rutina ${routine.trigger}\"."
+                )
+                return true
+            }
+            AriRoutines.Request.ListAll -> {
+                input.text.clear()
+                val routines = AriRoutines.load(routinePrefs())
+                answerLocally(
+                    text,
+                    if (routines.isEmpty()) {
+                        "Todavía no me enseñas rutinas. Prueba: \"cuando te diga buenos días, dime qué tengo hoy y pon música\"."
+                    } else {
+                        "Tus rutinas:\n" + routines.joinToString("\n") { "• " + AriRoutines.describe(it) }
+                    }
+                )
+                return true
+            }
+            is AriRoutines.Request.Forget -> {
+                input.text.clear()
+                val before = AriRoutines.load(routinePrefs())
+                val after = AriRoutines.remove(before, request.trigger)
+                AriRoutines.save(routinePrefs(), after)
+                answerLocally(
+                    text,
+                    if (after.size < before.size) "Listo, olvidé la rutina \"${request.trigger}\"."
+                    else "No tengo una rutina \"${request.trigger}\". Di \"mis rutinas\" para verlas."
+                )
+                return true
+            }
+            null -> Unit
+        }
+        val routine = AriRoutines.find(AriRoutines.load(routinePrefs()), text) ?: return false
+        input.text.clear()
+        saveMessage(ROLE_USER, text)
+        chat.addUser(text)
+        chat.addNote("Rutina \"${routine.trigger}\": ${routine.steps.size} ${if (routine.steps.size == 1) "paso" else "pasos"}.")
+        routineQueue.clear()
+        routineQueue.addAll(routine.steps)
+        routineWaits = 0
+        runNextRoutineStep()
+        return true
+    }
+
+    /** Hace el siguiente paso cuando Ari termina el anterior (espera como mucho 2 minutos). */
+    private fun runNextRoutineStep() {
+        if (isDestroyed || routineQueue.isEmpty()) return
+        if (busy) {
+            if (routineWaits++ < 240) input.postDelayed({ runNextRoutineStep() }, 500) else routineQueue.clear()
+            return
+        }
+        val next = routineQueue.removeFirst()
+        routineWaits = 0
+        runningRoutine = true
+        try {
+            input.setText(next)
+            sendMessage()
+        } finally {
+            runningRoutine = false
+        }
+        if (routineQueue.isNotEmpty()) input.postDelayed({ runNextRoutineStep() }, 800)
+    }
+
     private fun answerLocally(text: String, reply: String) {
         saveMessage(ROLE_USER, text)
         saveMessage(ROLE_ARI, reply)

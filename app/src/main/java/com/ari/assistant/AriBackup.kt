@@ -46,6 +46,7 @@ object AriBackup {
             .put("data", data)
             .put("team", team)
             .put("approved_networks", networks)
+            .put("routines", settings.getString(AriRoutines.PREFS_KEY, "").orEmpty())
         if (Profile.isConfigured(profilePrefs)) {
             val profile = Profile.load(profilePrefs)
             json.put(
@@ -93,6 +94,10 @@ object AriBackup {
         val networks = json.optJSONArray("approved_networks") ?: JSONArray()
         val approved = (0 until networks.length()).map { networks.getString(it) }.filter { it.isNotBlank() }.toSet()
         editor.putStringSet(KEY_APPROVED, approved)
+        // Las rutinas son solo texto; se vuelven a leer con las mismas reglas (máximo 30).
+        if (json.has("routines")) {
+            editor.putString(AriRoutines.PREFS_KEY, AriRoutines.encode(AriRoutines.decode(json.optString("routines"))))
+        }
         editor.apply()
 
         json.optJSONObject("profile")?.let { saved ->

@@ -507,6 +507,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Rutinas (0.38.0): le enseñas órdenes nuevas sin reinstalar. Ejemplo: "cuando te diga buenos días, dime qué tengo hoy y pon música". Luego dices "buenos días" y Ari hace cada paso. "mis rutinas" las muestra y "olvida la rutina buenos días" la borra. Viajan en el respaldo.
 - Ari responde a su nombre (0.37.0): Ajustes → Responder a "Ari". Le enseñas cómo dices su nombre (3 veces) y, cuando sales de la app, dices "Ari" y se abre escuchándote. No graba nada ni usa internet; se apaga desde su notificación.
 - Leer con calma (0.36.0): mientras Ari escribe, si subes a leer el chat ya no te baja solo; aparece "↓ Ir al final" para volver.
 - Ari CEO envía sola los recados (0.35.0): con el permiso de Accesibilidad (solo en tu Ari CEO), Ari toca "enviar" en tu app de mensajes, solo en los recados que le pides. Ajustes → Recados entre Ari → Enviar los recados sola.
