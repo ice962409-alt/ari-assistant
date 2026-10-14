@@ -54,6 +54,15 @@ jobs:
             echo "== $model"
             curl -sSI "$url" | grep -iE "^HTTP|x-linked-size|x-linked-etag|^location" || true
           done
+          # Candidatos de Qwen en formato .litertlm (para ofrecerlos en el botón Modelo).
+          for url in \
+            "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B.litertlm" \
+            "https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm" \
+            "https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm" \
+            "https://huggingface.co/litert-community/Qwen3-4B/resolve/main/Qwen3-4B.litertlm"; do
+            echo "== $url"
+            curl -sSI "$url" | grep -iE "^HTTP|x-linked-size|^location" || true
+          done
 
       - name: Pruebas automaticas
         run: ./gradlew :app:testCompletaDebugUnitTest :app:testOtrosDebugUnitTest

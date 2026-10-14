@@ -2148,6 +2148,13 @@ class MainActivity : Activity() {
     }
 
     /** El modelo elegido a mano (en la memoria interna) o, si no, el descargado. */
+    /** Qué modelo está cargado: el archivo que elegiste (si fue uno tuyo) o Gemma (si se descargó). */
+    private fun currentFamily(): ModelFamily {
+        val picked = File(filesDir, MODEL_FILE_NAME).takeIf { it.exists() && it.length() > 0L }
+        if (picked == null) return ModelFamily.GEMMA
+        return ModelFamily.detect(getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE).getString(KEY_MODEL_NAME, null))
+    }
+
     private fun savedModelFile(): File? =
         File(filesDir, MODEL_FILE_NAME).takeIf { it.exists() && it.length() > 0L }
             ?: modelDownload.downloadedFile()
@@ -2387,6 +2394,17 @@ class MainActivity : Activity() {
         ) return
 
         val uri: Uri = data?.data ?: return
+        // El nombre del archivo dice qué modelo es (Gemma, Qwen…): ARI se adapta a él.
+        val pickedName = runCatching {
+            contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0) else null
+            }
+        }.getOrNull()
+        ModelFamily.unsupportedFormat(pickedName)?.let { why ->
+            chat.addNote(why)
+            return
+        }
+        getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE).edit().putString(KEY_MODEL_NAME, pickedName.orEmpty()).apply()
 
         status.text = "Preparando el archivo del modelo..."
         selectButton.isEnabled = false
@@ -2490,6 +2508,8 @@ class MainActivity : Activity() {
         val gpuLargeAllowed = prefs.getString(KEY_GPU_LARGE, "") != GPU_FAILED
         // Versión básica (menos de 7 GB de RAM): sin la "vista", que ocupa mucha memoria.
         val basic = ModelChoice.basic(totalRam())
+        // Los modelos que no ven imágenes (Qwen, Llama…) cargan directo solo con texto.
+        val noVision = basic || !currentFamily().vision
 
         fun config(backend: Backend, vision: Boolean, tokens: Int?) = EngineConfig(
             modelPath = modelFile.absolutePath,
@@ -2519,7 +2539,7 @@ class MainActivity : Activity() {
         if (tryGpu) {
             // commit (no apply): la marca tiene que quedar escrita antes de tocar la GPU.
             prefs.edit().putString(KEY_GPU, GPU_TRYING).commit()
-            (if (basic) null else start({ Backend.GPU() }, vision = true, gpu = true))?.let {
+            (if (noVision) null else start({ Backend.GPU() }, vision = true, gpu = true))?.let {
                 prefs.edit().putString(KEY_GPU, GPU_OK).commit()
                 visionReady = true
                 engineLabel = "GPU, con vista"
@@ -2533,7 +2553,7 @@ class MainActivity : Activity() {
             }
             prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
         }
-        (if (basic) null else start({ Backend.CPU() }, vision = true))?.let {
+        (if (noVision) null else start({ Backend.CPU() }, vision = true))?.let {
             visionReady = true
             engineLabel = "CPU, con vista"
             return it
@@ -2581,12 +2601,12 @@ class MainActivity : Activity() {
                 // La conversación nueva ya trae la personalidad, tus recuerdos y la plática.
                 historyPending = false
                 memoriesPending = false
-                status.text = "Gemma cargado ($engineLabel). Ari está lista."
+                status.text = "${currentFamily().label} cargado ($engineLabel). Ari está lista."
                 notifyIfAway("Gemma terminó de cargar. Ya puedes hablar conmigo.")
                 if (database.recentMessages(1).isEmpty()) {
                     status.text = "Lista para ayudarte"
                 } else {
-                    chat.addNote("Gemma cargado ($engineLabel). Ari está lista.")
+                    chat.addNote("${currentFamily().label} cargado ($engineLabel). Ari está lista.")
                 }
                 selectButton.isEnabled = true
             }
@@ -4194,6 +4214,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val PICK_MODEL = 101
+        private const val KEY_MODEL_NAME = "modelo_nombre"
         private const val DOWNLOAD_CHECK_MS = 2000L
         private const val REQUEST_AUDIO = 102
         private const val REQUEST_LOCATION = 103

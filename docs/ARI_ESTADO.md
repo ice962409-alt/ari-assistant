@@ -604,3 +604,11 @@ Pedido del usuario: "Ari CEO" pasa a llamarse ARI.
 - Strings por sabor: `ari_name` ("Ari" en main, "ARI" en completa), `ari_send_label` ("ARI: manejar tus apps"), `ari_listener_label` ("ARI: tus notificaciones"). Nombre de la app, barra superior, modo live, etiqueta de los mensajes, bienvenida y "Hola, soy …" usan `ari_name`.
 - Lo que Ari dice en voz y su personalidad siguen escribiendo "Ari" (la voz del teléfono podría deletrear "A-R-I"); la palabra de activación sigue siendo "Ari".
 - En el código y en estos documentos, "Ari CEO" y el sabor `completa` siguen significando lo mismo.
+
+## ARI se adapta al modelo: Qwen y otros (versión 0.48.0)
+
+Pedido del usuario: integrar Qwen y que ARI se adapte al modelo.
+- `ModelFamily.kt` (puro; pruebas en `ModelFamilyTest`): por el nombre del archivo elegido detecta Gemma, Qwen, Llama, Phi, DeepSeek u otro; solo Gemma tiene vista. `unsupportedFormat` rechaza .gguf (PocketPal) y otros formatos con una explicación.
+- MainActivity: al elegir un archivo guarda su nombre (`ari_motor`/`modelo_nombre`); `currentFamily()`; los modelos sin vista cargan directo solo con texto (`noVision`) sin perder la memoria grande; "Qwen cargado (GPU, solo texto)".
+- CI: "Revisar enlaces de los modelos" prueba candidatos de Qwen .litertlm en litert-community para ofrecer su descarga cuando se confirme un enlace.
+- Pendiente: motor para .gguf (llama.cpp) para Qwen2.5-Coder y similares.
