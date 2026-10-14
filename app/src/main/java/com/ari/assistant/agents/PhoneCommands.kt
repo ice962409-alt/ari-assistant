@@ -303,5 +303,5 @@ object PhoneCommands {
     private val NAVIGATE = Regex(
         "^(?:llevame|como\\s+llego|guiame|navega|ruta)(?:\\s+(?:a|al|hasta|para|a\\s+la|hacia))?\\s+(.+)$"
     )
-    private val OPEN = Regex("^(?:abre|abrir|abreme|ejecuta|inicia|lanza)\\s+(?:la\\s+app\\s+(?:de\\s+)?|la\\s+aplicacion\\s+(?:de\\s+)?)?(.+)$")
+    private val OPEN = Regex("^(?:abre|abrir|abreme|ejecuta|inicia|lanza|accede\\s+a|entra\\s+a|entra\\s+en|metete\\s+a|metete\\s+en|ingresa\\s+a)\\s+(?:la\\s+app\\s+(?:de\\s+)?|la\\s+aplicacion\\s+(?:de\\s+)?)?(.+)$")
 }

@@ -82,6 +82,14 @@ data class Profile(
                 "paso a paso y con ejemplos. "
         )
         text.append(tone.instruction).append(' ')
+        // Que el modelo no se confunda de papel ni invente funciones (pasó con modelos pequeños).
+        text.append(
+            "Tú eres Ari y la persona que te escribe es $owner: nunca le llames Ari ni hables como si fueras $owner. " +
+                "Lo que haces en el teléfono (abrir apps, alarmas, recordatorios, llamadas y mensajes, agenda, recados) lo hace la app " +
+                "cuando $owner usa las frases que entiende; tú, al platicar, no tocas el teléfono. Nunca digas que hiciste algo que no " +
+                "hiciste, y nunca inventes menús, opciones, permisos, invitaciones, modos ni funciones. Si te piden algo que no sabes " +
+                "hacer, dilo claro y sugiere que diga \"¿qué te puedo decir?\" para ver lo que sí puedes, o \"anota una mejora\". "
+        )
         if (name.isNotEmpty()) text.append("Llama a $name por su nombre de vez en cuando. ")
         text.append("Respondes siempre en español.")
         return text.toString()

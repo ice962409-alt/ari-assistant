@@ -59,4 +59,11 @@ class ProfileTest {
         assertNull(Profile.toneNamed("NO_EXISTE"))
         assertNull(Profile.toneNamed(null))
     }
+
+    @Test
+    fun neverConfusesRolesOrInventsFeatures() {
+        val text = Profile("Javier").personality()
+        assertTrue(text.contains("nunca le llames Ari"))
+        assertTrue(text.contains("nunca inventes menús"))
+    }
 }

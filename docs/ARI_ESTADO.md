@@ -621,3 +621,11 @@ Pedido del usuario. `ModelChoice.Model` suma `QWEN15` (Qwen2.5 1.5B, 1.6 GB) y `
 ## Ari Estado 0.2.0: barra de avance en una notificación
 
 Pedido del usuario. `RefreshJob.showProgress`: notificación fija (canal "Avance del proyecto", importancia baja, sin sonido) con la tarea, "Paso X de Y", lo que sigue, pendientes y `setProgress(100, progreso)`. Se actualiza en cada revisión (cada 15 min, lo mínimo de Android, o con "Actualizar"); fija mientras Claude trabaja, se puede quitar cuando está en pausa. Tocarla abre la sesión de Claude Code.
+
+## ARI ya no inventa funciones ni confunde papeles (versión 0.50.0)
+
+Reporte del usuario (captura vista por otra sesión): ARI respondió a "Accede a WhatsApp" con un menú inventado ("Manejar mi dispositivo", "invitación", "modo on"), prometió borrar o copiar fotos y llamó "Ari" al usuario.
+- `Profile.personality`: "Tú eres Ari y la persona que te escribe es X: nunca le llames Ari"; las acciones del teléfono las hace la app con sus frases, el modelo no; nunca decir que hizo algo que no hizo ni inventar menús, opciones, permisos, invitaciones, modos ni funciones; si no sabe, sugerir "¿qué te puedo decir?" o "anota una mejora". Prueba en `ProfileTest`.
+- `PhoneCommands.OPEN`: también "accede a", "entra a/en", "métete a/en", "ingresa a" + app (pruebas en `PhoneCommandsTest`).
+- Al cargar un modelo que no es Gemma (Qwen…), aviso en el chat de que se equivoca más y no ve fotos.
+- Pendiente de saber: qué modelo tenía cargado el usuario.

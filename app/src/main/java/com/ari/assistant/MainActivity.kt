@@ -2611,6 +2611,9 @@ class MainActivity : Activity() {
                     status.text = "Lista para ayudarte"
                 } else {
                     chat.addNote("${currentFamily().label} cargado ($engineLabel). Ari está lista.")
+                    if (currentFamily() != ModelFamily.GEMMA) {
+                        chat.addNote("Ojo: con ${currentFamily().label} me equivoco más que con Gemma (es un modelo más pequeño) y no veo fotos. Si te contesto algo raro, vuelve a Gemma en Modelo.")
+                    }
                 }
                 selectButton.isEnabled = true
             }
