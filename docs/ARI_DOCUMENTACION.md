@@ -508,6 +508,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
 - Ari Estado 0.2.0: notificación con barra de progreso de lo que Claude está haciendo (tarea, paso y porcentaje). Se actualiza cada 15 minutos.
+- Guardar un wifi (0.60.0): cuando te den la clave, dile "guarda el wifi (nombre) con la clave (clave)"; Android te pide confirmar. "abre el wifi" abre la lista de redes. (ARI nunca adivina ni fuerza una contraseña ajena.)
+- Burbuja en el lateral (0.60.0, solo ARI): la burbuja se esconde pegada al borde y solo asoma una pestaña; tócala para traerla.
 - Elegir la voz (0.59.0): Ajustes → Voz de Ari cambia la velocidad (Lenta a Muy rápida) y el tono (Grave, Normal, Agudo). Lo pruebas al momento.
 - Tus apps son sus herramientas (0.58.0, solo ARI): pídele cosas con tus apps en tus palabras ("avísale a Rosa que llego tarde y ponme la ruta a casa"). Gemma arma los pasos; lo seguro (rutas, música, búsquedas, notas, abrir apps) lo hace sola, y los mensajes, llamadas, correos y citas te los pregunta. Lo que no sabe hacer lo anota como mejora. Nuevas frases: "pide un Uber al aeropuerto", "pide un DiDi a…", "anota en Keep…".
 - Actualizarse sola (0.57.0, solo ARI): "busca actualizaciones" o Ajustes → Buscar actualización. ARI baja la compilación nueva de GitHub y Android te pide tocar Instalar. A la llave de GitHub de ARI hay que agregarle el permiso Actions (lectura), y la primera vez permitir "Instalar apps desconocidas" para ARI.

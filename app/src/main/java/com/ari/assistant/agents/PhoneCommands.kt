@@ -27,6 +27,8 @@ sealed class PhoneAction {
     data class Ride(val place: String, val app: String) : PhoneAction()
     /** Una nota en Keep (o tu app de notas): se abre con el texto listo para guardar. */
     data class Note(val text: String) : PhoneAction()
+    /** Guardar un wifi nuevo cuando te dan la clave; Android te pide confirmar. Vacío abre la lista de wifi. */
+    data class SaveWifi(val ssid: String, val password: String) : PhoneAction()
     object Camera : PhoneAction()
     data class Settings(val section: String) : PhoneAction()
     /** La frase pedía una acción, pero falta algo; [message] explica qué. */
@@ -65,6 +67,13 @@ object PhoneCommands {
             val text = o.substring(found.groups[1]!!.range.first).trim()
             return if (text.isEmpty()) null else PhoneAction.Note(text)
         }
+
+        WIFI_SAVE.matchEntire(p)?.let { found ->
+            val ssid = o.substring(found.groups[1]!!.range.first, found.groups[1]!!.range.last + 1).trim().trim('"', '“', '”')
+            val pass = o.substring(found.groups[2]!!.range.first).trim().trim('"', '“', '”')
+            return if (ssid.isEmpty() || pass.isEmpty()) null else PhoneAction.SaveWifi(ssid, pass)
+        }
+        WIFI_OPEN.matchEntire(p)?.let { return PhoneAction.SaveWifi("", "") }
 
         SETTINGS.matchEntire(p)?.let { found ->
             return PhoneAction.Settings(found.groupValues[1].ifEmpty { "general" })
@@ -278,6 +287,8 @@ object PhoneCommands {
     private val POLITE = Regex("^[¿¡\\s]*(?:ari[,:]?\\s+)?(?:(?:por favor|porfa)[,]?\\s+)?(?:(?:puedes|podrias)\\s+)?")
     private val NUMBER = Regex("\\+?\\d[\\d\\s-]{6,}\\d")
 
+    private val WIFI_SAVE = Regex("^(?:guarda|conectate\\s+a|conectame\\s+a|agrega|a\u00f1ade|anade)\\s+(?:el\\s+|la\\s+)?(?:red\\s+|wifi\\s+|wi-fi\\s+)?(?:wifi\\s+|wi-fi\\s+)?(.+?)\\s+(?:con\\s+(?:la\\s+)?(?:clave|contrasena|password|pass)\\s+)(.+)$")
+    private val WIFI_OPEN = Regex("^(?:abre|abreme|conectame|ver|muestrame)\\s+(?:el\\s+|la\\s+|los\\s+|las\\s+|mis\\s+)?(?:wifi|wi-fi|redes?(?:\\s+wifi)?)$")
     private val RIDE = Regex("^(?:pide|pideme|pedir|llama|llamame|consigueme|consigue)\\s+un\\s+(uber|didi|taxi)(?:\\s+(?:a|al|para|hacia|hasta|que\\s+me\\s+lleve\\s+a)\\s+(.+))?$")
     private val NOTE = Regex("^(?:anota|apunta|guarda|escribe)\\s+en\\s+(?:google\\s+)?(?:keep|notas|mis\\s+notas)[:,]?\\s+(?:que\\s+)?(.+)$")
     private val CAMERA = Regex("^(?:abre|abrir|abreme|enciende|activa)\\s+(?:la\\s+)?camara$|^(?:toma|tomame|saca)\\s+una\\s+foto$")

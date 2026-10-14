@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.ContactsContract
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.app.SearchManager
@@ -196,6 +197,7 @@ class AndroidPhone(context: Context) : PhoneLauncher {
             )
         }
         is PhoneAction.Ride -> ride(action)
+        is PhoneAction.SaveWifi -> saveWifi(action)
         is PhoneAction.Note -> listOf(
             Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, action.text).setPackage("com.google.android.keep"),
             Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, action.text)
@@ -203,6 +205,26 @@ class AndroidPhone(context: Context) : PhoneLauncher {
         // Las de contactos se resuelven en el agente antes de llegar aquí.
         is PhoneAction.Missing, is PhoneAction.DialContact, is PhoneAction.WhatsAppContact,
         is PhoneAction.SmsContact -> emptyList()
+    }
+
+    /** Guardar un wifi: Android muestra un diálogo para confirmar y guardar la red (sin pedir ubicación). */
+    private fun saveWifi(action: PhoneAction.SaveWifi): List<Intent> {
+        if (action.ssid.isEmpty() || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return listOf(
+                Intent(Settings.ACTION_WIFI_SETTINGS),
+                Intent(Settings.ACTION_SETTINGS)
+            )
+        }
+        val suggestion = android.net.wifi.WifiNetworkSuggestion.Builder()
+            .setSsid(action.ssid)
+            .setWpa2Passphrase(action.password)
+            .build()
+        val list = arrayListOf(suggestion)
+        return listOf(
+            Intent(Settings.ACTION_WIFI_ADD_NETWORKS)
+                .putParcelableArrayListExtra(Settings.EXTRA_WIFI_NETWORK_LIST, list),
+            Intent(Settings.ACTION_WIFI_SETTINGS)
+        )
     }
 
     /** Uber con el destino listo (lo confirmas en Uber); DiDi solo se abre. */

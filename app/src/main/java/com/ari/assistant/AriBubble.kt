@@ -39,6 +39,8 @@ class AriBubbleService : Service() {
     private var panelOrb: AriOrbView? = null
     /** Dónde se dibujó la burbuja: hay que moverla y quitarla con el mismo. */
     private var host: WindowManager? = null
+    /** true cuando la burbuja está pegada al borde, escondida a medias. */
+    private var collapsed = false
 
     /**
      * Con el servicio de Accesibilidad de ARI encendido, la burbuja se dibuja a través de él
@@ -126,7 +128,10 @@ class AriBubbleService : Service() {
                 MotionEvent.ACTION_UP -> {
                     v.removeCallbacks(longPress)
                     if (moved) {
+                        collapseToEdge(v, layout)
                         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_X, layout.x).putInt(KEY_Y, layout.y).apply()
+                    } else if (collapsed) {
+                        expandFromEdge(v, layout)
                     } else {
                         openPanel()
                     }
@@ -142,6 +147,30 @@ class AriBubbleService : Service() {
         orb = view
         params = layout
         host = manager
+        view.post { collapseToEdge(view, layout) }
+    }
+
+    /** La burbuja se pega al borde más cercano y se esconde a medias (solo asoma una pestaña). */
+    private fun collapseToEdge(view: android.view.View, layout: WindowManager.LayoutParams) {
+        val screen = resources.displayMetrics.widthPixels
+        val size = view.width.takeIf { it > 0 } ?: (56 * resources.displayMetrics.density).toInt()
+        val peek = AriBubble.edgePeek(size)
+        val (x, _) = AriBubble.collapsedX(layout.x + size / 2, screen, size, peek)
+        layout.x = x
+        collapsed = true
+        view.alpha = 0.55f
+        runCatching { host?.updateViewLayout(view, layout) }
+    }
+
+    /** Un toque en la pestaña escondida la trae de vuelta y abre a Ari. */
+    private fun expandFromEdge(view: android.view.View, layout: WindowManager.LayoutParams) {
+        val screen = resources.displayMetrics.widthPixels
+        val size = view.width.takeIf { it > 0 } ?: (56 * resources.displayMetrics.density).toInt()
+        layout.x = AriBubble.expandedX(layout.x + size / 2 < screen / 2, screen, size)
+        collapsed = false
+        view.alpha = 1f
+        runCatching { host?.updateViewLayout(view, layout) }
+        openPanel()
     }
 
     private fun dp(value: Float) = (value * resources.displayMetrics.density).toInt()
@@ -346,6 +375,8 @@ class AriBubbleService : Service() {
         panelOrb = null
         runCatching { host?.removeView(view) }
         orb?.visibility = android.view.View.VISIBLE
+        // Al cerrar, la burbuja vuelve a esconderse en el borde para no estorbar.
+        orb?.let { view -> params?.let { collapseToEdge(view, it) } }
     }
 
     /** Abre Ari: [action] ACTION_WRITE pone el teclado listo (con [text] si ya escribiste algo). */
@@ -442,6 +473,20 @@ object AriBubble {
 
     /** Se puede con el permiso "Mostrar sobre otras apps" o con la Accesibilidad de ARI encendida. */
     fun canShow(context: Context) = OverlayHost.accessibility != null || Settings.canDrawOverlays(context)
+
+    /** Cuánto de la burbuja sigue a la vista cuando está escondida en el borde (un tercio). */
+    fun edgePeek(size: Int) = (size * 0.38f).toInt().coerceAtLeast(1)
+
+    /** Posición escondida: pegada al borde más cercano, con solo [peek] píxeles a la vista. */
+    fun collapsedX(centerX: Int, screenWidth: Int, size: Int, peek: Int): Pair<Int, Boolean> {
+        val toLeft = centerX < screenWidth / 2
+        val x = if (toLeft) -(size - peek) else screenWidth - peek
+        return x to toLeft
+    }
+
+    /** Posición a la vista: pegada al mismo borde pero completa. */
+    fun expandedX(toLeft: Boolean, screenWidth: Int, size: Int): Int =
+        if (toLeft) 0 else screenWidth - size
 
     fun isEnabled(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_ON, false)
 

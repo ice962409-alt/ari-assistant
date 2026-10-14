@@ -70,6 +70,10 @@ object AriNews {
             Item("Elige mi voz", "Ajustes → Voz de Ari: cambia qué tan rápido hablo y si mi tono es más grave o más agudo. Lo pruebas al momento."),
             Item("Oculta mis avisos fijos", "Los avisos \"Burbuja de Ari\" y \"Di Ari para llamarme\" los pone Android, sin sonido. Si te molestan, mantén presionado el aviso y apágalo en sus ajustes."),
         ),
+        74 to listOf(
+            Item("Me escondo en el borde", "Mi burbuja se pega al lado de la pantalla y se asoma apenas. Tócala y vuelvo; arrástrame para cambiarme de lado.", ceoOnly = true),
+            Item("Guarda un wifi nuevo", "Cuando te den la clave, dime: \"guarda el wifi (nombre) con la clave (clave)\". Android te pide confirmar y la red queda lista.", ceoOnly = true),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

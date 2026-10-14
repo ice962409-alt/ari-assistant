@@ -744,3 +744,10 @@ Idea pendiente del backlog ("elegir la voz y la velocidad de lectura"), [autóno
 Pregunta del usuario (captura con las notificaciones "Burbuja de Ari" y 'Di "Ari" para llamarme'). Son avisos que obliga Android mientras corren esos servicios en primer plano; ya estaban en IMPORTANCE_MIN (sin sonido).
 - Al encender la burbuja o el "responder a Ari", la nota del chat ahora explica que Android deja un aviso fijo y cómo apagarlo (mantener presionado → ajustes).
 - `AriNews` 73 incluye el consejo "Oculta mis avisos fijos" para quien ya los tenía encendidos.
+
+## Burbuja que se esconde en el borde y guardar un wifi (versión 0.60.0)
+
+Pedido del usuario (las dos de tres opciones: "la 2 y la 3").
+- Burbuja en el lateral: al soltarla, `AriBubbleService` la pega al borde más cercano, medio escondida (solo asoma una pestaña) y translúcida. Un toque la trae y abre la tarjeta; al cerrarla se vuelve a esconder. Arrastrarla la cambia de lado. Lógica pura en `AriBubble.edgePeek/collapsedX/expandedX` (pruebas en `AriBubbleEdgeTest`).
+- Guardar un wifi (contexto del usuario: a veces necesita internet fuera de casa; NO se tocó nada de forzar contraseñas): nuevo `PhoneAction.SaveWifi`. "guarda el wifi (nombre) con la clave (clave)" abre el diálogo de Android `ACTION_WIFI_ADD_NETWORKS` (API 30+) con una `WifiNetworkSuggestion` WPA2; la persona confirma y guarda. "abre el wifi" abre los ajustes de wifi. No pide permiso de ubicación. Pruebas en `WifiCommandTest`.
+- Herramienta nueva disponible también desde "HACER:" de Gemma (es segura: solo abre un diálogo que tú confirmas).
