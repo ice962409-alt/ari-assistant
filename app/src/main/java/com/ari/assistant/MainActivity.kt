@@ -2313,6 +2313,7 @@ class MainActivity : Activity() {
         }
 
         if (!guestMode && handleRoutine(text)) return
+        if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 
         if (!guestMode && handleTutor(text)) return
 
@@ -2680,6 +2681,7 @@ class MainActivity : Activity() {
                         chat.finishAri()
                         busy = false
                         if (!forGuest) learnFrom(response.toString())
+                        if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) noteImprovements(response.toString())
                         if (!forGuest) tutorTopic?.let { topic ->
                             AriTutor.summaryIn(response.toString())?.let { saveTutorSummary(topic, it) }
                         }
@@ -2882,6 +2884,66 @@ class MainActivity : Activity() {
         return true
     }
 
+    // --- Ari CEO se propone mejoras (las programa Claude) ---
+
+    private fun noteImprovements(response: String) {
+        val found = AriImprovements.notesIn(response)
+        if (found.isEmpty()) return
+        val prefs = routinePrefs()
+        AriImprovements.save(prefs, found.fold(AriImprovements.load(prefs)) { notes, note -> AriImprovements.add(notes, note) })
+    }
+
+    /** "anota una mejora: …", "propón mejoras" y "borra las mejoras". */
+    private fun handleImprovement(text: String): Boolean {
+        val request = AriImprovements.parse(com.ari.assistant.agents.normalizeForAgents(text)) ?: return false
+        input.text.clear()
+        val prefs = routinePrefs()
+        when (request) {
+            is AriImprovements.Request.Note -> {
+                AriImprovements.save(prefs, AriImprovements.add(AriImprovements.load(prefs), request.text))
+                answerLocally(text, "Anotado para mejorarme: \"${request.text}\". Cuando quieras, di \"propón mejoras\" y te armo el pedido para Claude.")
+            }
+            AriImprovements.Request.Clear -> {
+                AriImprovements.save(prefs, emptyList())
+                answerLocally(text, "Listo, borré mis notas de mejora.")
+            }
+            AriImprovements.Request.Propose -> {
+                val notes = AriImprovements.load(prefs)
+                if (notes.isEmpty()) {
+                    answerLocally(
+                        text,
+                        "Todavía no tengo mejoras anotadas. Cuando algo no me salga, lo anoto yo; también puedes decirme \"anota una mejora: …\"."
+                    )
+                } else {
+                    val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
+                    val phone = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+                    val date = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+                    val proposal = AriImprovements.proposal(notes, version, phone, date)
+                    answerLocally(text, proposal)
+                    offerProposalToClaude(proposal)
+                }
+            }
+        }
+        return true
+    }
+
+    /** Copia la propuesta y abre Claude para que la pegues en la sesión de Claude Code. */
+    private fun offerProposalToClaude(proposal: String) {
+        AlertDialog.Builder(this)
+            .setTitle("¿Se la paso a Claude?")
+            .setMessage("Copio la propuesta y abro Claude. Pégala en la sesión de Claude Code de Ari: Claude la programa, la prueba y te manda el APK.")
+            .setPositiveButton("Copiar y abrir Claude") { _, _ ->
+                getSystemService(android.content.ClipboardManager::class.java)
+                    ?.setPrimaryClip(android.content.ClipData.newPlainText("Propuesta de mejora de Ari", proposal))
+                val app = packageManager.getLaunchIntentForPackage("com.anthropic.claude")
+                val intent = app ?: Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://claude.ai/code"))
+                runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                chat.addNote("Copié la propuesta. En Claude, mantén presionado el campo de texto y toca Pegar.")
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
     /** Hace el siguiente paso cuando Ari termina el anterior (espera como mucho 2 minutos). */
     private fun runNextRoutineStep() {
         if (isDestroyed || routineQueue.isEmpty()) return
@@ -3027,6 +3089,8 @@ class MainActivity : Activity() {
         }
         // El cerebro de Ari: marca lo nuevo que aprende de ti para guardarlo (ver AriBrain).
         instruction.append("\n\n").append(AriBrain.instruction(profile.userName.trim().ifEmpty { "tu usuario" }))
+        // Ari CEO anota lo que le falta para proponerle mejoras a Claude (ver AriImprovements).
+        if (resources.getBoolean(R.bool.ari_ceo)) instruction.append("\n\n").append(AriImprovements.instruction())
         // Modo tutora: Gemma enseña el tema paso a paso y deja un resumen para la próxima clase.
         tutorTopic?.let { topic ->
             instruction.append("\n\n").append(AriTutor.instruction(topic, tutorSummary(topic), tutorSessions(topic)))

@@ -76,6 +76,6 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Conversación más fluida y humana (instrucciones de conversación natural).
 - [autónomo] Ari se mejora sola (decisión del usuario: "las 3"):
   - B: rutinas que el usuario le enseña, guardadas como datos (sin reinstalar). Hecho en 0.38.0; falta [prueba].
-  - A: Ari CEO detecta qué mejorar y redacta propuestas técnicas para Claude (botón Claude).
+  - A: Ari CEO anota qué mejorar y arma el pedido para Claude ("propón mejoras"). Hecho en 0.39.0; falta [prueba].
   - D: programar con el equipo de modelos de la laptop cuando tenga Linux (espera a laptop-linux).
 - [autónomo] Siempre atenta en segundo plano y responde a "Ari": hecho en 0.37.0 con palabra personal (dices "Ari" 3 veces). Falta [prueba] en el teléfono para ajustar qué tan fácil despierta.

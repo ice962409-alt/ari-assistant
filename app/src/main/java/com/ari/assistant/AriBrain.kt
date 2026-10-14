@@ -32,9 +32,9 @@ object AriBrain {
         return known.any { simplify(it.removePrefix(PREFIX)) == clean }
     }
 
-    /** La respuesta sin las líneas "APRENDÍ:" (para decirla en voz). */
+    /** La respuesta sin las líneas "APRENDÍ:" ni "MEJORA:" (para decirla en voz). */
     fun withoutNotes(text: String): String =
-        text.lines().filterNot { val t = it.trim().trim('*', '_', ' ').uppercase(); t.startsWith("APRENDÍ:") || t.startsWith("APRENDI:") }
+        text.lines().filterNot { val t = it.trim().trim('*', '_', ' ').uppercase(); t.startsWith("APRENDÍ:") || t.startsWith("APRENDI:") || t.startsWith("MEJORA:") }
             .joinToString("\n")
 
     private fun simplify(text: String) = text.lowercase().replace(Regex("[^\\p{L}\\p{N} ]"), "").replace(Regex("\\s+"), " ").trim()

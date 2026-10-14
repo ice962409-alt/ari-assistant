@@ -533,3 +533,11 @@ Decisión del usuario sobre "Ari se mejora sola": las 3 (A, B y D). Esta es la B
 - "mis rutinas" / "qué rutinas tienes" las lista; "olvida la rutina X" la borra. La rutina se dispara solo si el mensaje entero es la frase.
 - MainActivity: `handleRoutine` (solo el dueño, no invitados) antes de la tutora; `runNextRoutineStep` mete cada paso por `sendMessage` como si lo escribieras, esperando a que Ari termine el anterior (máximo 2 minutos por paso). Un paso no puede disparar otra rutina.
 - Se guardan en los ajustes `ari_agentes` (clave `rutinas`) y viajan en el respaldo (`routines`).
+
+## Ari CEO se propone mejoras (versión 0.39.0)
+
+Parte A de "Ari se mejora sola". Solo la Ari CEO (`R.bool.ari_ceo`) y solo con el dueño.
+- `AriImprovements.kt` (puro; pruebas en `AriImprovementsTest`): Gemma marca con una línea "MEJORA: …" lo que a la app le falta (instrucción en el sistema, como "APRENDÍ:"); también "anota una mejora: …". Se guardan sin repetir (máximo 30) en `ari_agentes`/`mejoras`.
+- "propón mejoras" / "¿qué mejorarías?" / "tus mejoras": arma un pedido para Claude con versión, teléfono, fecha, la lista y las reglas del proyecto; diálogo "Copiar y abrir Claude" (portapapeles + app de Claude o claude.ai/code). "borra las mejoras" las limpia.
+- `AriBrain.withoutNotes` también quita las líneas "MEJORA:" al hablar.
+- Ari no cambia su propio código: Claude programa, prueba y compila. La parte D (programar con la laptop) espera a que la laptop tenga Linux.

@@ -40,6 +40,7 @@ object AriNews {
         50 to listOf(Item("Lee con calma", "Mientras escribo, si subes a leer el chat se queda quieto; toca \"↓ Ir al final\" para volver abajo.")),
         51 to listOf(Item("Respondo a mi nombre", "Ajustes → Responder a \"Ari\": me enseñas cómo dices mi nombre (3 veces) y, cuando salgas de la app, di \"Ari\" y te escucho.")),
         52 to listOf(Item("Me enseñas rutinas", "Di: \"cuando te diga buenos días, dime qué tengo hoy y pon música\". Luego di \"buenos días\". Para verlas: \"mis rutinas\".")),
+        53 to listOf(Item("Me propongo mejoras", "Cuando algo no me sale, lo anoto. Di \"propón mejoras\" y te armo el pedido para que Claude me mejore.", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */
