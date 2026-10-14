@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ARI Trader no es la CEO: no controla el teléfono, ni GitHub, ni se mejora sola. -->
+    <bool name="ari_ceo">false</bool>
+    <!-- Enciende lo específico de trading (tutora, diario, checklist, leer gráficas, proponer mejoras). -->
+    <bool name="ari_trader">true</bool>
+    <string name="ari_name">Ari Trader</string>
+    <string name="ari_listener_label">Ari Trader: recados</string>
+    <string name="ari_send_label">Ari Trader: manejar tus apps</string>
+</resources>

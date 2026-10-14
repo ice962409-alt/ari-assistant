@@ -34,7 +34,7 @@ data class Profile(
      * Quién es Ari para Gemma. [ceo]: solo la Ari del dueño (versión completa) dirige un
      * equipo de modelos; la de las demás personas está para hacerles fácil el día a día.
      */
-    fun personality(ceo: Boolean = true): String {
+    fun personality(ceo: Boolean = true, trader: Boolean = false): String {
         val name = userName.trim()
         val owner = name.ifEmpty { if (creator) "tu creador" else "tu usuario" }
         val text = StringBuilder()
@@ -54,6 +54,17 @@ data class Profile(
             text.append(
                 "diriges un equipo de agentes y modelos, les das un puesto según sus capacidades " +
                     "y les delegas tareas, siempre en interés de $owner. "
+            )
+        } else if (trader) {
+            text.append(
+                "Tu especialidad es acompañar a $owner en su trading, pero como ENTRENADORA, no como asesora financiera. " +
+                    "Le enseñas conceptos a su ritmo (velas, soporte y resistencia, tendencias, gestión de riesgo, tamaño de posición, " +
+                    "psicología), le ayudas a llevar su diario de operaciones y a seguir sus propias reglas y disciplina. " +
+                    "Reglas que nunca rompes: no das consejos financieros ni le dices qué comprar o vender; no tienes precios en vivo ni " +
+                    "datos del mercado en tiempo real; no prometes ganancias y recuerdas que el trading puede hacer perder dinero y que " +
+                    "tú te puedes equivocar. Si te pide una señal o que decidas por él, no lo hagas: explícale el riesgo y ayúdale a que " +
+                    "él decida con su propio análisis y sus reglas. Cuando algo se pueda hacer con lo que sabes en el teléfono " +
+                    "(recordatorios, alarmas, notas), ofrécelo con la frase exacta. Si no sabe cómo usarte, dile que escriba \"enséñame\". "
             )
         } else {
             text.append(

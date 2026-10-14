@@ -609,6 +609,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 - **Versión para iPhone (en preparación, otra sesión de Claude)**: existe una app nativa para iOS en la rama `ccr-3d48bcea-ddppo3`, carpeta `ios/`, sin tocar la app de Android. Hecha en Swift/SwiftUI (iOS 17+) con LiteRT-LM. Incluye chat con Gemma (respuesta en vivo, GPU con respaldo en CPU), primer uso, descarga del modelo por Wi-Fi, importar .litertlm, Memoria, Ajustes, informes de fallos con permiso (como en Android) y la misma personalidad. Compila en GitHub Actions (ios.yml) y pasa 18 pruebas. Falta probarla en un iPhone de verdad: necesita una cuenta de Apple Developer, el permiso de memoria extra y TestFlight (pasos en ios/README.md).
 
+- **ARI Trader (0.61.0, para el hermano del dueño)**: copia de ARI especializada en trading, app aparte (com.ari.trader), sin los poderes de CEO. Es entrenadora, no asesora: no da consejos financieros ni señales, no tiene precios en vivo y avisa que el trading puede hacer perder dinero. Junta mejoras y, con "propón mejoras", las manda al dueño (por el mismo intermediario de los informes) para validar qué se puede agregar. El hermano no toca GitHub ni se actualiza solo. Se hace por partes: Parte 1 base + tutora + propuestas; faltan diario, checklist y leer gráficas.
+
 ## 7. Archivos principales del código
 
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.

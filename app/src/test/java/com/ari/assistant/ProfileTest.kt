@@ -66,4 +66,15 @@ class ProfileTest {
         assertTrue(text.contains("nunca le llames Ari"))
         assertTrue(text.contains("nunca inventes menús"))
     }
+
+    @Test
+    fun traderIsACoachNotAnAdvisor() {
+        val text = Profile("Carlos").personality(ceo = false, trader = true)
+        assertTrue(text.contains("trading"))
+        assertTrue(text.contains("ENTRENADORA") || text.contains("entrenadora"))
+        assertTrue(text.contains("no das consejos financieros"))
+        assertTrue(text.contains("perder dinero"))
+        assertFalse(text.contains("CEO"))
+    }
+
 }

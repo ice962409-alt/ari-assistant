@@ -758,3 +758,13 @@ Pedido del usuario: asignarle a ARI la tarea de recomendar mejoras de la interfa
 - `AriDesign.kt` (sin Android): `CONTEXT` describe cómo se ve ARI hoy (chat, carita, colores, ajustes, burbuja, icono, widget); `instruction()` le pide a Gemma actuar como diseñador y proponer 2-3 mejoras concretas, cada una en una línea "MEJORA: [Diseño] …"; `asks()` reconoce "mejora tu interfaz", "propón mejoras de diseño", "qué le cambiarías a tu icono", etc.
 - `MainActivity.handleDesignReview`: con la orden, pone `designReview = true`, Gemma recibe el contexto de diseño en sus instrucciones y propone; las líneas MEJORA quedan anotadas (pasan por `noteImprovements`) con la etiqueta [Diseño]. Con "propón mejoras" se vuelven ficha de GitHub.
 - Como Gemma no ve la pantalla, se le describe la interfaz en texto; no inventa funciones, solo mejoras de diseño.
+
+## ARI Trader para el hermano del dueño (versión 0.61.0, Parte 1)
+
+Pedido del usuario: una copia de ARI para su hermano, especializada en trading, con varias ventajas pero sin los poderes de CEO; que se adapte y nos mande propuestas (automático) para validarlas. Instalación libre (sin amarre a un teléfono).
+- Nuevo sabor `trader`: `applicationId com.ari.trader`, sufijo `-trader`, app aparte. `ari_ceo=false` (sin control del teléfono, GitHub, auto-mejora ni equipo de modelos), `ari_trader=true`. `res/values/trader.xml`, fuente `trader/…/CeoTeam.kt` (sin equipo).
+- Personalidad de trading (`Profile.personality(trader=true)`): entrenadora, no asesora. Reglas fijas: no da consejos financieros ni señales, no tiene precios en vivo, no promete ganancias y recuerda el riesgo de perder dinero. Tutora de trading funciona con "quiero aprender trading" (AriTutor).
+- Propuestas automáticas (`TraderProposals.kt`): junta lo que el usuario necesita y lo que ARI no supo (Gemma marca "MEJORA:"; o "anota una mejora: …"). Con "propón mejoras" pide permiso una vez y manda la lista al intermediario de los informes (reusa `BuildConfig.INFORMES_URL`, `X-Ari-App: ari`, kind=error, summary marcado `[Propuesta ARI Trader]`). Cola sin red con reintentos. Solo texto de la propuesta y la versión; nada personal. El hermano no toca GitHub ni se actualiza solo: el dueño le pasa el APK nuevo.
+- CI: `android.yml` ahora corre `testTraderDebugUnitTest`, compila `assembleTraderRelease` y guarda el artifact `ari-trader-apk`.
+- Pruebas en `TraderProposalsTest` y `ProfileTest`.
+- Siguiente (Parte 2+): diario de operaciones, checklist/disciplina, leer capturas de gráficas con visión (con avisos de que no es consejo).

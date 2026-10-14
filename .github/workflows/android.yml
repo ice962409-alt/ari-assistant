@@ -72,11 +72,11 @@ jobs:
           done
 
       - name: Pruebas automaticas
-        run: ./gradlew :app:testCompletaDebugUnitTest :app:testOtrosDebugUnitTest
+        run: ./gradlew :app:testCompletaDebugUnitTest :app:testOtrosDebugUnitTest :app:testTraderDebugUnitTest
 
       # Las versiones de entrega (release): código revuelto, sin modo de depuración.
       - name: Compilar APK
-        run: ./gradlew :app:assembleCompletaRelease :app:assembleOtrosRelease :app:assembleCompletaDebug :estado:assembleDebug
+        run: ./gradlew :app:assembleCompletaRelease :app:assembleOtrosRelease :app:assembleTraderRelease :app:assembleCompletaDebug :estado:assembleDebug
 
       # Revisa que cada APK esté bien firmada y se pueda instalar (firma, versión, permisos).
       - name: Revisar APK
@@ -104,6 +104,13 @@ jobs:
         with:
           name: ari-otros-apk
           path: app/build/outputs/apk/otros/release/app-otros-release.apk
+
+      # ARI Trader (hermano del dueño), especializada en trading, sin poderes de CEO.
+      - name: Guardar APK de ARI Trader
+        uses: actions/upload-artifact@v4
+        with:
+          name: ari-trader-apk
+          path: app/build/outputs/apk/trader/release/app-trader-release.apk
 
       # Página oficial: solo cuando se pide (publicar_web) y solo la Ari comercial, nunca la del dueño.
       # Necesita el secreto ARI_WEB_TOKEN (llave con permiso Contents de escritura solo en ari-web).

@@ -130,6 +130,8 @@ class MainActivity : Activity() {
     private var pendingContactRequest: String? = null
     /** true mientras Gemma hace una revisión de diseño (ver AriDesign). */
     private var designReview = false
+    /** true solo en ARI Trader (hermano del dueño): enciende lo específico de trading. */
+    private val trader by lazy { resources.getBoolean(R.bool.ari_trader) }
 
     // Revisa el avance de la descarga del modelo mientras Ari está a la vista.
     private val downloadWatcher = android.os.Handler(android.os.Looper.getMainLooper())
@@ -231,6 +233,7 @@ class MainActivity : Activity() {
         AriMessenger.listener = messageListener
         offerFailureReport()
         autoCheckForUpdate()
+        if (trader) Thread { runCatching { TraderProposals.flush(this) } }.start()
         voice = VoiceController(this, voiceListener)
         voiceVault = VoiceVault(this)
         voiceIdentity = VoiceIdentity(this)
@@ -2940,6 +2943,7 @@ class MainActivity : Activity() {
         if (!guestMode && handleUpdateRequest(text)) return
         if (!guestMode && handleWeb(text)) return
         if (!guestMode && handleAppControl(text)) return
+        if (!guestMode && trader && handleTraderFeedback(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleDesignReview(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 
@@ -3319,6 +3323,8 @@ class MainActivity : Activity() {
                         busy = false
                         if (!forGuest) learnFrom(response.toString())
                         if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) noteImprovements(response.toString())
+                        if (!forGuest && trader) TraderProposals.saveNotes(this@MainActivity,
+                            TraderProposals.notesIn(response.toString()).fold(TraderProposals.notes(this@MainActivity)) { acc, n -> TraderProposals.add(acc, n) })
                         if (designReview) {
                             designReview = false
                             chat.addNote("Esas son mis ideas. Si te gustan, di \"propón mejoras\" y se las paso a Claude.")
@@ -3590,6 +3596,63 @@ class MainActivity : Activity() {
     }
 
     /** "anota una mejora: …", "propón mejoras" y "borra las mejoras". */
+    /** Solo ARI Trader: junta mejoras y, con "propón mejoras", las manda al dueño para validarlas. */
+    private fun handleTraderFeedback(text: String): Boolean {
+        val request = TraderProposals.parse(com.ari.assistant.agents.normalizeForAgents(text)) ?: return false
+        input.text.clear()
+        when (request) {
+            is TraderProposals.Request.Note -> {
+                TraderProposals.saveNotes(this, TraderProposals.add(TraderProposals.notes(this), request.text))
+                answerLocally(text, "Anotado: \"${request.text}\". Cuando quieras, di \"propón mejoras\" y se lo mando a quien cuida ARI para que lo revise.")
+            }
+            TraderProposals.Request.Clear -> {
+                TraderProposals.saveNotes(this, emptyList())
+                answerLocally(text, "Listo, borré las mejoras anotadas.")
+            }
+            TraderProposals.Request.Propose -> {
+                val notes = TraderProposals.notes(this)
+                if (notes.isEmpty()) {
+                    answerLocally(text, "Todavía no hay mejoras anotadas. Cuando algo no pueda hacer lo anoto; también puedes decir \"anota una mejora: …\".")
+                } else if (!TraderProposals.asked(this)) {
+                    askTraderSend(notes)
+                } else {
+                    sendTraderProposals(notes)
+                }
+            }
+        }
+        return true
+    }
+
+    private fun askTraderSend(notes: List<String>) {
+        AlertDialog.Builder(this)
+            .setTitle("¿Mando tus mejoras?")
+            .setMessage(
+                "Le mando a quien cuida ARI estas ideas para que las revise y, si se pueden, las agregue en una próxima versión:\n\n" +
+                    notes.joinToString("\n") { "• $it" } +
+                    "\n\nSolo va este texto y la versión de la app, nada personal. ¿Lo mando?"
+            )
+            .setPositiveButton("Sí, mandar") { _, _ -> TraderProposals.setEnabled(this, true); sendTraderProposals(notes) }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    private fun sendTraderProposals(notes: List<String>) {
+        chat.addNote("Mandando tus mejoras…")
+        Thread {
+            TraderProposals.enqueue(this, notes)
+            val sent = TraderProposals.flush(this)
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                if (sent > 0) {
+                    TraderProposals.saveNotes(this, emptyList())
+                    chat.addNote("Listo, mandé tus mejoras para que las revisen. Gracias por ayudarme a mejorar.")
+                } else {
+                    chat.addNote("Las guardé; las mando en cuanto haya internet.")
+                }
+            }
+        }.start()
+    }
+
     /** Solo ARI: "mejora tu interfaz" → Gemma revisa su diseño y propone mejoras (van a las fichas). */
     private fun handleDesignReview(text: String): Boolean {
         if (!AriDesign.asks(text)) return false
@@ -3868,7 +3931,7 @@ class MainActivity : Activity() {
         if (guest) {
             return engine.createConversation(ConversationConfig(systemInstruction = Contents.of(guestPreface())))
         }
-        val instruction = StringBuilder(profile.personality(ceo = ceoTeam.enabled))
+        val instruction = StringBuilder(profile.personality(ceo = ceoTeam.enabled, trader = trader))
         val memories = database.memories()
         if (memories.isNotEmpty()) {
             instruction.append("\n\nRecuerdos guardados sobre el usuario (úsalos para responder, pero no los repitas literalmente):\n")
@@ -3890,6 +3953,8 @@ class MainActivity : Activity() {
         if (resources.getBoolean(R.bool.ari_ceo)) instruction.append("\n\n").append(AriTools.instruction())
         // Revisión de diseño: se le describe a Gemma cómo se ve ARI para que proponga mejoras.
         if (designReview) instruction.append("\n\n").append(AriDesign.instruction()).append("\n").append(AriDesign.CONTEXT)
+        // ARI Trader: que Gemma marque lo que al usuario le falta, para proponerlo al dueño.
+        if (trader) instruction.append("\n\n").append(TraderProposals.instruction())
         // Modo tutora: Gemma enseña el tema paso a paso y deja un resumen para la próxima clase.
         tutorTopic?.let { topic ->
             instruction.append("\n\n").append(AriTutor.instruction(topic, tutorSummary(topic), tutorSessions(topic)))

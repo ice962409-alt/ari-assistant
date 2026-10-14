@@ -51,8 +51,8 @@ android {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 74
-        versionName = "0.60.0"
+        versionCode = 75
+        versionName = "0.61.0"
         // El intermediario de informes de fallos (contrato en el repositorio ari-informes). No es secreto.
         buildConfigField("String", "INFORMES_URL", "\"https://ari-informes.javierhedzd.workers.dev/v1/informe\"")
         // De qué compilación de GitHub Actions viene este APK: ARI lo usa para saber si hay una más nueva.
@@ -77,6 +77,13 @@ android {
             // La Ari comercial: su propio paquete, para convivir con la ARI del dueño y publicarse aparte.
             applicationId = "com.ari.asistente"
             versionNameSuffix = "-otros"
+        }
+        create("trader") {
+            dimension = "version"
+            // ARI Trader: copia para el hermano del dueño, especializada en trading. App aparte,
+            // sin los poderes de CEO (control del teléfono, GitHub, auto-mejora, equipo de modelos).
+            applicationId = "com.ari.trader"
+            versionNameSuffix = "-trader"
         }
     }
 }
