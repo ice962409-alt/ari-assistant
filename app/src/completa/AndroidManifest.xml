@@ -24,6 +24,8 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- Actualizarse desde GitHub: Android siempre pide confirmar la instalación. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- "busca el archivo…": Android 11+ pide "Acceso a todos los archivos" para ver documentos. -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -34,6 +36,11 @@
     <application
         android:usesCleartextTraffic="true"
         tools:replace="android:usesCleartextTraffic">
+        <!-- El instalador de Android avisa aquí si necesita tu confirmación. -->
+        <receiver
+            android:name="com.ari.assistant.AriUpdateReceiver"
+            android:exported="false" />
+
 
         <!-- Solo la Ari CEO: envía los recados y maneja tus apps cuando se lo pides (Accesibilidad). -->
         <service

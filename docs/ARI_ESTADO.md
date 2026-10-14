@@ -690,3 +690,30 @@ Backlog [autónomo] de la libreta: verla y editarla desde el botón Memoria.
 - Al tocar a alguien se abre su ficha: nombre, quién es, cumpleaños y lo que Ari sabe (uno por línea). Botones Guardar, Olvidar (con confirmación) y Cancelar. "Agregar persona" crea una ficha nueva.
 - `PeopleEditor.kt`, sin Android: lee el cumpleaños escrito como "5 de mayo", "5 mayo", "5/5" o "05-05" (día y mes) y rechaza fechas imposibles. También quita datos vacíos o repetidos y explica lo que falta. Pruebas en `PeopleEditorTest`.
 - Guardar u olvidar marca `memoriesPending`, así Gemma recibe la libreta nueva.
+
+## Informes de fallos automáticos y actualizarse desde GitHub (versión 0.57.0)
+
+Decisión del usuario ("Sí" a las dos, 14/10). Los informes van en las dos apps; la actualización, solo en la ARI del dueño.
+
+### Informes de fallos automáticos
+
+`AutoReport.kt` sigue el contrato de `javierhedzd-ops/ari-informes` (CONTRATO.md).
+- Apagado hasta que la persona acepta: se pregunta una vez, cuando hay el primer informe guardado. Se cambia en Ajustes → Informes de fallos automáticos. Sin permiso, sigue el correo de siempre.
+- `FailureReport.save` también llama a `AutoReport.record`, que solo escribe la cola (`files/fallos/cola_informes.json`, máximo 20). Al abrir Ari se llama a `flush`; si falla, reintenta con `AutoReportJob` (JobScheduler, con red) a 1 min, 10 min y luego cada hora.
+- `POST BuildConfig.INFORMES_URL` con `X-Ari-App: ari`. El cuerpo lleva platform, appVersion, kind (cierre, congelada, memoria o error), summary, details (máx. 8000), osVersion, device, ramGb, model, installId (UUID al azar) y happenedAt. Se recorta a 32 KB.
+- `clean()` quita correos, teléfonos, enlaces y llaves antes de mandar.
+- 2xx, 400, 403 y 413 sacan el informe de la cola; 429, 5xx o sin red lo reintentan.
+- Pruebas en `AutoReportTest`.
+- Política de privacidad actualizada (`docs/POLITICA_PRIVACIDAD.md`, `web/privacidad.html` y ari-web).
+- Ojo: el repositorio ari-informes es público, así que las fichas se ven en internet (solo con datos técnicos).
+
+### Actualizarse desde GitHub (solo ARI)
+
+`AriUpdate.kt`:
+- `BuildConfig.BUILD_RUN` (GITHUB_RUN_ID) y `BUILD_BRANCH` (GITHUB_REF_NAME) dicen de qué compilación viene el APK.
+- `check` pide la última ejecución en verde de `android.yml` en esa rama. Si su id es mayor, ofrece bajarla.
+- `download` busca el artifact `ari-apk`. El enlace de descarga redirige a un almacenamiento temporal: se sigue la redirección sin mandar la llave. Después descomprime el APK en `cacheDir`.
+- `verify` revisa que sea el mismo paquete y una versión que no sea más vieja.
+- `install` usa una sesión de `PackageInstaller`. `AriUpdateReceiver` abre la confirmación de Android. Necesita `REQUEST_INSTALL_PACKAGES` (solo completa) y el permiso "Instalar apps desconocidas" para ARI.
+- Se usa con "busca actualizaciones", "actualízate" o Ajustes → Buscar actualización. Al abrir ARI revisa en silencio cada 6 horas como máximo.
+- La llave de GitHub de ARI necesita también el permiso Actions: lectura. Pruebas en `AriUpdateTest`.

@@ -58,6 +58,10 @@ object AriNews {
             Item("Burbuja sin el aviso de Android", "Con Ajustes → Manejar mis apps encendido, mi burbuja ya no hace salir el aviso \"ARI se muestra sobre otras apps\".", ceoOnly = true),
         ),
         70 to listOf(Item("Tu gente en una pantalla", "Toca Memoria → Mi gente: ve a todas las personas que conozco, corrige su cumpleaños o lo que sé de ellas, o agrega a alguien.")),
+        71 to listOf(
+            Item("Me actualizo desde GitHub", "Dime \"busca actualizaciones\" o Ajustes → Buscar actualización. A tu llave de GitHub agrégale el permiso Actions (lectura).", ceoOnly = true),
+            Item("Informes de fallos automáticos", "Ajustes → Informes de fallos automáticos. Solo datos técnicos, nunca tus pláticas; tú decides si se encienden."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

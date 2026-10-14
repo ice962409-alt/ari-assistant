@@ -29,6 +29,7 @@ La única conexión a internet es la **descarga del modelo**, si tú la pides: e
 - **Con nadie por defecto.**
 - **Equipo de modelos (opcional)**: si tú apruebas una computadora de tu red local, Ari le envía la tarea que le encargas, pero nunca tus recuerdos. Esa conexión no sale de tu red.
 - **Reconocimiento de voz**: lo hace el servicio de voz instalado en tu teléfono (por ejemplo, el de Google), con sus propias reglas de privacidad. Puedes instalar el paquete de idioma sin conexión para que funcione sin internet.
+- **Informes de fallos automáticos (opcional, desde 0.57.0)**: solo si los aceptas, Ari manda por internet los datos técnicos de un fallo: el error, la versión de Ari, el modelo y la versión de Android del teléfono, la memoria y un número al azar de la instalación que no se relaciona contigo. Nunca pláticas, recuerdos, contactos, fotos, nombres ni tu voz. Van al intermediario de quien hace Ari (Cloudflare), que los guarda como fichas en GitHub. Se apagan en Ajustes. Para Google Play se declaran como "registros de fallos" y "diagnóstico", opcionales y no vinculados a la persona.
 - **Respaldos**: si guardas un respaldo, va cifrado con tu contraseña al lugar que tú elijas (por ejemplo, tu Google Drive). Ni nosotros ni nadie sin tu contraseña puede leerlo.
 
 ## Publicidad y análisis

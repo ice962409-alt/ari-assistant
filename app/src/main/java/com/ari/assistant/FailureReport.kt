@@ -14,7 +14,8 @@ import java.io.StringWriter
  *
  * Si Ari se cierra sola, guarda en el teléfono qué pasó (el error y datos del teléfono).
  * La siguiente vez que se abre, ofrece mandarlo con "Compartir" (WhatsApp, correo…).
- * Ari no lo envía sola ni usa internet: la persona ve el informe y decide.
+ * Sin permiso, Ari no lo envía sola: la persona ve el informe y decide. Si la persona
+ * aceptó los informes automáticos, también lo manda [AutoReport] (solo datos técnicos).
  * Nunca incluye pláticas, recuerdos, contactos ni nombres.
  */
 object FailureReport {
@@ -77,6 +78,15 @@ object FailureReport {
 
     private fun save(context: Context, what: String, details: String) {
         file(context).writeText(text(device(context), what, details))
+        // Si la persona aceptó los informes automáticos, también queda en la cola para mandarse.
+        AutoReport.record(context, what, details)
+    }
+
+    /** "Qué pasó" y el detalle técnico de un informe guardado (sin Android, para probarlo). */
+    fun parts(report: String): Pair<String, String> {
+        val what = report.lineSequence().firstOrNull { it.startsWith("Qué pasó: ") }?.removePrefix("Qué pasó: ").orEmpty()
+        val details = report.substringAfter("\nDetalle técnico:\n", "").trim()
+        return what.ifEmpty { "Fallo de Ari" } to details
     }
 
     /**

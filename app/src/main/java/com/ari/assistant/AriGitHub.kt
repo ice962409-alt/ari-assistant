@@ -64,6 +64,9 @@ object AriGitHub {
         prefs(context).edit().remove(FIELD).apply()
     }
 
+    /** La llave guardada (también la usa [AriUpdate] para bajar actualizaciones). */
+    fun token(context: Context): String? = loadToken(context)
+
     private fun loadToken(context: Context): String? {
         val stored = prefs(context).getString(FIELD, null) ?: return null
         return runCatching {

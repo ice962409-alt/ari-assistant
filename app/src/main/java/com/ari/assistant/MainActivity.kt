@@ -228,6 +228,7 @@ class MainActivity : Activity() {
         buildInterface()
         AriMessenger.listener = messageListener
         offerFailureReport()
+        autoCheckForUpdate()
         voice = VoiceController(this, voiceListener)
         voiceVault = VoiceVault(this)
         voiceIdentity = VoiceIdentity(this)
@@ -859,6 +860,92 @@ class MainActivity : Activity() {
         return true
     }
 
+    // --- Solo ARI: actualizarse desde GitHub (ver AriUpdate) ---
+
+    private fun handleUpdateRequest(text: String): Boolean {
+        if (!resources.getBoolean(R.bool.ari_ceo) || !AriUpdate.asks(text)) return false
+        input.text.clear()
+        saveMessage(ROLE_USER, text)
+        chat.addUser(text)
+        checkForUpdate(quiet = false)
+        return true
+    }
+
+    /** Busca una compilación nueva. [quiet]: la revisión automática solo habla si hay algo nuevo. */
+    private fun checkForUpdate(quiet: Boolean) {
+        if (!resources.getBoolean(R.bool.ari_ceo)) return
+        if (!quiet) chat.addNote("Buscando en GitHub…")
+        Thread {
+            val result = runCatching { AriUpdate.check(this) }.getOrElse { AriUpdate.Check.Failed(AriUpdate.explain(-1)) }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                when (result) {
+                    is AriUpdate.Check.Available -> offerUpdate(result.release)
+                    AriUpdate.Check.UpToDate -> if (!quiet) chat.addNote("Ya tienes la versión más nueva.")
+                    AriUpdate.Check.NoToken -> if (!quiet) chat.addNote("Para buscar actualizaciones necesito la llave de GitHub: Ajustes → GitHub de ARI.")
+                    is AriUpdate.Check.Failed -> if (!quiet) chat.addNote(result.message)
+                }
+            }
+        }.start()
+    }
+
+    private fun offerUpdate(release: AriUpdate.Release) {
+        AlertDialog.Builder(this)
+            .setTitle("Hay una ARI nueva")
+            .setMessage(
+                "Compilación #${release.number} (${release.created}):\n${release.title}\n\n" +
+                    "La bajo de GitHub y Android te pide confirmar la instalación. Tus recuerdos y ajustes se quedan."
+            )
+            .setPositiveButton("Bajar e instalar") { _, _ -> downloadUpdate(release) }
+            .setNegativeButton("Después", null)
+            .show()
+    }
+
+    private fun downloadUpdate(release: AriUpdate.Release) {
+        if (!AriUpdate.canInstall(this)) {
+            AlertDialog.Builder(this)
+                .setTitle("Un permiso, una sola vez")
+                .setMessage("Android pide que me dejes instalar actualizaciones. En la pantalla que abro, activa \"Permitir de esta fuente\" y vuelve. Luego dime otra vez \"busca actualizaciones\".")
+                .setPositiveButton("Abrir") { _, _ -> runCatching { startActivity(AriUpdate.permissionIntent(this)) } }
+                .setNegativeButton("Cancelar", null)
+                .show()
+            return
+        }
+        chat.addNote("Bajando la compilación #${release.number}…")
+        var lastShown = -10
+        Thread {
+            val (apk, error) = runCatching {
+                AriUpdate.download(this, release) { percent ->
+                    if (percent >= lastShown + 10) {
+                        lastShown = percent
+                        runOnUiThread { if (!isDestroyed) status.text = "Bajando la actualización: $percent%" }
+                    }
+                }
+            }.getOrElse { null to "No pude bajar la actualización. Revisa tu internet." }
+            val problem = error ?: apk?.let { runCatching { AriUpdate.verify(this, it) }.getOrElse { "No pude revisar el archivo." } }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                status.text = ""
+                if (apk == null || problem != null) {
+                    chat.addNote(problem ?: "No pude bajar la actualización.")
+                    return@runOnUiThread
+                }
+                chat.addNote("Listo. Android te va a pedir confirmar: toca Instalar.")
+                runCatching { AriUpdate.install(this, apk) }.onFailure { chat.addNote("No pude abrir el instalador: ${it.message}") }
+            }
+        }.start()
+    }
+
+    /** Al abrir ARI, una revisión silenciosa cada 6 horas como máximo. */
+    private fun autoCheckForUpdate() {
+        if (!resources.getBoolean(R.bool.ari_ceo) || !AriGitHub.hasToken(this)) return
+        val prefs = getSharedPreferences("ari_actualizacion", MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        if (now - prefs.getLong("ultima", 0L) < 6 * 60 * 60 * 1000L) return
+        prefs.edit().putLong("ultima", now).apply()
+        checkForUpdate(quiet = true)
+    }
+
     // --- Solo Ari CEO: uso del teléfono y pasos (ver AriUsage) ---
 
     private fun setupUsage() {
@@ -1249,6 +1336,7 @@ class MainActivity : Activity() {
         if (ceo) items += item("Leer mis notificaciones: ${if (AriRecados.enabled(this)) "sí" else "no"}") { setupInbox() }
         if (ceo) items += item("Agenda y fotos") { setupAgendaAndPhotos() }
         if (ceo) items += item("GitHub de ARI: ${if (AriGitHub.hasToken(this)) "conectado" else "sin conectar"}") { setupGitHub() }
+        if (ceo) items += item("Buscar actualización") { checkForUpdate(quiet = false) }
         if (ceo) items += item("Uso del teléfono y pasos") { setupUsage() }
         if (!ceo) items += item("Ari Premium") {
             AlertDialog.Builder(this)
@@ -1258,6 +1346,14 @@ class MainActivity : Activity() {
                 .show()
         }
         items += item("Recados entre Ari") { setupAriMessages() }
+        items += item("Informes de fallos automáticos: ${if (AutoReport.enabled(this)) "sí" else "no"}") {
+            if (AutoReport.enabled(this)) {
+                AutoReport.setEnabled(this, false)
+                chat.addNote("Ya no mando informes de fallos sola. Si me cierro, te ofrezco mandarlo por correo.")
+            } else {
+                askAutoReports(null)
+            }
+        }
         items += item("Reportar un problema") { askProblemReport() }
         items += item("Acerca de Ari y licencias") { showAbout() }
         AlertDialog.Builder(this)
@@ -1271,9 +1367,21 @@ class MainActivity : Activity() {
     private fun offerFailureReport() {
         Thread {
             FailureReport.checkSystemExit(this)
+            // Lo que quedó en la cola de informes automáticos (por ejemplo, sin red) sale ahora.
+            AutoReport.flush(this)
             val report = FailureReport.pending(this) ?: return@Thread
+            if (AutoReport.enabled(this)) {
+                // Ya se mandó solo (o espera red en la cola): no hace falta preguntar.
+                FailureReport.clear(this)
+                runOnUiThread { if (!isDestroyed) chat.addNote("Ari se cerró la última vez. Mandé el informe del fallo (solo datos técnicos) para que lo arreglen.") }
+                return@Thread
+            }
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
+                if (!AutoReport.asked(this)) {
+                    askAutoReports(report)
+                    return@runOnUiThread
+                }
                 AlertDialog.Builder(this)
                     .setTitle("Ari se cerró la última vez")
                     .setMessage(
@@ -1287,6 +1395,38 @@ class MainActivity : Activity() {
                     .show()
             }
         }.start()
+    }
+
+    /** Una sola vez: ¿mandar los informes de fallos solos? Se cambia en Ajustes. */
+    private fun askAutoReports(report: String?) {
+        AlertDialog.Builder(this)
+            .setTitle(if (report != null) "Ari se cerró la última vez" else "Informes de fallos")
+            .setMessage(
+                "¿Enviar informes de fallos automáticamente para mejorar Ari?\n\n" +
+                    "Solo van datos técnicos: el error, la versión de Ari y el modelo del teléfono. " +
+                    "Nunca tus pláticas, recuerdos, contactos, fotos ni tu voz. " +
+                    "Si no hay internet, espera y lo manda después. Lo puedes apagar en Ajustes."
+            )
+            .setPositiveButton("Sí, enviarlos") { _, _ ->
+                AutoReport.setEnabled(this, true)
+                if (report != null) {
+                    Thread {
+                        val (what, details) = FailureReport.parts(report)
+                        AutoReport.record(this, what, details)
+                        FailureReport.clear(this)
+                        val sent = AutoReport.flush(this)
+                        runOnUiThread {
+                            if (!isDestroyed) chat.addNote(if (sent > 0) "Listo, mandé el informe del fallo." else "Guardé el informe; lo mando en cuanto haya internet.")
+                        }
+                    }.start()
+                }
+            }
+            .setNegativeButton("No") { _, _ ->
+                AutoReport.setEnabled(this, false)
+                if (report != null) showReport(report, clearAfter = true)
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun showReport(report: String, clearAfter: Boolean) {
@@ -2794,6 +2934,7 @@ class MainActivity : Activity() {
         if (!guestMode && handlePhoneSettings(text)) return
         if (!guestMode && handleMedia(text)) return
         if (!guestMode && handleUsage(text)) return
+        if (!guestMode && handleUpdateRequest(text)) return
         if (!guestMode && handleWeb(text)) return
         if (!guestMode && handleAppControl(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
@@ -3432,9 +3573,9 @@ class MainActivity : Activity() {
             addView(TextView(this@MainActivity).apply {
                 setTextColor(AriTheme.text)
                 text = (if (AriGitHub.hasToken(this@MainActivity)) "Ya tengo una llave guardada. Si pegas otra, reemplaza a la anterior.\n\n" else "") +
-                    "Con esta llave dejo mis propuestas de mejora como fichas (issues) en tu repositorio ari-assistant, y Claude las programa.\n\n" +
+                    "Con esta llave dejo mis propuestas de mejora como fichas (issues) en tu repositorio ari-assistant, y Claude las programa. También busco y bajo mis actualizaciones.\n\n" +
                     "Cómo crearla:\n1. Toca \"Abrir GitHub\".\n2. Nombre: ARI fichas. Caducidad: 90 días.\n" +
-                    "3. Acceso a repositorios: solo ari-assistant.\n4. Permisos → Issues: lectura y escritura.\n" +
+                    "3. Acceso a repositorios: solo ari-assistant.\n4. Permisos → Issues: lectura y escritura; Actions: solo lectura (para actualizarme).\n" +
                     "5. Genera, copia la llave y pégala aquí. No la mandes por chat."
             })
             addView(field)
