@@ -507,6 +507,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Tu día en números (0.46.0): tu Ari CEO te dice cuánto usaste el teléfono hoy y en qué apps, y cuántos pasos llevas.
 - Agenda y fotos (0.45.0): tu Ari CEO guarda citas directo en tu calendario, te muestra tus fotos de hoy, ayer o la semana, tu última foto o captura, y busca documentos por nombre.
 - Ari CEO maneja tu teléfono (0.44.0): linterna, volumen, música, No molestar, brillo, bloquear la pantalla y capturas por voz; con Manejar mis apps, "llama a mamá" llama sola.
 - Ari CEO lee tus notificaciones (0.43.0): "¿qué notificaciones tengo?" te las resume por app y persona; "respóndele a Juan que ya voy" contesta desde la notificación después de tu "sí". Solo en memoria, 12 horas.

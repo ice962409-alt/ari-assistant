@@ -331,6 +331,18 @@ Cuando sales de una app, Android la "duerme" para cuidar la batería y tu privac
 - El micrófono en segundo plano solo se puede encender **mientras Ari está en pantalla**. Por eso el modo live empieza en Ari, y si Android cierra la app, no vuelve a escuchar sola.
 - Un detalle práctico: si pones música, el micrófono oiría la canción y Ari la tomaría por órdenes. Por eso, si algo está sonando, Ari espera a que toques "Hablar".
 
+### Permisos especiales: los que se dan en una pantalla aparte
+
+Algunos permisos son tan delicados que Android no los pregunta con una ventanita: hay que ir a una pantalla de Ajustes y activarlos a mano. Tu Ari CEO usa varios:
+
+- **Acceso al uso**: ver cuánto tiempo usas cada app.
+- **Acceso a todos los archivos**: buscar documentos en cualquier carpeta.
+- **Modificar ajustes del sistema**: cambiar el brillo.
+- **Acceso a notificaciones**: leerlas, contestarlas y activar No molestar.
+- **Accesibilidad**: tocar y escribir en otras apps.
+
+Ari te abre la pantalla correcta y tú decides. Se pueden quitar cuando quieras desde Ajustes del teléfono → Apps → Ari.
+
 ### Ari maneja tus apps: Accesibilidad con pausa
 
 El permiso de **Accesibilidad** existe para personas que no pueden tocar la pantalla: deja que una app lea lo que hay en otras y toque por ti. Es muy poderoso, por eso Android lo pide con varios pasos.

@@ -591,3 +591,9 @@ Decisión del usuario: darle más accesos a la Ari CEO (notificaciones, teléfon
 - `ChatView.addPhotos`: tira de miniaturas (96dp, `loadThumbnail` en otro hilo) que se abren al tocarlas.
 - Ajustes → "Agenda y fotos" (solo CEO) explica y pide los permisos. Manifiesto de la CEO: `WRITE_CALENDAR`, `READ_MEDIA_IMAGES`, `READ_MEDIA_VISUAL_USER_SELECTED`, `READ_EXTERNAL_STORAGE` (≤32), `MANAGE_EXTERNAL_STORAGE`.
 - Pendiente: buscar una foto por lo que sale en ella ("la del recibo") con la vista de Gemma; es lento en el teléfono.
+
+## Ari CEO: uso del teléfono y pasos (versión 0.46.0)
+
+- `AriUsage.kt` (frases y textos puros; pruebas en `AriUsageTest`): "¿cuánto tiempo usé el teléfono hoy?", "tiempo en pantalla", "¿en qué apps paso más tiempo?" → `UsageStatsManager.queryAndAggregateUsageStats` desde las 0:00 (sin el lanzador, apps con más de 1 min; top 5; aviso de descanso desde 5 h). Permiso especial "Acceso al uso" (`PACKAGE_USAGE_STATS`).
+- "¿cuántos pasos llevo?" → `TYPE_STEP_COUNTER` (permiso `ACTIVITY_RECOGNITION`); el día empieza en la primera lectura del día (`AriUsage.sample` al abrir Ari) y se reinicia si el teléfono se reinició. Limitación: no cuenta los pasos antes de abrir Ari ese día (Health Connect quedaría para después).
+- Ajustes → "Uso del teléfono y pasos" (solo CEO).

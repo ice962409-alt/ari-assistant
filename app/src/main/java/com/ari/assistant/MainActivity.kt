@@ -770,6 +770,68 @@ class MainActivity : Activity() {
             .show()
     }
 
+    // --- Solo Ari CEO: uso del teléfono y pasos (ver AriUsage) ---
+
+    private fun setupUsage() {
+        AlertDialog.Builder(this)
+            .setTitle("Uso del teléfono y pasos")
+            .setMessage(
+                "• \"¿cuánto tiempo usé el teléfono hoy?\" o \"¿en qué apps paso más tiempo?\"\n" +
+                    "• \"¿cuántos pasos llevo?\"\n\n" +
+                    "Para el tiempo, Android pide \"Acceso al uso\" (búscame en la lista y actívalo). Para los pasos, el permiso de " +
+                    "\"Actividad física\". Nada sale del teléfono."
+            )
+            .setPositiveButton("Dar permisos") { _, _ ->
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q &&
+                    checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    requestPermissions(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION), REQUEST_STEPS)
+                } else if (!AriUsage.hasUsageAccess(this)) {
+                    runCatching { startActivity(AriUsage.usageAccessIntent()) }
+                } else {
+                    chat.addNote("Ya tengo los permisos. Pregúntame cuando quieras.")
+                }
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    private fun handleUsage(text: String): Boolean {
+        if (!resources.getBoolean(R.bool.ari_ceo)) return false
+        val request = AriUsage.parse(text) ?: return false
+        input.text.clear()
+        when (request) {
+            AriUsage.Request.SCREEN_TIME -> {
+                if (!AriUsage.hasUsageAccess(this)) {
+                    answerLocally(text, "Para saber cuánto usas cada app, Android pide \"Acceso al uso\". Te abro la pantalla: búscame y actívalo.")
+                    runCatching { startActivity(AriUsage.usageAccessIntent()) }
+                    return true
+                }
+                Thread {
+                    val message = runCatching { AriUsage.screenTimeMessage(AriUsage.appTimesToday(this)) }
+                        .getOrDefault("No pude leer el uso del teléfono.")
+                    runOnUiThread { if (!isDestroyed) answerLocally(text, message) }
+                }.start()
+            }
+            AriUsage.Request.STEPS -> {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q &&
+                    checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    answerLocally(text, "Para contar tus pasos necesito el permiso de \"Actividad física\".")
+                    requestPermissions(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION), REQUEST_STEPS)
+                    return true
+                }
+                Thread {
+                    val result = runCatching { AriUsage.steps(this) }.getOrNull()
+                    val message = if (result == null) "Tu teléfono no tiene contador de pasos (o no me lo deja leer)."
+                    else AriUsage.stepsMessage(result.first, result.second)
+                    runOnUiThread { if (!isDestroyed) answerLocally(text, message) }
+                }.start()
+            }
+        }
+        return true
+    }
+
     // --- Solo Ari CEO: agenda y fotos (ver AriMedia) ---
 
     private fun agendaAndPhotoPermissions(): Array<String> = arrayOf(
@@ -1096,6 +1158,7 @@ class MainActivity : Activity() {
         if (ceo) items += item("Manejar mis apps: ${if (AutoSend.enabled(this)) "sí" else "no"}") { setupAppControl() }
         if (ceo) items += item("Leer mis notificaciones: ${if (AriRecados.enabled(this)) "sí" else "no"}") { setupInbox() }
         if (ceo) items += item("Agenda y fotos") { setupAgendaAndPhotos() }
+        if (ceo) items += item("Uso del teléfono y pasos") { setupUsage() }
         items += item("Recados entre Ari") { setupAriMessages() }
         items += item("Reportar un problema") { askProblemReport() }
         items += item("Acerca de Ari y licencias") { showAbout() }
@@ -2234,6 +2297,8 @@ class MainActivity : Activity() {
         // Ari en pantalla ya te escucha: la que espera su nombre suelta el micrófono.
         AriWakeWord.appVisible = true
         AriWakeWord.start(this)
+        // Ari CEO: al abrirla, el contador de pasos del día empieza a contar.
+        if (resources.getBoolean(R.bool.ari_ceo)) AriUsage.sample(this)
         // Ya estás aquí: el chat de notificaciones se limpia (todo está en la pantalla de Ari).
         AriChat.clear(this)
         // Dentro de Ari no hace falta la burbuja; vuelve al salir.
@@ -2603,6 +2668,7 @@ class MainActivity : Activity() {
         if (!guestMode && handleInbox(text)) return
         if (!guestMode && handlePhoneSettings(text)) return
         if (!guestMode && handleMedia(text)) return
+        if (!guestMode && handleUsage(text)) return
         if (!guestMode && handleAppControl(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 
@@ -3542,6 +3608,14 @@ class MainActivity : Activity() {
             ceoTeam.onLocationResult()
             return
         }
+        if (requestCode == REQUEST_STEPS) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                AriUsage.sample(this)
+                chat.addNote("¡Listo! Desde ahora cuento tus pasos.")
+            }
+            if (!AriUsage.hasUsageAccess(this)) runCatching { startActivity(AriUsage.usageAccessIntent()) }
+            return
+        }
         if (requestCode == REQUEST_AGENDA_PHOTOS) {
             if (grantResults.any { it != PackageManager.PERMISSION_GRANTED }) {
                 chat.addNote("Faltó algún permiso. Puedes darlo en Ajustes del teléfono → Apps → Ari → Permisos.")
@@ -4170,6 +4244,7 @@ class MainActivity : Activity() {
         private const val REQUEST_AUDIO_ENROLL = 112
         private const val REQUEST_AUDIO_WAKE = 116
         private const val REQUEST_AGENDA_PHOTOS = 117
+        private const val REQUEST_STEPS = 118
         private val ENROLL_PHRASES = listOf(
             "Hola Ari, soy yo. Hoy quiero platicar contigo un rato.",
             "El perro de mi vecino corre rápido por el parque grande.",
