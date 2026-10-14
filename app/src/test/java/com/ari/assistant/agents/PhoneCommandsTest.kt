@@ -139,4 +139,13 @@ class PhoneCommandsTest {
         assertEquals("5533333333", (PhoneCommands.pickContact("juan perez", contacts) as PhoneCommands.ContactChoice.Found).contact.number)
         assertTrue(PhoneCommands.pickContact("Pedro", contacts) is PhoneCommands.ContactChoice.None)
     }
+
+    @Test
+    fun pedirViajeYNotas() {
+        assertEquals(PhoneAction.Ride("aeropuerto", "uber"), parse("Pide un Uber al aeropuerto"))
+        assertEquals(PhoneAction.Ride("Plaza Satélite", "didi"), parse("pídeme un DiDi a Plaza Satélite"))
+        assertEquals(PhoneAction.Ride("", "uber"), parse("pide un taxi"))
+        assertEquals(PhoneAction.Note("comprar leche"), parse("anota en Keep comprar leche"))
+        assertEquals(PhoneAction.Note("llamar al dentista"), parse("Apunta en mis notas que llamar al dentista"))
+    }
 }

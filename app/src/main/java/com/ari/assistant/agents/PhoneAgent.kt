@@ -95,6 +95,8 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
                     is PhoneAction.CalendarEvent -> "No encontré una app de calendario."
                     is PhoneAction.Email -> "No encontré una app de correo."
                     is PhoneAction.Sms -> "No encontré una app de mensajes."
+                    is PhoneAction.Ride -> if (action.app == "didi") "No encontré DiDi en tu teléfono." else "No encontré Uber ni un navegador."
+                    is PhoneAction.Note -> "No encontré una app de notas."
                     else -> "No encontré una app que pueda hacer eso."
                 },
                 success = false
@@ -149,6 +151,10 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
         is PhoneAction.CalendarEvent ->
             "Abrí el calendario con \"${action.title}\" para el ${describe(action.start)}. Toca guardar para confirmarlo."
         is PhoneAction.Navigate -> "Abrí el mapa hacia ${action.place}."
+        is PhoneAction.Ride ->
+            if (action.app == "didi") "Abrí DiDi" + (if (action.place.isNotEmpty()) ": escribe el destino (${action.place}) y confirma." else ".")
+            else "Abrí Uber" + (if (action.place.isNotEmpty()) " con el destino ${action.place}" else "") + ". Revisa y confirma el viaje ahí."
+        is PhoneAction.Note -> "Abrí Keep con la nota lista. Toca guardar."
         PhoneAction.Camera -> "Abrí la cámara."
         is PhoneAction.Settings -> "Abrí los ajustes" + (if (action.section != "general") " de ${action.section}" else "") + "."
         else -> "Listo."

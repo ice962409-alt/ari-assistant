@@ -195,9 +195,27 @@ class AndroidPhone(context: Context) : PhoneLauncher {
                     .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, begin + 60 * 60 * 1000L)
             )
         }
+        is PhoneAction.Ride -> ride(action)
+        is PhoneAction.Note -> listOf(
+            Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, action.text).setPackage("com.google.android.keep"),
+            Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, action.text)
+        )
         // Las de contactos se resuelven en el agente antes de llegar aquí.
         is PhoneAction.Missing, is PhoneAction.DialContact, is PhoneAction.WhatsAppContact,
         is PhoneAction.SmsContact -> emptyList()
+    }
+
+    /** Uber con el destino listo (lo confirmas en Uber); DiDi solo se abre. */
+    private fun ride(action: PhoneAction.Ride): List<Intent> {
+        if (action.app == "didi") {
+            return listOf("com.didiglobal.passenger", "com.sdu.didi.psnger")
+                .mapNotNull { context.packageManager.getLaunchIntentForPackage(it) }
+        }
+        val dropoff = if (action.place.isEmpty()) "" else "&dropoff[formatted_address]=" + Uri.encode(action.place)
+        return listOf(
+            Intent(Intent.ACTION_VIEW, Uri.parse("uber://?action=setPickup&pickup=my_location$dropoff")),
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://m.uber.com/ul/?action=setPickup&pickup=my_location$dropoff"))
+        )
     }
 
     private fun whatsApp(action: PhoneAction.WhatsApp): List<Intent> {

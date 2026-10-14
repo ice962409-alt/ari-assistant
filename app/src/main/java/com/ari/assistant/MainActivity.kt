@@ -3315,6 +3315,7 @@ class MainActivity : Activity() {
                         busy = false
                         if (!forGuest) learnFrom(response.toString())
                         if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) noteImprovements(response.toString())
+                        if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) runTools(response.toString())
                         if (!forGuest) tutorTopic?.let { topic ->
                             AriTutor.summaryIn(response.toString())?.let { saveTutorSummary(topic, it) }
                         }
@@ -3515,6 +3516,60 @@ class MainActivity : Activity() {
         routineWaits = 0
         runNextRoutineStep()
         return true
+    }
+
+    // --- Solo ARI: tus apps son sus herramientas (ver AriTools) ---
+
+    /** Ejecuta los pasos "HACER:" de Gemma: lo seguro sola; lo delicado, después de tu "sí". */
+    private fun runTools(response: String) {
+        val steps = AriTools.plan(response)
+        if (steps.isEmpty()) return
+        steps.filterIsInstance<AriTools.Step.Unknown>().forEach { step ->
+            chat.addNote("Todavía no sé hacer \"${step.command}\". Lo anoté como mejora.")
+            val prefs = routinePrefs()
+            AriImprovements.save(prefs, AriImprovements.add(AriImprovements.load(prefs), "Herramienta que falta: ${step.command}"))
+        }
+        val runnable = steps.filterIsInstance<AriTools.Step.Run>()
+        if (runnable.isEmpty()) return
+        val delicate = runnable.filter { it.risk == AriTools.Risk.ASK }
+        if (delicate.isEmpty()) {
+            executeTools(runnable)
+            return
+        }
+        val safe = runnable.filter { it.risk == AriTools.Risk.SAFE }
+        AlertDialog.Builder(this)
+            .setTitle("¿Lo hago?")
+            .setMessage(
+                delicate.joinToString("\n") { "• " + AriTools.describe(it.action) } +
+                    (if (safe.isNotEmpty()) "\n\nTambién (sin preguntar): " + safe.joinToString(", ") { it.command } else "") +
+                    "\n\nEl mensaje queda listo; el último toque de enviar lo das tú."
+            )
+            .setPositiveButton("Sí") { _, _ -> executeTools(runnable) }
+            .setNegativeButton("No") { _, _ ->
+                chat.addNote("No hice nada de eso.")
+                if (safe.isNotEmpty()) executeTools(safe)
+            }
+            .show()
+    }
+
+    private fun executeTools(steps: List<AriTools.Step.Run>) {
+        Thread {
+            steps.forEachIndexed { index, step ->
+                if (index > 0) Thread.sleep(1500)
+                val result = runCatching {
+                    phoneAgent.execute(com.ari.assistant.agents.AgentTask(step.command, "herramienta", step.command))
+                }.getOrNull()
+                runOnUiThread {
+                    if (isDestroyed) return@runOnUiThread
+                    chat.addNote(result?.reply ?: "No pude hacer \"${step.command}\".")
+                    if (phoneAgent.needsContactsPermission) {
+                        phoneAgent.needsContactsPermission = false
+                        pendingContactRequest = step.command
+                        requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), REQUEST_CONTACTS)
+                    }
+                }
+            }
+        }.start()
     }
 
     // --- Ari CEO se propone mejoras (las programa Claude) ---
@@ -3810,6 +3865,8 @@ class MainActivity : Activity() {
         instruction.append("\n\n").append(AriBrain.instruction(profile.userName.trim().ifEmpty { "tu usuario" }))
         // Ari CEO anota lo que le falta para proponerle mejoras a Claude (ver AriImprovements).
         if (resources.getBoolean(R.bool.ari_ceo)) instruction.append("\n\n").append(AriImprovements.instruction())
+        // Tus apps son sus herramientas: Gemma escribe los pasos "HACER: …" y ARI los ejecuta (ver AriTools).
+        if (resources.getBoolean(R.bool.ari_ceo)) instruction.append("\n\n").append(AriTools.instruction())
         // Modo tutora: Gemma enseña el tema paso a paso y deja un resumen para la próxima clase.
         tutorTopic?.let { topic ->
             instruction.append("\n\n").append(AriTutor.instruction(topic, tutorSummary(topic), tutorSessions(topic)))

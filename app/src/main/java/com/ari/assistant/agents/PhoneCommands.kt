@@ -23,6 +23,10 @@ sealed class PhoneAction {
     data class Timer(val seconds: Int, val label: String) : PhoneAction()
     data class WebSearch(val query: String) : PhoneAction()
     data class Navigate(val place: String) : PhoneAction()
+    /** Pedir un viaje: abre Uber o DiDi con el destino listo; el viaje lo confirmas tú. */
+    data class Ride(val place: String, val app: String) : PhoneAction()
+    /** Una nota en Keep (o tu app de notas): se abre con el texto listo para guardar. */
+    data class Note(val text: String) : PhoneAction()
     object Camera : PhoneAction()
     data class Settings(val section: String) : PhoneAction()
     /** La frase pedía una acción, pero falta algo; [message] explica qué. */
@@ -50,6 +54,17 @@ object PhoneCommands {
         val o = original.substring(start).trimEnd('.', '!', '?', ' ')
 
         CAMERA.matchEntire(p)?.let { return PhoneAction.Camera }
+
+        RIDE.matchEntire(p)?.let { found ->
+            val app = if (found.groupValues[1] == "didi") "didi" else "uber"
+            val place = found.groups[2]?.let { o.substring(it.range.first).trim() }.orEmpty()
+            return PhoneAction.Ride(place, app)
+        }
+
+        NOTE.matchEntire(p)?.let { found ->
+            val text = o.substring(found.groups[1]!!.range.first).trim()
+            return if (text.isEmpty()) null else PhoneAction.Note(text)
+        }
 
         SETTINGS.matchEntire(p)?.let { found ->
             return PhoneAction.Settings(found.groupValues[1].ifEmpty { "general" })
@@ -263,6 +278,8 @@ object PhoneCommands {
     private val POLITE = Regex("^[¿¡\\s]*(?:ari[,:]?\\s+)?(?:(?:por favor|porfa)[,]?\\s+)?(?:(?:puedes|podrias)\\s+)?")
     private val NUMBER = Regex("\\+?\\d[\\d\\s-]{6,}\\d")
 
+    private val RIDE = Regex("^(?:pide|pideme|pedir|llama|llamame|consigueme|consigue)\\s+un\\s+(uber|didi|taxi)(?:\\s+(?:a|al|para|hacia|hasta|que\\s+me\\s+lleve\\s+a)\\s+(.+))?$")
+    private val NOTE = Regex("^(?:anota|apunta|guarda|escribe)\\s+en\\s+(?:google\\s+)?(?:keep|notas|mis\\s+notas)[:,]?\\s+(?:que\\s+)?(.+)$")
     private val CAMERA = Regex("^(?:abre|abrir|abreme|enciende|activa)\\s+(?:la\\s+)?camara$|^(?:toma|tomame|saca)\\s+una\\s+foto$")
     private val SETTINGS = Regex(
         "^(?:abre|abrir|abreme)\\s+(?:los\\s+|la\\s+)?(?:ajustes|configuracion)(?:\\s+(?:de|del)(?:\\s+la)?\\s+(wifi|wi-fi|bluetooth|sonido|pantalla|bateria|ubicacion|notificaciones))?$"

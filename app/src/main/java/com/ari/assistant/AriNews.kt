@@ -62,6 +62,10 @@ object AriNews {
             Item("Me actualizo desde GitHub", "Dime \"busca actualizaciones\" o Ajustes → Buscar actualización. A tu llave de GitHub agrégale el permiso Actions (lectura).", ceoOnly = true),
             Item("Informes de fallos automáticos", "Ajustes → Informes de fallos automáticos. Solo datos técnicos, nunca tus pláticas; tú decides si se encienden."),
         ),
+        72 to listOf(
+            Item("Tus apps son mis herramientas", "Pídeme cosas con tus apps en tus palabras: \"avísale a Rosa que llego tarde y ponme la ruta a casa\". Lo seguro lo hago sola; los mensajes, llamadas y citas te los pregunto.", ceoOnly = true),
+            Item("Uber, DiDi y Keep", "Di \"pide un Uber al aeropuerto\" o \"anota en Keep comprar leche\"."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

@@ -717,3 +717,17 @@ Decisión del usuario ("Sí" a las dos, 14/10). Los informes van en las dos apps
 - `install` usa una sesión de `PackageInstaller`. `AriUpdateReceiver` abre la confirmación de Android. Necesita `REQUEST_INSTALL_PACKAGES` (solo completa) y el permiso "Instalar apps desconocidas" para ARI.
 - Se usa con "busca actualizaciones", "actualízate" o Ajustes → Buscar actualización. Al abrir ARI revisa en silencio cada 6 horas como máximo.
 - La llave de GitHub de ARI necesita también el permiso Actions: lectura. Pruebas en `AriUpdateTest`.
+
+## Tus apps son las herramientas de ARI (versión 0.58.0)
+
+Pedido del usuario: "diseñar a ARI para que mis apps sean sus herramientas". Decisiones: las cuatro familias (mensajes; mapas y transporte; música y videos; productividad) y "ejecuta lo seguro solo".
+- `AriTools.kt` (sin Android): catálogo por familias con frases de ejemplo. Su `instruction()` le dice a Gemma que, al final de su respuesta, escriba un paso por línea, "HACER: <orden>", con las frases que ARI ya entiende (máximo 4).
+- `plan()` pasa cada paso por `PhoneCommands.parse`. Lo que no reconoce se avisa y queda como mejora ("Herramienta que falta: …"). Pagar, comprar o borrar no son herramientas.
+- `risk()`: WhatsApp, SMS, correo, llamadas y citas piden confirmación en un diálogo ("Sí" ejecuta todo; "No" hace solo lo seguro). Lo demás se hace solo.
+- `MainActivity.runTools` / `executeTools`, solo en la ARI del dueño: corren los pasos en orden con `phoneAgent`, con 1.5 s entre pasos. Si falta el permiso de contactos, lo pide.
+- `AriBrain.withoutNotes` ya no dice en voz las líneas "HACER:".
+- Herramientas nuevas en `PhoneCommands`:
+  - `Ride`: "pide un Uber/DiDi/taxi a …". Uber se abre con el destino; DiDi solo se abre.
+  - `Note`: "anota en Keep …"; abre Keep con el texto.
+- Pruebas en `AriToolsTest` y `PhoneCommandsTest`.
+- Siguiente: que el catálogo se arme con las apps instaladas, AppFunctions cuando Android las abra, y pasos con Accesibilidad para apps sin accesos directos.
