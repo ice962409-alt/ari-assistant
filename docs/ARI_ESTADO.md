@@ -612,3 +612,4 @@ Pedido del usuario: integrar Qwen y que ARI se adapte al modelo.
 - MainActivity: al elegir un archivo guarda su nombre (`ari_motor`/`modelo_nombre`); `currentFamily()`; los modelos sin vista cargan directo solo con texto (`noVision`) sin perder la memoria grande; "Qwen cargado (GPU, solo texto)".
 - CI: "Revisar enlaces de los modelos" prueba candidatos de Qwen .litertlm en litert-community para ofrecer su descarga cuando se confirme un enlace.
 - Pendiente: motor para .gguf (llama.cpp) para Qwen2.5-Coder y similares.
+- Enlaces confirmados por CI (14/10): Qwen3-0.6B (`litert-community/Qwen3-0.6B/.../Qwen3-0.6B.litertlm`, 614 MB) y Qwen2.5-1.5B-Instruct (`litert-community/Qwen2.5-1.5B-Instruct/.../Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm`, 1.6 GB). Qwen2.5-0.5B y Qwen3-4B en .litertlm no existen (404).
