@@ -29,6 +29,9 @@ object AriNews {
             Item("Burbuja flotante", "Ajustes → Burbuja flotante: mi carita flota sobre tus apps; tócala y se abre mi tarjeta para escribirme o hablarme. Te explico cómo dar el permiso."),
             Item("Interrúmpeme hablando", "En modo live, si me hablas mientras hablo, me callo y te escucho (Ajustes → Interrumpirla hablando)."),
         ),
+        46 to listOf(
+            Item("Leo sola los recados de otras Ari", "Ajustes → Recados entre Ari → Activar. Te explico cómo dar el acceso a notificaciones."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

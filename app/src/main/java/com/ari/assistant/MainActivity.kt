@@ -566,18 +566,39 @@ class MainActivity : Activity() {
             .show()
     }
 
+    // true mientras el usuario está en los ajustes del teléfono dando el acceso a notificaciones.
+    private var recadosPermissionAsked = false
+
     private fun setupAriMessages() {
+        val reading = AriRecados.enabled(this)
         AlertDialog.Builder(this)
             .setTitle("Recados entre Ari")
             .setMessage(
                 "Para mandar: dime \"dile a mi mamá que llego a las 8\". Abro tu app de mensajes con el recado listo " +
                     "y tú tocas enviar. Si tu mamá no tiene Ari, le llega como un SMS normal.\n\n" +
-                    "Para recibir: cuando te llegue un SMS que empieza con \"[Ari de …]\", mantenlo presionado → " +
-                    "Compartir → Ari (o cópialo y pégalo en mi chat), y te lo digo.\n\n" +
-                    "No leo tus SMS ni uso internet: tu teléfono no deja instalar apps de fuera de la tienda " +
-                    "que piden permisos de SMS, para protegerte de fraudes."
+                    (if (reading) "Para recibir: ya leo sola los recados que te llegan (solo los que empiezan con \"[Ari de …]\").\n\n"
+                    else "Para recibir: puedo leer sola los recados que te lleguen. Para eso dame \"Acceso a notificaciones\":\n" +
+                        "1. Toca \"Activar\".\n" +
+                        "2. Activa \"Ari: recados de otras Ari\" y acepta.\n" +
+                        "3. Si dice \"Configuración restringida\": ve a Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
+                        "\"Permitir configuración restringida\", y repite los pasos 1 y 2.\n" +
+                        "4. Regresa a Ari.\n\n" +
+                        "Solo miro las notificaciones de tu app de mensajes y solo hago caso a las que empiezan con \"[Ari de …]\"; " +
+                        "las demás no las leo ni las guardo.\n\n") +
+                    "No uso internet: cada recado cuesta lo que un SMS normal."
             )
-            .setPositiveButton("Entendido", null)
+            .apply {
+                if (!reading) setPositiveButton("Activar") { _, _ ->
+                    recadosPermissionAsked = true
+                    try {
+                        startActivity(AriRecados.settingsIntent(this@MainActivity))
+                    } catch (e: android.content.ActivityNotFoundException) {
+                        recadosPermissionAsked = false
+                        chat.addNote("No encontré esa pantalla. Búscala en Ajustes del teléfono → Notificaciones → Acceso a notificaciones.")
+                    }
+                }
+            }
+            .setNegativeButton(if (reading) "Entendido" else "Ahora no", null)
             .show()
     }
 
@@ -1630,6 +1651,13 @@ class MainActivity : Activity() {
         AriChat.clear(this)
         // Dentro de Ari no hace falta la burbuja; vuelve al salir.
         AriBubble.stop(this)
+        if (recadosPermissionAsked) {
+            recadosPermissionAsked = false
+            chat.addNote(
+                if (AriRecados.enabled(this)) "¡Listo! Ahora leo sola los recados de otras Ari que te lleguen por SMS."
+                else "Todavía no tengo el acceso a notificaciones. Cuando quieras, vuelve a Ajustes → Recados entre Ari."
+            )
+        }
         if (bubblePermissionAsked) {
             bubblePermissionAsked = false
             if (AriBubble.canShow(this)) {

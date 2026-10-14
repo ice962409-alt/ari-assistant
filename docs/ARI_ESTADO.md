@@ -490,3 +490,9 @@ Pedido del usuario: "La Ari CEO es exclusiva para mí. Más nadie puede tenerla"
 - `R.array.ari_ceo_telefonos` en `src/completa/res/values/ceo.xml`: si tiene códigos, la Ari CEO solo abre en esos teléfonos ("Esta Ari es exclusiva de su dueño"). Vacío mientras el dueño no mande su código (arranque). En la Ari para otros, la lista está vacía y `ari_ceo` es false: sin candado.
 - PENDIENTE: el código del POCO del dueño (lo lee en Ajustes → Acerca de Ari de la 0.31.0) y agregarlo a la lista.
 
+## Ari lee sola los recados (versión 0.32.0)
+
+Decisión del usuario: "Sí, que Ari lea sola los recados".
+- `AriRecadosListener` (NotificationListenerService, BIND_NOTIFICATION_LISTENER_SERVICE): solo apps de mensajes (la predeterminada de SMS + Google Mensajes, Samsung, MIUI); textos de EXTRA_MESSAGES o EXTRA_BIG_TEXT/EXTRA_TEXT; `AriMessages.decode`; nombre = título de la notificación (contacto de la app de mensajes); `AriRecados.firstTime` evita repetir. Entrega con `AriMessenger.deliver`.
+- Ajustes → Recados entre Ari: explica el permiso (incluida "Configuración restringida") y abre `ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS`.
+

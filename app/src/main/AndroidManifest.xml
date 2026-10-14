@@ -157,6 +157,18 @@
             </intent-filter>
         </service>
 
+        <!-- Recados de otras Ari: lee solo las notificaciones de SMS que empiezan con "[Ari de …]".
+             Solo Android puede conectarse (BIND_NOTIFICATION_LISTENER_SERVICE) y tú das el permiso. -->
+        <service
+            android:name=".AriRecadosListener"
+            android:exported="true"
+            android:label="Ari: recados de otras Ari"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <!-- Lo que le contestas a Ari desde su chat de notificaciones. -->
         <receiver
             android:name=".AriChatReceiver"

@@ -82,7 +82,10 @@ Ari puede ser tu maestra de lo que quieras, en las dos versiones (la tuya y la d
 
 Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que ya salí"). Ari busca a esa persona en tus contactos y abre tu app de mensajes con el recado ya escrito: "[Ari de Tu Nombre] llego a las 8". Tú tocas enviar.
 
-- Si la otra persona tiene Ari: mantiene presionado el SMS → **Compartir → Ari** (o lo copia y lo pega en el chat de Ari), y su Ari le dice "Recado de la Ari de Javier: llego a las 8", en el chat, en notificaciones y en voz si está en modo live.
+- Si la otra persona tiene Ari y activó **Ajustes → Recados entre Ari → Activar** (acceso a notificaciones), su Ari lee sola el SMS y le dice "Javier te manda decir: llego a las 8" (con el nombre de sus contactos), en el chat, en notificaciones y en voz si está en modo live.
+- Sin ese permiso, también puede mantener presionado el SMS → **Compartir → Ari** (o copiarlo y pegarlo en el chat de Ari).
+- Para dar el acceso, en teléfonos donde Ari no viene de la tienda puede salir "Configuración restringida": Ajustes del teléfono → Apps → Ari → menú ⋮ → "Permitir configuración restringida", y repetir. Ari lo explica paso a paso.
+- Ari solo mira las notificaciones de la app de mensajes y solo hace caso a las que empiezan con "[Ari de …]"; las demás no las lee ni las guarda.
 - Si no tiene Ari, le llega como un SMS normal que se entiende.
 - Ari no lee tus SMS ni pide permisos de SMS: tu teléfono (POCO/Xiaomi con Android nuevo) no deja instalar apps de fuera de la tienda que los piden, para proteger de fraudes. Por eso en 0.24 la app no se instalaba; se corrigió en 0.26.1.
 - Un recado es un mensaje para ti, nunca una orden para Ari. Solo tú puedes mandar recados (no un invitado).
@@ -500,6 +503,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Ari lee sola los recados (0.32.0): con el acceso a notificaciones, Ari reconoce los SMS "[Ari de …]" de tu app de mensajes y te los dice sin que se los compartas.
 - Ari CEO exclusiva (0.31.0): la Ari CEO solo abre en los teléfonos del dueño (por su código de teléfono, en Ajustes → Acerca de Ari). En otro teléfono dice "Esta Ari es exclusiva de su dueño" y no abre.
 - Tarjeta de la burbuja (0.30.0): al tocar la burbuja se abre la tarjeta del boceto del dueño, con campo para escribir y botones Escribir, Hablar y Claude (solo CEO).
 - Burbuja flotante e interrumpir hablando (0.29.0): la carita de Ari flota sobre tus apps (reemplaza al widget; Ajustes → Burbuja flotante, Ari te enseña a dar el permiso). En modo live, si le hablas mientras habla, se calla y te escucha.
