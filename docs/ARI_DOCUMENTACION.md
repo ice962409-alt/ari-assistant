@@ -507,6 +507,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- ARI descarga Qwen (0.49.0): en Modelo aparecen Qwen2.5 1.5B y Qwen3 0.6B; ARI los baja por Wi-Fi y los integra sola.
 - ARI se adapta al modelo (0.48.0): puedes cargar un Qwen u otro modelo .litertlm desde Modelo → Elegir un archivo; ARI lo reconoce y se adapta. Los .gguf todavía no.
 - Ahora se llama ARI (0.47.0): la Ari del dueño (antes "Ari CEO") se ve como ARI en el teléfono. Se le sigue llamando "Ari".
 - Tu día en números (0.46.0): tu Ari CEO te dice cuánto usaste el teléfono hoy y en qué apps, y cuántos pasos llevas.

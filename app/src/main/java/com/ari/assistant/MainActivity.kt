@@ -2151,7 +2151,7 @@ class MainActivity : Activity() {
     /** Qué modelo está cargado: el archivo que elegiste (si fue uno tuyo) o Gemma (si se descargó). */
     private fun currentFamily(): ModelFamily {
         val picked = File(filesDir, MODEL_FILE_NAME).takeIf { it.exists() && it.length() > 0L }
-        if (picked == null) return ModelFamily.GEMMA
+        if (picked == null) return modelDownload.downloadedModel()?.family ?: ModelFamily.GEMMA
         return ModelFamily.detect(getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE).getString(KEY_MODEL_NAME, null))
     }
 
@@ -2182,7 +2182,7 @@ class MainActivity : Activity() {
         }
         if (modelDownload.isRunning()) {
             AlertDialog.Builder(this)
-                .setTitle("Descargando a Gemma")
+                .setTitle("Descargando el modelo")
                 .setMessage("La descarga sigue aunque cierres Ari; verás el avance arriba y en las notificaciones.")
                 .setPositiveButton("Seguir", null)
                 .setNegativeButton("Cancelar descarga") { _, _ ->
@@ -2200,6 +2200,8 @@ class MainActivity : Activity() {
         val options = arrayOf(
             option(advice.model, if (advice.tooWeak) "el más ligero" else "recomendado"),
             option(other, if (other == ModelChoice.Model.E4B) "el más listo" else "más ligero"),
+            option(ModelChoice.Model.QWEN15, "Qwen, rápido, sin vista"),
+            option(ModelChoice.Model.QWEN06, "Qwen, el más rápido, sin vista"),
             "Elegir un archivo del teléfono"
         )
         AlertDialog.Builder(this)
@@ -2208,6 +2210,8 @@ class MainActivity : Activity() {
                 when (which) {
                     0 -> confirmDownload(advice.model, advice.reason)
                     1 -> confirmDownload(other, advice.reason)
+                    2 -> confirmDownload(ModelChoice.Model.QWEN15, "Qwen es más pequeño que Gemma: contesta más rápido y gasta menos, pero es menos listo y no ve fotos.")
+                    3 -> confirmDownload(ModelChoice.Model.QWEN06, "Qwen 0.6B es el más pequeño: muy rápido, pero sencillo y sin vista. Bueno para probar.")
                     else -> pickModelFile()
                 }
             }
@@ -2235,8 +2239,8 @@ class MainActivity : Activity() {
     private fun startDownload(model: ModelChoice.Model) {
         when (val started = modelDownload.start(model)) {
             ModelDownload.Start.Started -> {
-                status.text = "Empezó la descarga de Gemma."
-                chat.addNote("Estoy descargando a Gemma. Te aviso cuando esté lista; puedes cerrar la app mientras.")
+                status.text = "Empezó la descarga de ${model.label}."
+                chat.addNote("Estoy descargando ${model.label}. Te aviso cuando esté listo; puedes cerrar la app mientras.")
                 if (!AlarmReminders.canNotify(this) && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                     requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS_QUIET)
                 }

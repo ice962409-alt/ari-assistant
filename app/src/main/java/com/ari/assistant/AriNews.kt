@@ -49,6 +49,7 @@ object AriNews {
         60 to listOf(Item("Tu día en números", "Ajustes → Uso del teléfono y pasos. Luego: \"¿cuánto tiempo usé el teléfono hoy?\" o \"¿cuántos pasos llevo?\".", ceoOnly = true)),
         61 to listOf(Item("Ahora me llamo ARI", "Ya no soy \"Ari CEO\": soy ARI, tu extensión. Me sigues llamando igual: di \"Ari\".", ceoOnly = true)),
         62 to listOf(Item("Me adapto a tu modelo", "Toca Modelo → Elegir un archivo y carga un Qwen u otro modelo .litertlm: me adapto a él (sin vista si no la tiene).", ceoOnly = true)),
+        63 to listOf(Item("Descargo Qwen yo misma", "Toca Modelo → Descargar Qwen2.5 1.5B (o Qwen3 0.6B). Lo bajo por Wi-Fi y lo integro sola.", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

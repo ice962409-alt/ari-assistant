@@ -9,7 +9,13 @@ package com.ari.assistant
  */
 object ModelChoice {
 
-    enum class Model(val id: String, val label: String, val url: String, val bytes: Long) {
+    enum class Model(
+        val id: String,
+        val label: String,
+        val url: String,
+        val bytes: Long,
+        val family: ModelFamily = ModelFamily.GEMMA
+    ) {
         E4B(
             "e4b", "Gemma 4 E4B",
             "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
@@ -19,6 +25,18 @@ object ModelChoice {
             "e2b", "Gemma 4 E2B",
             "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
             2_588_147_712L
+        ),
+        // Qwen en el formato de ARI (enlaces confirmados por la compilación). Más rápidos y
+        // pequeños que Gemma, pero menos listos y sin vista.
+        QWEN15(
+            "qwen15", "Qwen2.5 1.5B",
+            "https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm",
+            1_597_922_856L, ModelFamily.QWEN
+        ),
+        QWEN06(
+            "qwen06", "Qwen3 0.6B",
+            "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B.litertlm",
+            613_722_264L, ModelFamily.QWEN
         );
 
         /** El modelo más un margen para que el teléfono no se quede sin espacio. */

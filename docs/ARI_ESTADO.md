@@ -613,3 +613,7 @@ Pedido del usuario: integrar Qwen y que ARI se adapte al modelo.
 - CI: "Revisar enlaces de los modelos" prueba candidatos de Qwen .litertlm en litert-community para ofrecer su descarga cuando se confirme un enlace.
 - Pendiente: motor para .gguf (llama.cpp) para Qwen2.5-Coder y similares.
 - Enlaces confirmados por CI (14/10): Qwen3-0.6B (`litert-community/Qwen3-0.6B/.../Qwen3-0.6B.litertlm`, 614 MB) y Qwen2.5-1.5B-Instruct (`litert-community/Qwen2.5-1.5B-Instruct/.../Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm`, 1.6 GB). Qwen2.5-0.5B y Qwen3-4B en .litertlm no existen (404).
+
+## ARI descarga Qwen desde la app (versión 0.49.0)
+
+Pedido del usuario. `ModelChoice.Model` suma `QWEN15` (Qwen2.5 1.5B, 1.6 GB) y `QWEN06` (Qwen3 0.6B, 614 MB) con `family = QWEN`; el botón Modelo los ofrece después de las dos Gemma. La recomendación automática sigue siendo Gemma. `currentFamily()` usa la familia del modelo descargado. Mensajes de descarga con el nombre del modelo.

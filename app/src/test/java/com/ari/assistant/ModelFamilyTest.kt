@@ -27,4 +27,14 @@ class ModelFamilyTest {
         assertNotNull(ModelFamily.unsupportedFormat("Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"))
         assertNull(ModelFamily.unsupportedFormat("Qwen3-0.6B.litertlm"))
     }
+
+    @Test
+    fun qwenDownloadsAreQwenAndNeverRecommendedOverGemma() {
+        assertEquals(ModelFamily.QWEN, ModelChoice.Model.QWEN15.family)
+        assertEquals(ModelFamily.QWEN, ModelChoice.Model.byId("qwen06")?.family)
+        assertEquals(ModelFamily.GEMMA, ModelChoice.Model.E4B.family)
+        // Ari sigue recomendando Gemma (la que ve y es más lista); Qwen se elige a propósito.
+        val advice = ModelChoice.recommend(12L * 1024 * 1024 * 1024, 20L * 1024 * 1024 * 1024)
+        assertEquals(ModelFamily.GEMMA, advice.model.family)
+    }
 }
