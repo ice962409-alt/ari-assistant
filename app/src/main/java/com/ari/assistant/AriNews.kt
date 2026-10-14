@@ -25,6 +25,10 @@ object AriNews {
             Item("Platico más natural", "Háblame como a una persona; te pregunto de vuelta cuando hace falta."),
             Item("Te aviso en voz", "Si sales de la app mientras trabajo, te digo en voz cuando termino (Ajustes → Avisarme en voz)."),
         ),
+        42 to listOf(
+            Item("Burbuja flotante", "Ajustes → Burbuja flotante: mi carita flota sobre tus apps y me hablas con un toque. Te explico cómo dar el permiso."),
+            Item("Interrúmpeme hablando", "En modo live, si me hablas mientras hablo, me callo y te escucho (Ajustes → Interrumpirla hablando)."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

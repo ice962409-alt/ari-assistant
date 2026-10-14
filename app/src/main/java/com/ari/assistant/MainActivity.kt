@@ -517,6 +517,44 @@ class MainActivity : Activity() {
         if (voiceMode && !busy) voice.speak(text)
     }
 
+    // true mientras el usuario está en los ajustes del teléfono dando el permiso de la burbuja.
+    private var bubblePermissionAsked = false
+
+    /** Ajustes → Burbuja flotante: Ari explica el permiso, lleva a la pantalla correcta y la enciende. */
+    private fun setupBubble() {
+        if (AriBubble.canShow(this)) {
+            val on = !AriBubble.isEnabled(this)
+            AriBubble.setEnabled(this, on)
+            chat.addNote(
+                if (on) "Burbuja activada: aparece cuando sales de Ari. Tócala para hablarme; mantenla presionada para esconderla."
+                else "Burbuja desactivada."
+            )
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Burbuja flotante")
+            .setMessage(
+                "Mi carita puede flotar sobre tus otras apps para que me hables con un toque, sin buscarme.\n\n" +
+                    "Para eso, Android necesita que me des un permiso:\n" +
+                    "1. Toca \"Abrir ajustes\".\n" +
+                    "2. Busca \"Ari\" en la lista (si aparece).\n" +
+                    "3. Activa \"Mostrar sobre otras apps\" (o \"Permitir mostrar sobre otras apps\").\n" +
+                    "4. Regresa a Ari con el botón de atrás.\n\n" +
+                    "Solo uso ese permiso para la burbuja."
+            )
+            .setPositiveButton("Abrir ajustes") { _, _ ->
+                bubblePermissionAsked = true
+                try {
+                    startActivity(AriBubble.permissionIntent(this))
+                } catch (e: android.content.ActivityNotFoundException) {
+                    bubblePermissionAsked = false
+                    chat.addNote("No encontré esa pantalla. Búscala en Ajustes del teléfono → Apps → Ari → Mostrar sobre otras apps.")
+                }
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
     private fun setupAriMessages() {
         AlertDialog.Builder(this)
             .setTitle("Recados entre Ari")
@@ -628,8 +666,10 @@ class MainActivity : Activity() {
             "Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}",
             "Reconocer voces",
             "Color de Ari: ${currentColor.name}",
+            "Burbuja flotante: ${if (AriBubble.isEnabled(this) && AriBubble.canShow(this)) "activada" else "desactivada"}",
             "Aprender a usar Ari",
             "Avisarme en voz al terminar: ${if (speakWhenDone()) "sí" else "no"}",
+            "Interrumpirla hablando: ${if (bargeInEnabled()) "sí" else "no"}",
             "Recados entre Ari",
             "Reportar un problema",
             "Acerca de Ari y licencias"
@@ -644,13 +684,21 @@ class MainActivity : Activity() {
                     3 -> chooseEngine()
                     4 -> showVoicesDialog()
                     5 -> chooseColor()
-                    6 -> startLessons()
-                    7 -> {
+                    6 -> setupBubble()
+                    7 -> startLessons()
+                    8 -> {
                         getSharedPreferences(VOICE_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SPEAK_DONE, !speakWhenDone()).apply()
                         chat.addNote(if (speakWhenDone()) "Te diré en voz cuando termine algo y no estés en la app." else "Ya no te aviso en voz; solo en las notificaciones.")
                     }
-                    8 -> setupAriMessages()
-                    9 -> askProblemReport()
+                    9 -> {
+                        voicePrefs().edit().putBoolean(KEY_BARGE_IN, !bargeInEnabled()).apply()
+                        chat.addNote(
+                            if (bargeInEnabled()) "Si me hablas mientras hablo, me callo y te escucho."
+                            else "Ya no me interrumpo con tu voz; tócame para interrumpirme."
+                        )
+                    }
+                    10 -> setupAriMessages()
+                    11 -> askProblemReport()
                     else -> showAbout()
                 }
             }
@@ -1301,6 +1349,7 @@ class MainActivity : Activity() {
     }
 
     private fun setLive(mood: AriOrbView.Mood, statusText: String? = null, caption: String? = null) {
+        AriBubble.mood(mood)
         if (!::liveOrb.isInitialized) return
         liveOrb.mood = mood
         statusText?.let { liveStatus.text = it }
@@ -1546,6 +1595,17 @@ class MainActivity : Activity() {
         inForeground = true
         // Ya estás aquí: el chat de notificaciones se limpia (todo está en la pantalla de Ari).
         AriChat.clear(this)
+        // Dentro de Ari no hace falta la burbuja; vuelve al salir.
+        AriBubble.stop(this)
+        if (bubblePermissionAsked) {
+            bubblePermissionAsked = false
+            if (AriBubble.canShow(this)) {
+                AriBubble.setEnabled(this, true)
+                chat.addNote("¡Listo! Cuando salgas de Ari verás mi burbuja. Tócala para hablarme; mantenla presionada para esconderla.")
+            } else {
+                chat.addNote("Todavía no tengo el permiso \"Mostrar sobre otras apps\". Cuando quieras, vuelve a Ajustes → Burbuja flotante.")
+            }
+        }
         // Recados de otras Ari que llegaron con Ari cerrada.
         AriMessenger.takeKept(this).forEach { showAriMessage(it) }
         if (modelDownload.isRunning()) watchDownload()
@@ -2697,6 +2757,7 @@ class MainActivity : Activity() {
 
     private fun stopVoiceMode(message: String) {
         voiceMode = false
+        bargeIn.stop()
         guestMode = false
         speaker = null
         speakerSeen = false
@@ -2783,7 +2844,19 @@ class MainActivity : Activity() {
     }
 
     /** Empieza a escuchar. Con reconocer voces, la frase espera a saber quién la dijo. */
+    // Escucha si interrumpes a Ari mientras habla (solo en modo live).
+    private val bargeIn = com.ari.assistant.voz.BargeInMonitor {
+        if (!isDestroyed && voiceMode && voice.isSpeaking) {
+            voice.stopSpeaking()
+            setLive(AriOrbView.Mood.LISTENING, "Te escucho…")
+            if (!busy) listen()
+        }
+    }
+
+    private fun bargeInEnabled() = voicePrefs().getBoolean(KEY_BARGE_IN, true)
+
     private fun startRecognizer() {
+        bargeIn.stop()
         speakerReady = !voice.speakerMode
         heldSpeech = null
         downloadWatcher.removeCallbacks(releaseHeldSpeech)
@@ -2907,7 +2980,11 @@ class MainActivity : Activity() {
         }
 
         override fun onSpeakingStarted() {
-            if (voiceMode) setLive(AriOrbView.Mood.SPEAKING, "Hablando · tócala para interrumpir")
+            // Si le hablas mientras habla, se calla y te escucha.
+            if (voiceMode && bargeInEnabled() &&
+                checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+            ) bargeIn.start()
+            if (voiceMode) setLive(AriOrbView.Mood.SPEAKING, "Hablando · háblale o tócala para interrumpir")
         }
 
         override fun onVoiceLevel(level: Float) {
@@ -2929,6 +3006,7 @@ class MainActivity : Activity() {
         }
 
         override fun onSpeakingFinished() {
+            bargeIn.stop()
             if (voiceMode && !busy) listen()
         }
     }
@@ -2939,8 +3017,8 @@ class MainActivity : Activity() {
         inForeground = false
         // En modo live, Ari se queda contigo aunque salgas (con su notificación).
         if (voiceMode && !LiveSessionService.running) stopVoiceMode("Modo voz detenido.")
-        // Al salir de Ari, el widget muestra los recuerdos y el equipo al día.
-        AriWidget.refresh(this)
+        // Al salir de Ari aparece su burbuja (si la activaste).
+        AriBubble.start(this)
     }
 
     private fun addMemory(content: String) {
@@ -3176,6 +3254,7 @@ class MainActivity : Activity() {
         if (ScreenGlance.listener === screenListener) ScreenGlance.listener = null
         if (AriMessenger.listener === messageListener) AriMessenger.listener = null
         if (AriChat.controller === chatController) AriChat.controller = null
+        bargeIn.stop()
         voiceWorker.execute { voiceIdentity.release() }
         voiceWorker.shutdown()
 
@@ -3219,6 +3298,7 @@ class MainActivity : Activity() {
         private const val KEY_INTRODUCED = "presentada"
         private const val COLOR_PREFS = "ari_color"
         private const val KEY_SPEAK_DONE = "hablar_al_terminar"
+        private const val KEY_BARGE_IN = "interrumpir_hablando"
         private const val NEWS_PREFS = "ari_novedades"
         private const val KEY_NEWS_SEEN = "vista"
         private const val LESSON_PREFS = "ari_lecciones"

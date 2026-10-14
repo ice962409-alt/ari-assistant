@@ -167,6 +167,14 @@ Google Play pide que cada app publique una **política de privacidad**: un texto
 - **Firma digital**: cada APK va firmada con una clave secreta, como un sello de lacre. Si alguien cambia algo, el sello se rompe y tiene que poner el suyo. Ari revisa su propio sello al abrir (comparando su **huella**, un código único del certificado) y, si no es el suyo, no abre.
 - La clave de firma es un secreto: quien la tenga puede publicar "Aris oficiales". Por eso el repositorio debe seguir privado.
 
+### Cancelación de eco: cómo sabe Ari que la interrumpes
+
+Cuando Ari habla por la bocina, su micrófono también la oye a ella. Si solo midiera el volumen, se interrumpiría sola. Los teléfonos traen un **cancelador de eco**: conoce lo que sale por la bocina y lo resta de lo que entra al micrófono (lo mismo que hace una llamada en altavoz). Ari además aprende cómo suena "el fondo" mientras habla y solo se calla si tu voz es mucho más fuerte por un momento seguido.
+
+### Ventanas sobre otras apps
+
+Una app normalmente solo dibuja dentro de su propia pantalla. Con el permiso **"Mostrar sobre otras apps"** puede poner una ventanita encima de todo (como las burbujas de chat). Es un permiso delicado, porque una app tramposa podría tapar botones; por eso Android pide que tú lo actives a mano en los ajustes.
+
 ### ¿Puede una IA aprender sola? Entrenar frente a recordar
 
 - **Entrenar** un modelo es cambiar sus "pesos" (los miles de millones de números que tiene dentro). Necesita muchísimos datos y computadoras muy potentes durante horas o días; un teléfono no puede.
@@ -531,6 +539,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Ofuscar**: revolver el código de una app para que sea difícil de leer sin cambiar lo que hace.
 - **Descompilar**: convertir una app instalable de vuelta en algo parecido a su código.
 - **Firma digital**: el sello que demuestra quién hizo una app y que nadie la cambió.
+- **Cancelador de eco**: lo que quita del micrófono el sonido que sale por la bocina.
 - **Protocolo**: las reglas que dos programas siguen para entenderse.
 - **Suplantación**: hacerse pasar por otra persona, por ejemplo poniendo su nombre en un mensaje.
 - **Sabor (product flavor)**: una versión de la app compilada del mismo código, con piezas o permisos distintos.
