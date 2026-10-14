@@ -1316,7 +1316,24 @@ class MainActivity : Activity() {
             input.setText(suggestion)
             sendMessage()
         }
-        root.addView(chat, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        // El chat con el botón "↓ Ir al final" encima, que aparece si subes a leer mientras Ari escribe.
+        val chatBox = android.widget.FrameLayout(this)
+        chatBox.addView(chat, android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        val toEnd = TextView(this).apply {
+            text = "↓ Ir al final"
+            textSize = 13f
+            setTextColor(AriTheme.text)
+            setPadding(dp(14f), dp(8f), dp(14f), dp(8f))
+            background = AriTheme.rounded(this@MainActivity, AriTheme.surface, 18f, AriTheme.border)
+            visibility = android.view.View.GONE
+            setOnClickListener { chat.jumpToEnd() }
+        }
+        chatBox.addView(toEnd, android.widget.FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        ).apply { bottomMargin = dp(10f) })
+        chat.onFollowChanged = { following -> toEnd.visibility = if (following) android.view.View.GONE else android.view.View.VISIBLE }
+        root.addView(chatBox, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
         // Campo para escribir, redondeado como el de Claude, con micrófono y enviar.
         val composer = LinearLayout(this).apply {

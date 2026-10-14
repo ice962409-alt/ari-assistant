@@ -108,7 +108,8 @@ class ChatView(context: Context) : ScrollView(context) {
         finishAri()
         image?.let { file -> thumbnail(file)?.let { column.addView(it, spaced(top = 14f)) } }
         column.addView(userRow(text), spaced(top = if (image != null) 6f else 14f))
-        scrollToEnd()
+        // Mandaste algo: el chat vuelve abajo para seguir la respuesta.
+        jumpToEnd()
     }
 
     /** Miniatura de la imagen que adjuntaste, a la derecha como tus mensajes. */
@@ -304,9 +305,50 @@ class ChatView(context: Context) : ScrollView(context) {
         welcomeOrb = null
     }
 
+    // true mientras estás hasta abajo: el chat sigue a la respuesta de Ari. Si subes a leer,
+    // se queda quieto donde estás hasta que bajes o toques "Ir al final".
+    private var follow = true
+    // Solo un desplazamiento hecho con el dedo puede dejar de seguir la respuesta.
+    private var touched = false
+
+    /** Avisa cuando el chat deja de seguir la respuesta (para mostrar "↓ Ir al final"). */
+    var onFollowChanged: ((Boolean) -> Unit)? = null
+
     private fun scrollToEnd() {
+        if (!follow) return
         // scrollTo y no fullScroll: fullScroll mueve el foco y cerraría el teclado.
+        post { if (follow) smoothScrollTo(0, column.bottom) }
+    }
+
+    /** Vuelve hasta abajo y sigue la respuesta. */
+    fun jumpToEnd() {
+        setFollow(true)
         post { smoothScrollTo(0, column.bottom) }
+    }
+
+    private fun setFollow(value: Boolean) {
+        if (follow == value) return
+        follow = value
+        onFollowChanged?.invoke(value)
+    }
+
+    private fun atBottom(): Boolean = scrollY + height >= column.bottom - dp(48f)
+
+    override fun onTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN || ev.actionMasked == android.view.MotionEvent.ACTION_MOVE) touched = true
+        return super.onTouchEvent(ev)
+    }
+
+    override fun onInterceptTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) touched = true
+        return super.onInterceptTouchEvent(ev)
+    }
+
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        if (!touched) return
+        val bottom = atBottom()
+        if (t < oldt && !bottom) setFollow(false) else if (bottom) setFollow(true)
     }
 
     private fun spaced(top: Float) = LinearLayout.LayoutParams(

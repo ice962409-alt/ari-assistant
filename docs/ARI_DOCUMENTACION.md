@@ -507,6 +507,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Leer con calma (0.36.0): mientras Ari escribe, si subes a leer el chat ya no te baja solo; aparece "↓ Ir al final" para volver.
 - Ari CEO envía sola los recados (0.35.0): con el permiso de Accesibilidad (solo en tu Ari CEO), Ari toca "enviar" en tu app de mensajes, solo en los recados que le pides. Ajustes → Recados entre Ari → Enviar los recados sola.
 - Recados por voz desde la burbuja (0.34.0): tocas un contacto de recados, lo dices en voz y queda listo para enviar.
 - Contactos de recados (0.33.0): la primera vez que mandas un recado a alguien, Ari pregunta si lo guarda. La Ari para otros guarda máximo 4; la Ari CEO, sin límite. Aparecen en la tarjeta de la burbuja: tocas uno, escribes el recado y Enviar (se abre tu app de mensajes con el recado listo).

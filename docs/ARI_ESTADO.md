@@ -511,3 +511,8 @@ Decisión del usuario: "Accesibilidad, solo Ari CEO".
 - `AriSendService` (solo `src/completa`, AccessibilityService limitado a paquetes de mensajes por `xml/ari_send_service.xml`): busca la caja editable con el recado y el botón enviar (ids conocidos de Google Mensajes, Samsung, MIUI, o texto "Enviar/Send"); toca y avisa "Listo, le mandé el recado a X".
 - Ajustes → Recados entre Ari ahora es un menú: cómo funciona, leer solos, enviar solos (solo CEO), quitar contacto. Novedades con `ceoOnly`.
 
+## Leer con calma mientras Ari escribe (versión 0.36.0)
+
+Pedido del usuario: poder leer sin que el chat se vaya hacia abajo.
+- `ChatView`: `follow` (solo un desplazamiento hacia arriba hecho con el dedo deja de seguir; volver al fondo lo reactiva); `scrollToEnd` solo si `follow`; `addUser` usa `jumpToEnd`. `onFollowChanged` muestra el botón "↓ Ir al final" (FrameLayout sobre el chat en MainActivity).
+
