@@ -1372,6 +1372,23 @@ class MainActivity : Activity() {
             ShareActivity.take()?.let { attachment -> liveOverlay.post { showAttachment(attachment) } }
             return
         }
+        if (intent?.action == ACTION_WRITE) {
+            // Desde la burbuja: "Escribir" abre Ari con el teclado listo (y lo que ya escribiste).
+            intent.action = null
+            val text = intent.getStringExtra(EXTRA_TEXT)
+            intent.removeExtra(EXTRA_TEXT)
+            input.post {
+                if (!text.isNullOrBlank()) {
+                    input.setText(text)
+                    sendMessage()
+                } else {
+                    input.requestFocus()
+                    getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                        ?.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+                }
+            }
+            return
+        }
         if (intent?.action == ACTION_LIVE) {
             intent.action = null
             if (LiveShortcutActivity.consumeTicket()) liveOverlay.post { openLive() }
@@ -3350,6 +3367,8 @@ class MainActivity : Activity() {
         private const val STANDBY_TIMEOUT_MS = 5 * 60_000L
         private val THINKING_FILLERS = listOf("A ver…", "Mmm, déjame ver.", "A ver, a ver.", "Déjame pensarlo.")
         const val ACTION_LIVE = "com.ari.assistant.LIVE"
+        const val ACTION_WRITE = "com.ari.assistant.ESCRIBIR"
+        const val EXTRA_TEXT = "texto"
 
         /** Para la voz: respuestas cortas y naturales, como en una plática. */
         private const val VOICE_STYLE =

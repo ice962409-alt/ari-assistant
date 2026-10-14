@@ -481,4 +481,5 @@ Lista del usuario en docs/BACKLOG.md ("Mejoras pedidas el 14 de octubre de 2026"
 Primer informe por correo (14/10, de contrerasasael33@gmail.com, tester): "Ari se cerró por un error del motor (GPU)", 0.23.0-otros, Samsung SM-S918B (S23 Ultra), Android 16, RAM 11.6 GB, Gemma 4 E4B, GPU: falla (la protección ya pasó a CPU).
 - Sospecha: pedir 8192 tokens en la GPU (desde 0.18.1). Ahora hay una marca aparte `gpu_memoria_grande`: si Ari se cierra probando la memoria grande en la GPU, la siguiente vez la GPU se prueba con la memoria normal en lugar de pasar directo a CPU.
 - Ajustes → Velocidad → Rápida (GPU) después de una falla vuelve a probar la GPU con la memoria normal.
+- 0.30.0: boceto del usuario para la burbuja: `AriBubbleService.openPanel` (ventana enfocable con FLAG_NOT_TOUCH_MODAL + WATCH_OUTSIDE_TOUCH; campo que manda por `AriChat.controller`, o abre Ari con `ACTION_WRITE` + `EXTRA_TEXT`; botón Claude según `R.bool.ari_ceo`, true solo en `src/completa/res/values/ceo.xml`).
 

@@ -26,7 +26,7 @@ object AriNews {
             Item("Te aviso en voz", "Si sales de la app mientras trabajo, te digo en voz cuando termino (Ajustes → Avisarme en voz)."),
         ),
         42 to listOf(
-            Item("Burbuja flotante", "Ajustes → Burbuja flotante: mi carita flota sobre tus apps y me hablas con un toque. Te explico cómo dar el permiso."),
+            Item("Burbuja flotante", "Ajustes → Burbuja flotante: mi carita flota sobre tus apps; tócala y se abre mi tarjeta para escribirme o hablarme. Te explico cómo dar el permiso."),
             Item("Interrúmpeme hablando", "En modo live, si me hablas mientras hablo, me callo y te escucho (Ajustes → Interrumpirla hablando)."),
         ),
     )

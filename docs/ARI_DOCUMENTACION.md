@@ -89,7 +89,8 @@ Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que y
 ### La burbuja flotante (en lugar del widget)
 
 - **Ajustes → Burbuja flotante**. La primera vez Ari explica el permiso y abre la pantalla correcta: activa "Mostrar sobre otras apps" para Ari y regresa.
-- Cuando sales de Ari, su carita flota sobre tus apps. **Un toque**: si estás en modo live, Ari te escucha; si no, se abre en modo live. **Arrástrala** para moverla. **Mantenla presionada** para esconderla.
+- Cuando sales de Ari, su carita flota sobre tus apps. **Un toque** abre su tarjeta (diseño del dueño): la carita, "¿Cómo puedo ayudarte hoy?", un campo para escribirle sin abrir la app, y los botones **Escribir** (abre Ari con el teclado listo), **Hablar** (te escucha en modo live) y, solo en tu Ari CEO, **Claude** (abre la app de Claude o claude.ai). La **X** o un toque fuera la cierra.
+- **Arrástrala** para moverla. **Mantenla presionada** para esconderla.
 - La carita cambia de ánimo como en el modo live (escuchando, pensando, hablando).
 - Desde 0.29.0 Ari ya no trae el widget de la pantalla de inicio (el de Ari Estado sigue igual).
 
@@ -497,6 +498,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Tarjeta de la burbuja (0.30.0): al tocar la burbuja se abre la tarjeta del boceto del dueño, con campo para escribir y botones Escribir, Hablar y Claude (solo CEO).
 - Burbuja flotante e interrumpir hablando (0.29.0): la carita de Ari flota sobre tus apps (reemplaza al widget; Ajustes → Burbuja flotante, Ari te enseña a dar el permiso). En modo live, si le hablas mientras habla, se calla y te escucha.
 - Ari aprende de ti (0.28.0): guarda lo que descubre de ti al platicar (en Memoria, como "(Aprendido)"; viaja en el respaldo como un cerebro portátil) y se adapta a tu forma de hablar. Platica más natural. Tu Ari CEO es totalmente franca con sus opiniones y propone mejoras; y te avisa en voz cuando termina algo (Ajustes → Avisarme en voz).
 - Agenda, comandos de voz y novedades (0.27.0): "¿qué tengo hoy?" lee tu calendario; "¿qué te puedo decir?" muestra los comandos de voz; al actualizarse, Ari cuenta lo nuevo con una frase para probarlo.

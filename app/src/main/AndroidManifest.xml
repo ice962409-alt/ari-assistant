@@ -42,6 +42,8 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Botón "Claude" de la burbuja (solo en la Ari CEO). -->
+        <package android:name="com.anthropic.claude" />
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
         <package android:name="com.spotify.music" />

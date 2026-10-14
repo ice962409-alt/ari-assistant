@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Solo la Ari CEO (la del dueño) muestra el botón de Claude en su burbuja. -->
+    <bool name="ari_ceo">true</bool>
+</resources>
