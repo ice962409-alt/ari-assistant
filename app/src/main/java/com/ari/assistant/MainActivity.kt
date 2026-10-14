@@ -425,6 +425,23 @@ class MainActivity : Activity() {
         chat.addNote("Consejo del día: ${next.title.lowercase()}. ${next.tryThis}")
     }
 
+    /** Guarda en tus recuerdos lo que Ari aprendió en esta respuesta (sin repetir y con un máximo). */
+    private fun learnFrom(response: String) {
+        val notes = AriBrain.learnedIn(response)
+        if (notes.isEmpty() || storage.isShutdown) return
+        storage.execute {
+            runCatching {
+                val known = database.memories()
+                notes.filterNot { AriBrain.alreadyKnown(it, known.map { m -> m.content }) }.distinct().forEach {
+                    database.addMemory(AriBrain.PREFIX + it)
+                }
+                // Lo más viejo que aprendió se olvida si ya son demasiados.
+                val learned = database.memories().filter { it.content.startsWith(AriBrain.PREFIX) }
+                learned.dropLast(AriBrain.MAX_LEARNED).forEach { database.deleteMemory(it.id) }
+            }
+        }
+    }
+
     // --- Tutora personal: "quiero aprender inglés" ---
 
     private fun tutorPrefs() = getSharedPreferences(TUTOR_PREFS, MODE_PRIVATE)
@@ -612,6 +629,7 @@ class MainActivity : Activity() {
             "Reconocer voces",
             "Color de Ari: ${currentColor.name}",
             "Aprender a usar Ari",
+            "Avisarme en voz al terminar: ${if (speakWhenDone()) "sí" else "no"}",
             "Recados entre Ari",
             "Reportar un problema",
             "Acerca de Ari y licencias"
@@ -627,8 +645,12 @@ class MainActivity : Activity() {
                     4 -> showVoicesDialog()
                     5 -> chooseColor()
                     6 -> startLessons()
-                    7 -> setupAriMessages()
-                    8 -> askProblemReport()
+                    7 -> {
+                        getSharedPreferences(VOICE_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SPEAK_DONE, !speakWhenDone()).apply()
+                        chat.addNote(if (speakWhenDone()) "Te diré en voz cuando termine algo y no estés en la app." else "Ya no te aviso en voz; solo en las notificaciones.")
+                    }
+                    8 -> setupAriMessages()
+                    9 -> askProblemReport()
                     else -> showAbout()
                 }
             }
@@ -1505,8 +1527,18 @@ class MainActivity : Activity() {
      * En modo live el mensaje llega sin sonar: ya la estás oyendo.
      */
     private fun notifyIfAway(text: String) {
-        if (!inForeground && text.isNotBlank()) AriChat.ariSays(this, text, alert = !voiceMode)
+        if (!inForeground && text.isNotBlank()) {
+            AriChat.ariSays(this, text, alert = !voiceMode)
+            // También te lo dice en voz (si no estás ya platicando con ella en modo live).
+            // En la Ari CEO viene encendido; en la de otros se enciende en Ajustes.
+            if (!voiceMode && speakWhenDone()) {
+                val first = AriBrain.withoutNotes(text).trim().split(Regex("(?<=[.!?])\\s")).firstOrNull().orEmpty().take(160)
+                if (first.isNotBlank()) voice.speak("Listo. $first")
+            }
+        }
     }
+
+    private fun speakWhenDone() = getSharedPreferences(VOICE_PREFS, MODE_PRIVATE).getBoolean(KEY_SPEAK_DONE, ceoTeam.enabled)
 
     override fun onResume() {
         super.onResume()
@@ -2188,6 +2220,7 @@ class MainActivity : Activity() {
                         if (speakLive && voiceMode) {
                             speech.append(chunk)
                             SpeechChunker.take(speech).forEach {
+                                if (AriBrain.withoutNotes(it).isBlank()) return@forEach
                                 spoke = true
                                 voice.streamSentence(it)
                             }
@@ -2204,6 +2237,7 @@ class MainActivity : Activity() {
                         if (!forGuest) saveResponse(response)
                         chat.finishAri()
                         busy = false
+                        if (!forGuest) learnFrom(response.toString())
                         if (!forGuest) tutorTopic?.let { topic ->
                             AriTutor.summaryIn(response.toString())?.let { saveTutorSummary(topic, it) }
                         }
@@ -2214,12 +2248,12 @@ class MainActivity : Activity() {
                         notifyIfAway(response.toString())
                         if (speakLive && voiceMode) {
                             status.text = "Ari está hablando..."
-                            voice.streamSentence(SpeechChunker.rest(speech))
+                            voice.streamSentence(AriBrain.withoutNotes(SpeechChunker.rest(speech)))
                             // Si la interrumpiste mientras pensaba, te escucha en cuanto termina.
                             if (!voice.endStream()) listen()
                         } else if (voiceMode) {
                             status.text = "Ari está hablando..."
-                            voice.speak(response.toString())
+                            voice.speak(AriBrain.withoutNotes(response.toString()))
                         } else {
                             status.text = "Ari está lista."
                         }
@@ -2464,6 +2498,8 @@ class MainActivity : Activity() {
                 instruction.append("- ${PeopleAgent.summary(it).take(PERSON_PROMPT_CHARS)}\n")
             }
         }
+        // El cerebro de Ari: marca lo nuevo que aprende de ti para guardarlo (ver AriBrain).
+        instruction.append("\n\n").append(AriBrain.instruction(profile.userName.trim().ifEmpty { "tu usuario" }))
         // Modo tutora: Gemma enseña el tema paso a paso y deja un resumen para la próxima clase.
         tutorTopic?.let { topic ->
             instruction.append("\n\n").append(AriTutor.instruction(topic, tutorSummary(topic), tutorSessions(topic)))
@@ -3182,6 +3218,7 @@ class MainActivity : Activity() {
         private const val KEY_MODEL_OFFERED = "ofrecida"
         private const val KEY_INTRODUCED = "presentada"
         private const val COLOR_PREFS = "ari_color"
+        private const val KEY_SPEAK_DONE = "hablar_al_terminar"
         private const val NEWS_PREFS = "ari_novedades"
         private const val KEY_NEWS_SEEN = "vista"
         private const val LESSON_PREFS = "ari_lecciones"

@@ -468,3 +468,10 @@ El usuario reportó "No se instaló la app" con 0.26.0 (release y debug) y 0.24;
 - Recibir: `ShareActivity` reconoce texto con la marca y lo guarda con `AriMessenger.keep` (se muestra al abrir); pegar el recado en el chat también lo anuncia (`AriMessages.announceShared`).
 - Actions: paso "Revisar APK" (apksigner, aapt2, zipalign) para diagnosticar.
 
+## Mejoras pedidas el 14/10 (versiones 0.27.0 y 0.28.0)
+
+Lista del usuario en docs/BACKLOG.md ("Mejoras pedidas el 14 de octubre de 2026").
+- 0.27.0: `CalendarAgent` + `AndroidCalendar` (READ_CALENDAR, REQUEST_CALENDAR 115); `AriNews` (novedades por versionCode en prefs `ari_novedades/vista`; comandos de voz con `asksCommands`).
+- 0.28.0: `AriBrain` (línea "APRENDÍ:" en la respuesta → recuerdo "(Aprendido) …", máx. 50, sin recrear la conversación; se quita de lo que se dice en voz). `Profile.personality`: conversación natural y adaptarse al usuario; con `ceo = true`, franqueza total y proponer mejoras. `notifyIfAway` dice en voz el primer enunciado ("Listo. …") si `hablar_al_terminar` (por defecto sí en la CEO, no en la de otros).
+- Límites explicados al usuario: no se quitan las reglas de seguridad propias de Gemma; la "autonomía total" se hace como proactividad, y lo que afecta a otros sigue con confirmación.
+

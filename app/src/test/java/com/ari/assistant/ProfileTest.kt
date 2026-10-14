@@ -16,6 +16,7 @@ class ProfileTest {
         assertTrue(text.contains("empresa de Javier"))
         assertTrue(text.contains("grosería"))
         assertTrue(text.contains("Llama a Javier por su nombre"))
+        assertTrue(text.contains("totalmente franca"))
         assertTrue(text.endsWith("Respondes siempre en español."))
     }
 
@@ -40,6 +41,7 @@ class ProfileTest {
     fun laAriParaOtrosNoEsCeoYAyudaEnElDiaADia() {
         val text = Profile("Ana").personality(ceo = false)
         assertFalse(text.contains("CEO"))
+        assertFalse(text.contains("totalmente franca"))
         assertTrue(text.contains("vida diaria"))
         assertTrue(text.contains("enséñame"))
         assertTrue(text.endsWith("Respondes siempre en español."))

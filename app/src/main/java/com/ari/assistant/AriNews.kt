@@ -20,6 +20,11 @@ object AriNews {
             Item("Comandos de voz", "Pregunta: \"¿qué te puedo decir?\" y te enseño las frases que entiendo."),
             Item("Novedades", "Cada vez que me actualice te cuento lo nuevo, como ahora."),
         ),
+        41 to listOf(
+            Item("Aprendo de ti", "Mientras platicamos, guardo lo que aprendo de ti (lo ves en Memoria como \"(Aprendido)\") y me adapto a tu forma de hablar."),
+            Item("Platico más natural", "Háblame como a una persona; te pregunto de vuelta cuando hace falta."),
+            Item("Te aviso en voz", "Si sales de la app mientras trabajo, te digo en voz cuando termino (Ajustes → Avisarme en voz)."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

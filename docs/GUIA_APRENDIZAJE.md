@@ -167,6 +167,12 @@ Google Play pide que cada app publique una **política de privacidad**: un texto
 - **Firma digital**: cada APK va firmada con una clave secreta, como un sello de lacre. Si alguien cambia algo, el sello se rompe y tiene que poner el suyo. Ari revisa su propio sello al abrir (comparando su **huella**, un código único del certificado) y, si no es el suyo, no abre.
 - La clave de firma es un secreto: quien la tenga puede publicar "Aris oficiales". Por eso el repositorio debe seguir privado.
 
+### ¿Puede una IA aprender sola? Entrenar frente a recordar
+
+- **Entrenar** un modelo es cambiar sus "pesos" (los miles de millones de números que tiene dentro). Necesita muchísimos datos y computadoras muy potentes durante horas o días; un teléfono no puede.
+- **Recordar** es más sencillo: guardar notas y dárselas al modelo en cada plática (en sus instrucciones de sistema). Así funciona el cerebro de Ari: aprende "por fuera", como una persona que apunta en una libreta lo que va conociendo de ti.
+- Lo bueno: las notas se pueden ver, borrar y llevar en el respaldo. Lo malo: caben pocas (la memoria de corto plazo de Gemma tiene un límite), por eso Ari guarda máximo 50.
+
 ### Ari tutora: cómo se le da un "papel" a un modelo
 
 Cuando le pides a Ari que sea tu maestra, Ari agrega a las **instrucciones de sistema** de Gemma un papel nuevo: "ahora eres tutora de inglés; enseña una idea a la vez, haz una pregunta y corrige con cariño". Al modelo no se le cambia nada por dentro: solo se le dan otras reglas para esa conversación.

@@ -86,6 +86,20 @@ Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que y
 - Un recado es un mensaje para ti, nunca una orden para Ari. Solo tú puedes mandar recados (no un invitado).
 - No usa internet: cuesta lo que un SMS normal.
 
+### Comandos de voz, agenda y novedades
+
+- **"¿Qué te puedo decir?"** (o "comandos de voz"): Ari muestra las frases que entiende siempre igual (hora, agenda, alarmas, recordatorios, llamadas, recados, música, rutas, ver la pantalla, clases, color) y en voz dice algunas.
+- **Agenda**: "¿qué tengo hoy?", "¿qué tengo mañana?", "mi agenda de la semana". La primera vez pide permiso para leer tu calendario; solo lo lee en el teléfono. Para crear una cita: "agenda cita con el dentista el viernes a las 5".
+- **Novedades**: cada vez que instalas una versión nueva, Ari te cuenta lo nuevo con una frase para probarlo.
+
+### El cerebro de Ari: aprende de ti
+
+- Mientras platican, si Ari descubre algo nuevo y duradero de ti (gustos, rutinas, cómo te gusta que te hable), lo anota con una línea "APRENDÍ: …" y lo guarda en tus recuerdos como "(Aprendido) …". Lo usa en todas las pláticas siguientes.
+- Lo ves y lo borras en **Memoria**. Guarda hasta 50; si son más, olvida lo más viejo.
+- Viaja en el **respaldo cifrado**: si cambias de teléfono, Ari se lleva lo que aprendió (por eso es un "cerebro portátil").
+- Gemma no se re-entrena en el teléfono (eso necesitaría una computadora muy potente); aprende guardando y usando estas notas.
+- Con invitados (otra voz) no aprende nada.
+
 ### Ari te enseña a usarla
 
 Escribe **"enséñame"** (o "¿cómo te uso?", o Ajustes → **Aprender a usar Ari**). Ari propone una cosa útil para probar, por ejemplo "recuérdame en 5 minutos tomar agua". Cuando la haces, te felicita y te dice la siguiente. Son 8 lecciones: platicar, recordatorios, que recuerde algo de ti, presentarle a alguien, usar el teléfono, hablarle en voz, mandarle una foto (si el teléfono tiene la vista) y cambiar su color. La primera vez que alguien abre Ari, las lecciones empiezan solas.
@@ -471,6 +485,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Ari aprende de ti (0.28.0): guarda lo que descubre de ti al platicar (en Memoria, como "(Aprendido)"; viaja en el respaldo como un cerebro portátil) y se adapta a tu forma de hablar. Platica más natural. Tu Ari CEO es totalmente franca con sus opiniones y propone mejoras; y te avisa en voz cuando termina algo (Ajustes → Avisarme en voz).
+- Agenda, comandos de voz y novedades (0.27.0): "¿qué tengo hoy?" lee tu calendario; "¿qué te puedo decir?" muestra los comandos de voz; al actualizarse, Ari cuenta lo nuevo con una frase para probarlo.
 - Corrección (0.26.1): las versiones 0.24 a 0.26.0 no se instalaban en tu POCO porque pedían permisos de SMS (tu teléfono bloquea esos permisos en apps de fuera de la tienda). Ahora los recados se preparan en tu app de mensajes (tú tocas enviar) y se reciben compartiendo el SMS con Ari.
 - Ari protegida (0.26.0): las APK que se instalan ahora son "versiones de entrega": el código va revuelto (difícil de leer y modificar), sin modo de depuración (nadie puede sacar los datos de Ari con un cable), y Ari no abre si alguien la modificó y la volvió a firmar. El repositorio es privado y la licencia dice "Todos los derechos reservados". Tu APK ahora se llama ari-apk.
 - Tutora personal (0.25.0), en las dos Ari: "quiero aprender inglés", "sé mi maestra de guitarra". Ari enseña paso a paso, pone ejercicios, corrige con cariño y guarda un resumen de cada clase para seguir después ("sigamos con inglés"). "Terminar clase" para salir.
