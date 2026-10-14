@@ -656,3 +656,9 @@ Pedido del usuario: que ARI trabaje a través de GitHub. ARI no programa; crea i
 
 - `ari_ceo_telefonos` en `src/completa/res/values/ceo.xml` = D7A55140 (POCO X8 Pro Max del dueño). En cualquier otro teléfono la ARI dice que es exclusiva y no abre.
 - Ojo: el código sale del ANDROID_ID, que cambia si el teléfono se restablece de fábrica o si cambia la llave con la que se firma ARI. Si pasa, el dueño manda el código nuevo y se agrega.
+
+## Asistente de configuración y relevo automático (versión 0.54.0)
+
+- `SetupGuide.kt` (puro; pruebas en `SetupGuideTest`): pasos nombre, modelo, notificaciones, micrófono, contactos, calendario, burbuja, responder a su nombre y lecciones, con "✓/○", para qué sirve cada uno y el avance. MainActivity: `setupDone()`, `showSetupGuide()` (Ajustes → "Configurar Ari (n de 9 listos)" o "configúrame"), `runSetupStep` pide el permiso (REQUEST_SETUP = 119) y vuelve a la lista. Si falta lo esencial, al abrir lo recuerda con una nota. Ambas versiones.
+- Tarea automática "Relevo de Claude para ARI" (trig_01U44nT45SYEeYexGZCEJriJ): diario 8:52 hora de CDMX, sesión nueva; revisa fichas [ARI], informes y el tablero, hace cambios pequeños y seguros, compila y avisa. Limitación: corre sin conectores (sin Gmail ni Drive); para agregarlos, crearla desde la pantalla de rutinas de claude.ai. La hora se ajusta con el pendiente "hora-relevo".
+- Página oficial: correo de contacto javierhedzd@gmail.com en privacidad.html (cambiable).

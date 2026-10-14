@@ -253,6 +253,10 @@ class MainActivity : Activity() {
         } else if (!offerModelOnce()) {
             if (!showNews()) remindBackup()
             dailyTip()
+            // Si aún falta lo esencial, Ari recuerda que configurarla es fácil.
+            if (!SetupGuide.essentialsDone(setupDone())) {
+                chat.addNote("Para dejarme lista en un minuto, toca Ajustes → Configurar Ari o dime \"configúrame\".")
+            }
         }
         handleLaunch(intent)
         // Por si Android borró las alarmas (reinicio, actualización, respaldo recuperado).
@@ -770,6 +774,56 @@ class MainActivity : Activity() {
             .show()
     }
 
+    // --- Configurar Ari: todos los pasos en una sola lista (ver SetupGuide) ---
+
+    private fun granted(permission: String) = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+
+    private fun setupDone(): Set<SetupGuide.Step> = buildSet {
+        if (profile.userName.isNotBlank()) add(SetupGuide.Step.NAME)
+        if (savedModelFile() != null || modelDownload.isRunning()) add(SetupGuide.Step.MODEL)
+        if (AlarmReminders.canNotify(this@MainActivity)) add(SetupGuide.Step.NOTIFICATIONS)
+        if (granted(Manifest.permission.RECORD_AUDIO)) add(SetupGuide.Step.MICROPHONE)
+        if (granted(Manifest.permission.READ_CONTACTS)) add(SetupGuide.Step.CONTACTS)
+        if (granted(Manifest.permission.READ_CALENDAR)) add(SetupGuide.Step.CALENDAR)
+        if (AriBubble.isEnabled(this@MainActivity) && AriBubble.canShow(this@MainActivity)) add(SetupGuide.Step.BUBBLE)
+        if (AriWakeWord.isEnabled(this@MainActivity) && AriWakeWord.hasModel(this@MainActivity)) add(SetupGuide.Step.WAKE_WORD)
+        if (lessonsDone().size >= 3) add(SetupGuide.Step.LESSONS)
+    }
+
+    private fun showSetupGuide() {
+        val done = setupDone()
+        val steps = SetupGuide.Step.values()
+        AlertDialog.Builder(this)
+            .setTitle("Configurar Ari · " + SetupGuide.progress(done))
+            .setItems(SetupGuide.lines(done).toTypedArray()) { _, which -> runSetupStep(steps[which]) }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun runSetupStep(step: SetupGuide.Step) {
+        fun ask(permission: String) {
+            if (granted(permission)) {
+                chat.addNote("Ese paso ya está listo.")
+                showSetupGuide()
+            } else {
+                requestPermissions(arrayOf(permission), REQUEST_SETUP)
+            }
+        }
+        when (step) {
+            SetupGuide.Step.NAME -> askUserName(firstTime = false)
+            SetupGuide.Step.MODEL -> selectModel()
+            SetupGuide.Step.NOTIFICATIONS ->
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) ask(Manifest.permission.POST_NOTIFICATIONS)
+                else showSetupGuide()
+            SetupGuide.Step.MICROPHONE -> ask(Manifest.permission.RECORD_AUDIO)
+            SetupGuide.Step.CONTACTS -> ask(Manifest.permission.READ_CONTACTS)
+            SetupGuide.Step.CALENDAR -> ask(Manifest.permission.READ_CALENDAR)
+            SetupGuide.Step.BUBBLE -> setupBubble()
+            SetupGuide.Step.WAKE_WORD -> setupWakeWord()
+            SetupGuide.Step.LESSONS -> startLessons()
+        }
+    }
+
     // --- Solo Ari CEO: consultas a internet (ver AriWeb) ---
 
     private fun handleWeb(text: String): Boolean {
@@ -1162,6 +1216,7 @@ class MainActivity : Activity() {
         val ceo = resources.getBoolean(R.bool.ari_ceo)
         fun item(label: String, action: () -> Unit) = label to action
         val items = mutableListOf(
+            item("Configurar Ari (${setupDone().size} de ${SetupGuide.Step.values().size} listos)") { showSetupGuide() },
             item("Tu nombre: $name") { askUserName(firstTime = false) },
             item("Tono de Ari: ${profile.tone.title}") { chooseTone() },
             item("Respaldo de la memoria") { showBackupDialog() },
@@ -2749,6 +2804,12 @@ class MainActivity : Activity() {
             return
         }
 
+        if (SetupGuide.asks(text)) {
+            input.text.clear()
+            showSetupGuide()
+            return
+        }
+
         if (AriLessons.asks(text)) {
             input.text.clear()
             saveMessage(ROLE_USER, text)
@@ -3754,6 +3815,11 @@ class MainActivity : Activity() {
             ceoTeam.onLocationResult()
             return
         }
+        if (requestCode == REQUEST_SETUP) {
+            // De vuelta a la lista, con el paso ya palomeado si lo diste.
+            showSetupGuide()
+            return
+        }
         if (requestCode == REQUEST_STEPS) {
             if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
                 AriUsage.sample(this)
@@ -4391,6 +4457,7 @@ class MainActivity : Activity() {
         private const val REQUEST_AUDIO_WAKE = 116
         private const val REQUEST_AGENDA_PHOTOS = 117
         private const val REQUEST_STEPS = 118
+        private const val REQUEST_SETUP = 119
         private val ENROLL_PHRASES = listOf(
             "Hola Ari, soy yo. Hoy quiero platicar contigo un rato.",
             "El perro de mi vecino corre rápido por el parque grande.",

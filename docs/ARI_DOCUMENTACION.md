@@ -508,6 +508,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
 - Ari Estado 0.2.0: notificación con barra de progreso de lo que Claude está haciendo (tarea, paso y porcentaje). Se actualiza cada 15 minutos.
+- Configurar Ari (0.54.0): Ajustes → Configurar Ari o "configúrame" muestra todos los pasos para dejarla lista, con palomitas.
+- Tarea automática de Claude: cada día a las 8:52 revisa las fichas de ARI, programa lo seguro y te avisa.
 - ARI deja fichas en GitHub (0.53.0): con tu llave (Ajustes → GitHub de ARI), "propón mejoras" crea una ficha en tu repositorio y Claude la programa.
 - Base de la Ari comercial (0.52.0): la Ari para otras personas tiene su propio paquete (com.ari.asistente), la pantalla "Ari Premium" (gratis + Premium) y tu ARI anota mejoras para ella ("anota una mejora para Ari: …").
 - ARI con internet (0.51.0): "¿quién fue…?", "busca en internet qué es…" (Wikipedia) y "¿cómo está el clima en…?". Solo sale lo que buscas.
