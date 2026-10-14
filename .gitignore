@@ -13,3 +13,13 @@ local.properties
 *.jks
 *.keystore
 !app/debug.keystore
+
+# iOS: el proyecto de Xcode se genera con XcodeGen
+ios/Ari.xcodeproj/
+ios/Ari/Info.plist
+ios/Ari/Ari.entitlements
+ios/.spm/
+ios/.build/
+ios/AriCore/.build/
+ios/xcodebuild.log
+*.ipa

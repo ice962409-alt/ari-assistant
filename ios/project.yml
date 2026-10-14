@@ -1,0 +1,53 @@
+# Proyecto de Xcode de Ari para iPhone. Se genera con XcodeGen:
+#   brew install xcodegen && cd ios && xcodegen
+# y luego se abre Ari.xcodeproj. El .xcodeproj no se guarda en el repositorio.
+name: Ari
+options:
+  bundleIdPrefix: com.javierhedzd
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: es
+
+packages:
+  LiteRTLM:
+    url: https://github.com/google-ai-edge/LiteRT-LM
+    exactVersion: 0.18.0
+  AriCore:
+    path: AriCore
+
+targets:
+  Ari:
+    type: application
+    platform: iOS
+    sources:
+      - path: Ari
+    dependencies:
+      - package: LiteRTLM
+        product: LiteRTLM
+      - package: AriCore
+    entitlements:
+      path: Ari/Ari.entitlements
+      properties:
+        # Gemma ocupa varios GB: sin esto iOS cerraría la app al cargar el modelo completo.
+        com.apple.developer.kernel.increased-memory-limit: true
+    info:
+      path: Ari/Info.plist
+      properties:
+        CFBundleDisplayName: Ari
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        CFBundleDevelopmentRegion: es
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+        # Intermediario de informes de fallos (repositorio ari-informes). Vacío = no se envían.
+        AriInformesURL: https://ari-informes.javierhedzd.workers.dev/v1/informe
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.javierhedzd.ari
+        PRODUCT_NAME: Ari
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"

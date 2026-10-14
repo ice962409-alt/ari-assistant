@@ -1,0 +1,84 @@
+name: Build Ari iOS
+
+# Compila Ari para iPhone sin firmar: comprueba que el código es correcto.
+# Para instalarla en un iPhone hace falta firmarla con una cuenta de Apple (ver ios/README.md).
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      # LiteRT-LM guarda archivos grandes con Git LFS que la app no necesita.
+      GIT_LFS_SKIP_SMUDGE: '1'
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Elegir Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$XCODE" ]; then sudo xcode-select -s "$XCODE"; fi
+          xcodebuild -version
+
+      - name: Pruebas de la logica (AriCore)
+        run: swift test --package-path ios/AriCore
+
+      - name: Generar el proyecto
+        run: |
+          brew install xcodegen
+          cd ios && xcodegen generate
+
+      - name: Resolver paquetes
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project ios/Ari.xcodeproj -scheme Ari \
+            -clonedSourcePackagesDirPath ios/.spm
+
+      - name: Compilar para iPhone (sin firmar)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project ios/Ari.xcodeproj -scheme Ari \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -clonedSourcePackagesDirPath ios/.spm \
+            -derivedDataPath ios/.build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tee ios/xcodebuild.log | grep -E "error:|warning: .*Ari/|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" ios/xcodebuild.log
+
+      - name: Empaquetar la app sin firmar
+        run: |
+          APP=$(find ios/.build/Build/Products/Release-iphoneos -maxdepth 1 -name "Ari.app" | head -1)
+          mkdir -p Payload && cp -R "$APP" Payload/
+          zip -qry ari-ios-sin-firmar.ipa Payload
+
+      - name: Guardar
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ari-ios-sin-firmar
+          path: |
+            ari-ios-sin-firmar.ipa
+            ios/xcodebuild.log
+          if-no-files-found: warn
+          retention-days: 7

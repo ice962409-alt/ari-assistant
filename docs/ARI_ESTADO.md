@@ -95,3 +95,12 @@ Pendiente de verificar:
 ## Documentación en Google Drive
 - El usuario pidió una copia legible de la documentación en su Drive, actualizada siempre que se termine un cambio.
 - Fuente: `docs/ARI_DOCUMENTACION.md`. Carpeta de Drive: "Ari - Documentación de Claude". El procedimiento está en `CLAUDE.md`.
+
+## Versión para iPhone (Claude, rama ccr-3d48bcea-ddppo3)
+- Pedido del usuario: trabajar en la versión para iOS. Carpeta `ios/`, independiente de la app de Android; no toca `app/`.
+- App nativa en Swift/SwiftUI (iOS 17+) con LiteRT-LM 0.18.0 por Swift Package Manager (API Swift en "Early Preview" de Google).
+- `ios/AriCore/`: lógica con pruebas (personalidad y tono, comandos de memoria, recorte del historial, elección de modelo por RAM, guardado JSON, informes de fallos con el contrato de ari-informes).
+- `ios/Ari/`: chat con respuesta en vivo, primer uso (nombre, tono, modelo recomendado), descarga en segundo plano solo por Wi-Fi, importar .litertlm desde Archivos, Memoria, Ajustes, informes con permiso (MetricKit + errores del modelo).
+- `.github/workflows/ios.yml`: en una Mac de GitHub corre `swift test` de AriCore y compila la app sin firmar (artefacto `ari-ios-sin-firmar`).
+- Para instalar en iPhones hace falta la cuenta de Apple Developer, el App ID con "Increased Memory Limit" y TestFlight (pasos en `ios/README.md`).
+- Pendiente: firmar y subir a TestFlight, recordatorios, modo voz, widget, Atajos de Siri.
