@@ -556,3 +556,12 @@ Pedido del usuario: que mueva la boca al hablar y al pensar, con amor en el dise
 - El modo live aparece y se va con un fundido suave (`openLive`/`closeLive`, cancelando la animación si se abre mientras se cierra).
 - Bienvenida: la carita se pone feliz y luego "dice" el saludo.
 - "Enviar" se ve apagado (alfa 0.45) sin texto ni adjunto (`refreshSendButton`) y vibra suave al mandar; el campo de texto se enmarca con el color de Ari al escribir.
+
+## Ari CEO maneja tus apps (versión 0.42.0)
+
+Decisión del usuario: "Control total con pausa". Solo la Ari CEO.
+- `AppControl.kt` (main, puro; pruebas en `AppControlTest`): "toca/dale a/presiona X" (no "toca música…"), "teclea …" / "escribe aquí …" (respeta mayúsculas y acentos), "desliza/baja/sube la pantalla", "atrás", "ve al inicio", "apps recientes", "notificaciones", "ajustes rápidos", "lee mi pantalla". `isSensitive` (enviar, pagar, comprar, borrar, confirmar, llamar, instalar…) → Ari pregunta "¿Toco X? Dime sí o no" (`pendingControl`).
+- `AriSendService` (src/completa) ahora es "Ari CEO: manejar tus apps": implementa `AppControl.Controller` (se registra al conectarse). Ventana de la app que usas (nunca la de Ari, `flagRetrieveInteractiveWindows`); tocar por texto/descripción con `matchScore` (clic al ancestro tocable o gesto en el centro), escribir con `ACTION_SET_TEXT`, desplazar la lista más grande o gesto, acciones globales, leer textos visibles (`summarize`). Los recados siguen igual, solo en apps de mensajes. Ya no se limita por `packageNames`; `canPerformGestures`.
+- MainActivity: `handleAppControl` tras las rutinas; si Ari está en pantalla se hace a un lado (`moveTaskToBack`) y actúa 0.8 s después; responde en el chat y en voz. Ajustes ahora es una lista de acciones; "Manejar mis apps" solo aparece en la CEO.
+- Sin el permiso, "lee mi pantalla" sigue usando la vista de pantalla (proyección).
+- Aviso "Ari se muestra sobre otras apps": es de Android (Sistema), no de Ari; se apaga en sus ajustes de notificación.

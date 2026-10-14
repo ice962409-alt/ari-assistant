@@ -18,11 +18,11 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:usesCleartextTraffic">
 
-        <!-- Envío automático de recados (solo la Ari CEO): toca "enviar" en la app de mensajes. -->
+        <!-- Solo la Ari CEO: envía los recados y maneja tus apps cuando se lo pides (Accesibilidad). -->
         <service
             android:name="com.ari.assistant.AriSendService"
             android:exported="true"
-            android:label="Ari: enviar recados"
+            android:label="Ari CEO: manejar tus apps"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

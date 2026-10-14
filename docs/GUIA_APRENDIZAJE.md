@@ -331,6 +331,14 @@ Cuando sales de una app, Android la "duerme" para cuidar la batería y tu privac
 - El micrófono en segundo plano solo se puede encender **mientras Ari está en pantalla**. Por eso el modo live empieza en Ari, y si Android cierra la app, no vuelve a escuchar sola.
 - Un detalle práctico: si pones música, el micrófono oiría la canción y Ari la tomaría por órdenes. Por eso, si algo está sonando, Ari espera a que toques "Hablar".
 
+### Ari maneja tus apps: Accesibilidad con pausa
+
+El permiso de **Accesibilidad** existe para personas que no pueden tocar la pantalla: deja que una app lea lo que hay en otras y toque por ti. Es muy poderoso, por eso Android lo pide con varios pasos.
+
+- Tu Ari CEO lo usa solo cuando se lo pides: busca el botón que nombraste ("toca Siguiente") en el **árbol de la pantalla** (la lista de botones y textos que Android describe) y lo toca; también escribe, desliza y va atrás o al inicio.
+- **Con pausa**: si el botón puede mandar, pagar, comprar o borrar algo, Ari pregunta primero ("¿Toco Enviar?"). Así un malentendido no se convierte en un mensaje o una compra.
+- Solo existe en la Ari CEO; la Ari para otros no trae este servicio.
+
 ### Rutinas: enseñarle a Ari sin cambiar su código
 
 Una app normalmente solo hace lo que su código dice; para cambiarla hay que programar, compilar e instalar de nuevo. Las **rutinas** son otra forma de enseñarle cosas: en lugar de código, se guardan **datos** (texto) que Ari ya sabe usar.
@@ -499,6 +507,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 ## 8. Glosario rápido
 
 - **APK**: el archivo instalador de una app de Android.
+- **Árbol de la pantalla**: la descripción que Android hace de los botones y textos de una app; Accesibilidad la usa para leer y tocar.
 - **Rutina**: una frase que dispara varios pasos que Ari ya sabe hacer.
 - **Disparador**: la frase que pone en marcha una rutina.
 - **Palabra de activación**: la palabra que despierta a un asistente (como "Ari").

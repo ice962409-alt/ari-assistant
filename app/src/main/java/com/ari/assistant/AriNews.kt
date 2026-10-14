@@ -42,6 +42,7 @@ object AriNews {
         52 to listOf(Item("Me enseñas rutinas", "Di: \"cuando te diga buenos días, dime qué tengo hoy y pon música\". Luego di \"buenos días\". Para verlas: \"mis rutinas\".")),
         53 to listOf(Item("Me propongo mejoras", "Cuando algo no me sale, lo anoto. Di \"propón mejoras\" y te armo el pedido para que Claude me mejore.", ceoOnly = true)),
         54 to listOf(Item("Mi carita nueva", "Mírame arriba: pienso murmurando y muevo la boca con cada palabra que escribo o digo. Tócame para hablar en voz.")),
+        56 to listOf(Item("Manejo tus apps", "Ajustes → Manejar mis apps. Luego, en cualquier app: \"toca Siguiente\", \"teclea hola\", \"desliza hacia abajo\", \"atrás\" o \"lee mi pantalla\". Antes de enviar, pagar o borrar te pregunto.", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

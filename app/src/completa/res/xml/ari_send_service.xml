@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Solo mira las apps de mensajes y solo actúa con un recado que Ari acaba de armar. -->
+<!-- Solo la Ari CEO. Toca "enviar" en los recados que armó Ari y maneja tus apps solo
+     cuando tú se lo pides (tocar, escribir, deslizar, atrás, leer la pantalla). -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagReportViewIds"
+    android:accessibilityFlags="flagReportViewIds|flagRetrieveInteractiveWindows|flagIncludeNotImportantViews"
     android:canRetrieveWindowContent="true"
+    android:canPerformGestures="true"
     android:notificationTimeout="200"
-    android:packageNames="com.google.android.apps.messaging,com.samsung.android.messaging,com.android.mms,com.android.messaging,com.miui.mms"
     android:description="@string/ari_send_service_description" />

@@ -690,7 +690,7 @@ class MainActivity : Activity() {
     /** Solo Ari CEO: que toque "enviar" sola en los recados (Accesibilidad). */
     private fun setupAutoSend() {
         if (AutoSend.enabled(this)) {
-            chat.addNote("Ya envío sola los recados. Para quitarlo: Ajustes del teléfono → Accesibilidad → Ari: enviar recados.")
+            chat.addNote("Ya envío sola los recados. Para quitarlo: Ajustes del teléfono → Accesibilidad → Ari CEO: manejar tus apps.")
             return
         }
         AlertDialog.Builder(this)
@@ -700,7 +700,7 @@ class MainActivity : Activity() {
                     "en los 20 segundos después de armarlos y si el texto es exactamente el recado. No leo ni toco nada más.\n\n" +
                     "Para eso Android pide el permiso de Accesibilidad:\n" +
                     "1. Toca \"Activar\".\n" +
-                    "2. Busca \"Ari: enviar recados\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
+                    "2. Busca \"Ari CEO: manejar tus apps\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
                     "3. Si dice \"Configuración restringida\": Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
                     "\"Permitir configuración restringida\", y repite el paso 2.\n" +
                     "4. Regresa a Ari."
@@ -719,6 +719,108 @@ class MainActivity : Activity() {
     }
 
     private var autoSendPermissionAsked = false
+
+    // --- Solo Ari CEO: manejar tus apps (Accesibilidad, ver AppControl) ---
+
+    /** El permiso es el mismo de los recados: el servicio "Ari CEO: manejar tus apps". */
+    private fun setupAppControl() {
+        if (AutoSend.enabled(this)) {
+            AlertDialog.Builder(this)
+                .setTitle("Manejar tus apps")
+                .setMessage(
+                    "Ya puedo manejar tus apps. Abre una app, llámame (burbuja, modo live o \"Ari\") y dime:\n\n" +
+                        "• \"toca Siguiente\", \"dale a Buscar\"\n" +
+                        "• \"teclea hola, ya voy\"\n" +
+                        "• \"desliza hacia abajo\", \"atrás\", \"ve al inicio\"\n" +
+                        "• \"lee mi pantalla\"\n\n" +
+                        "Antes de enviar, pagar, comprar o borrar algo te pregunto.\n\n" +
+                        "Para quitarlo: Ajustes del teléfono → Accesibilidad → Ari CEO: manejar tus apps."
+                )
+                .setPositiveButton("Entendido", null)
+                .show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Que maneje tus apps")
+            .setMessage(
+                "Puedo tocar botones, escribir, deslizar, ir atrás o al inicio y leerte la pantalla en cualquier app, " +
+                    "solo cuando tú me lo pides. Antes de enviar, pagar, comprar o borrar algo te pregunto. No guardo lo que veo.\n\n" +
+                    "Para eso Android pide el permiso de Accesibilidad:\n" +
+                    "1. Toca \"Activar\".\n" +
+                    "2. Busca \"Ari CEO: manejar tus apps\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
+                    "3. Si dice \"Configuración restringida\": Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
+                    "\"Permitir configuración restringida\", y repite el paso 2.\n" +
+                    "4. Regresa a Ari."
+            )
+            .setPositiveButton("Activar") { _, _ ->
+                autoSendPermissionAsked = true
+                try {
+                    startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                } catch (e: android.content.ActivityNotFoundException) {
+                    autoSendPermissionAsked = false
+                    chat.addNote("No encontré esa pantalla. Búscala en Ajustes del teléfono → Accesibilidad.")
+                }
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    /** Un toque delicado esperando tu "sí". */
+    private var pendingControl: AppControl.Command? = null
+
+    /** "toca…", "teclea…", "desliza…", "atrás", "lee mi pantalla". Solo Ari CEO y solo el dueño. */
+    private fun handleAppControl(text: String): Boolean {
+        if (!resources.getBoolean(R.bool.ari_ceo)) return false
+        pendingControl?.let { pending ->
+            pendingControl = null
+            if (AppControl.isYes(text)) {
+                runAppControl(text, pending)
+                return true
+            }
+            if (AppControl.isNo(text)) {
+                input.text.clear()
+                answerLocally(text, "Va, no lo toco.")
+                return true
+            }
+        }
+        val command = AppControl.parse(text) ?: return false
+        if (AppControl.controller == null) {
+            // Sin el permiso, "lee mi pantalla" sigue funcionando mirando la pantalla (con su pregunta de Android).
+            if (command == AppControl.Command.ReadScreen) return false
+            input.text.clear()
+            answerLocally(text, "Para manejar tus apps necesito el permiso de Accesibilidad. Ve a Ajustes → Manejar mis apps y te explico.")
+            return true
+        }
+        if (command is AppControl.Command.Tap && AppControl.isSensitive(command.target)) {
+            pendingControl = command
+            input.text.clear()
+            answerLocally(text, "¿Toco \"${command.target}\"? Puede enviar, pagar o borrar algo. Dime sí o no.")
+            return true
+        }
+        runAppControl(text, command)
+        return true
+    }
+
+    private fun runAppControl(text: String, command: AppControl.Command) {
+        val controller = AppControl.controller ?: return
+        input.text.clear()
+        saveMessage(ROLE_USER, text)
+        chat.addUser(text)
+        // Si Ari está en pantalla, se hace a un lado para dejarte ver (y tocar) tu app.
+        val wasInFront = inForeground && command !is AppControl.Command.Global
+        if (wasInFront) moveTaskToBack(true)
+        Thread {
+            if (wasInFront) Thread.sleep(800)
+            val result = controller.perform(command)
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                saveMessage(ROLE_ARI, result.message)
+                chat.addAri(result.message)
+                if (voiceMode) voice.speak(result.message)
+                else if (!inForeground && (command == AppControl.Command.ReadScreen || !result.ok)) AriChat.ariSays(this, result.message, alert = false)
+            }
+        }.start()
+    }
 
     // --- Novedades: al actualizarse, Ari cuenta lo nuevo y cómo se usa ---
 
@@ -809,51 +911,37 @@ class MainActivity : Activity() {
 
     private fun showSettingsDialog() {
         val name = profile.userName.ifEmpty { "sin nombre" }
-        val options = arrayOf(
-            "Tu nombre: $name",
-            "Tono de Ari: ${profile.tone.title}",
-            "Respaldo de la memoria",
-            "Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}",
-            "Reconocer voces",
-            "Color de Ari: ${currentColor.name}",
-            "Burbuja flotante: ${if (AriBubble.isEnabled(this) && AriBubble.canShow(this)) "activada" else "desactivada"}",
-            "Aprender a usar Ari",
-            "Avisarme en voz al terminar: ${if (speakWhenDone()) "sí" else "no"}",
-            "Interrumpirla hablando: ${if (bargeInEnabled()) "sí" else "no"}",
-            "Responder a \"Ari\": ${if (AriWakeWord.isEnabled(this) && AriWakeWord.hasModel(this)) "sí" else "no"}",
-            "Recados entre Ari",
-            "Reportar un problema",
-            "Acerca de Ari y licencias"
+        val ceo = resources.getBoolean(R.bool.ari_ceo)
+        fun item(label: String, action: () -> Unit) = label to action
+        val items = mutableListOf(
+            item("Tu nombre: $name") { askUserName(firstTime = false) },
+            item("Tono de Ari: ${profile.tone.title}") { chooseTone() },
+            item("Respaldo de la memoria") { showBackupDialog() },
+            item("Velocidad de Gemma: ${if (gpuAllowed()) "rápida (GPU)" else "segura (CPU)"}") { chooseEngine() },
+            item("Reconocer voces") { showVoicesDialog() },
+            item("Color de Ari: ${currentColor.name}") { chooseColor() },
+            item("Burbuja flotante: ${if (AriBubble.isEnabled(this) && AriBubble.canShow(this)) "activada" else "desactivada"}") { setupBubble() },
+            item("Aprender a usar Ari") { startLessons() },
+            item("Avisarme en voz al terminar: ${if (speakWhenDone()) "sí" else "no"}") {
+                getSharedPreferences(VOICE_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SPEAK_DONE, !speakWhenDone()).apply()
+                chat.addNote(if (speakWhenDone()) "Te diré en voz cuando termine algo y no estés en la app." else "Ya no te aviso en voz; solo en las notificaciones.")
+            },
+            item("Interrumpirla hablando: ${if (bargeInEnabled()) "sí" else "no"}") {
+                voicePrefs().edit().putBoolean(KEY_BARGE_IN, !bargeInEnabled()).apply()
+                chat.addNote(
+                    if (bargeInEnabled()) "Si me hablas mientras hablo, me callo y te escucho."
+                    else "Ya no me interrumpo con tu voz; tócame para interrumpirme."
+                )
+            },
+            item("Responder a \"Ari\": ${if (AriWakeWord.isEnabled(this) && AriWakeWord.hasModel(this)) "sí" else "no"}") { setupWakeWord() },
         )
+        if (ceo) items += item("Manejar mis apps: ${if (AutoSend.enabled(this)) "sí" else "no"}") { setupAppControl() }
+        items += item("Recados entre Ari") { setupAriMessages() }
+        items += item("Reportar un problema") { askProblemReport() }
+        items += item("Acerca de Ari y licencias") { showAbout() }
         AlertDialog.Builder(this)
             .setTitle("Ajustes")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> askUserName(firstTime = false)
-                    1 -> chooseTone()
-                    2 -> showBackupDialog()
-                    3 -> chooseEngine()
-                    4 -> showVoicesDialog()
-                    5 -> chooseColor()
-                    6 -> setupBubble()
-                    7 -> startLessons()
-                    8 -> {
-                        getSharedPreferences(VOICE_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SPEAK_DONE, !speakWhenDone()).apply()
-                        chat.addNote(if (speakWhenDone()) "Te diré en voz cuando termine algo y no estés en la app." else "Ya no te aviso en voz; solo en las notificaciones.")
-                    }
-                    9 -> {
-                        voicePrefs().edit().putBoolean(KEY_BARGE_IN, !bargeInEnabled()).apply()
-                        chat.addNote(
-                            if (bargeInEnabled()) "Si me hablas mientras hablo, me callo y te escucho."
-                            else "Ya no me interrumpo con tu voz; tócame para interrumpirme."
-                        )
-                    }
-                    10 -> setupWakeWord()
-                    11 -> setupAriMessages()
-                    12 -> askProblemReport()
-                    else -> showAbout()
-                }
-            }
+            .setItems(items.map { it.first }.toTypedArray()) { _, which -> items[which].second() }
             .setNegativeButton("Cerrar", null)
             .show()
     }
@@ -2352,6 +2440,7 @@ class MainActivity : Activity() {
         }
 
         if (!guestMode && handleRoutine(text)) return
+        if (!guestMode && handleAppControl(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 
         if (!guestMode && handleTutor(text)) return
