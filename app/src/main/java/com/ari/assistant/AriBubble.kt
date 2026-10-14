@@ -195,8 +195,47 @@ class AriBubbleService : Service() {
         button("🎙", "Hablar") { closePanel(); talk() }
         if (resources.getBoolean(R.bool.ari_ceo)) button("C.", "Claude") { openClaude() }
         card.addView(buttons)
+        // Contactos de recados: un toque y lo que escribas abajo se le manda como recado.
+        var recipient: QuickContact? = null
+        val quick = QuickContacts.all(this)
+        val field = android.widget.EditText(this)
+        if (quick.isNotEmpty()) {
+            card.addView(android.widget.TextView(this).apply {
+                text = "Recados"
+                textSize = 12f
+                setTextColor(com.ari.assistant.ui.AriTheme.muted)
+                setPadding(0, dp(14f), 0, dp(4f))
+            })
+            val chips = android.widget.LinearLayout(this).apply { orientation = android.widget.LinearLayout.HORIZONTAL }
+            val chipViews = mutableListOf<android.widget.TextView>()
+            quick.forEach { contact ->
+                val chip = android.widget.TextView(this).apply {
+                    text = contact.name.substringBefore(' ').take(12)
+                    textSize = 13f
+                    setTextColor(com.ari.assistant.ui.AriTheme.text)
+                    setPadding(dp(12f), dp(6f), dp(12f), dp(6f))
+                    background = com.ari.assistant.ui.AriTheme.rounded(this@AriBubbleService, com.ari.assistant.ui.AriTheme.bubble, 16f)
+                }
+                chip.setOnClickListener {
+                    recipient = if (recipient == contact) null else contact
+                    chipViews.forEach { other ->
+                        other.background = com.ari.assistant.ui.AriTheme.rounded(this, com.ari.assistant.ui.AriTheme.bubble, 16f,
+                            if (other === chip && recipient != null) com.ari.assistant.ui.AriTheme.ice else null)
+                    }
+                    field.hint = recipient?.let { "Recado para ${it.name.substringBefore(' ')}…" } ?: "Escribe aquí…"
+                }
+                chipViews.add(chip)
+                chips.addView(chip, android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { rightMargin = dp(6f) })
+            }
+            card.addView(android.widget.HorizontalScrollView(this).apply {
+                isHorizontalScrollBarEnabled = false
+                addView(chips)
+            })
+        }
         // Campo para escribirle sin abrir la app.
-        val field = android.widget.EditText(this).apply {
+        field.apply {
             hint = "Escribe aquí…"
             textSize = 15f
             setTextColor(com.ari.assistant.ui.AriTheme.text)
@@ -208,7 +247,12 @@ class AriBubbleService : Service() {
         }
         val send = {
             val text = field.text.toString().trim()
-            if (text.isNotEmpty()) {
+            val to = recipient
+            if (text.isNotEmpty() && to != null) {
+                // Recado: tu app de mensajes se abre con el recado listo; tú tocas enviar.
+                field.text.clear()
+                sendRecado(to, text)
+            } else if (text.isNotEmpty()) {
                 field.text.clear()
                 val ari = AriChat.controller
                 if (ari != null) {
@@ -256,6 +300,15 @@ class AriBubbleService : Service() {
             return
         }
         panel = card
+    }
+
+    private fun sendRecado(to: QuickContact, text: String) {
+        closePanel()
+        val owner = Profile.load(getSharedPreferences(Profile.PREFS, MODE_PRIVATE)).userName
+        val sms = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + Uri.encode(to.number)))
+            .putExtra("sms_body", AriMessages.encode(owner, text))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(sms) }
     }
 
     private fun closePanel() {

@@ -496,3 +496,10 @@ Decisión del usuario: "Sí, que Ari lea sola los recados".
 - `AriRecadosListener` (NotificationListenerService, BIND_NOTIFICATION_LISTENER_SERVICE): solo apps de mensajes (la predeterminada de SMS + Google Mensajes, Samsung, MIUI); textos de EXTRA_MESSAGES o EXTRA_BIG_TEXT/EXTRA_TEXT; `AriMessages.decode`; nombre = título de la notificación (contacto de la app de mensajes); `AriRecados.firstTime` evita repetir. Entrega con `AriMessenger.deliver`.
 - Ajustes → Recados entre Ari: explica el permiso (incluida "Configuración restringida") y abre `ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS`.
 
+## Contactos de recados (versión 0.33.0)
+
+Pedido del usuario: máximo 4 contactos de recados en la Ari para otros (Ari pide guardarlos), sin límite en la CEO; el envío desde la burbuja.
+- `QuickContacts` (prefs `ari_recados_contactos`, JSON) y `QuickContactRules` (pruebas en `QuickContactsTest`; compara los últimos 10 dígitos). Límite por `R.bool.ari_ceo`.
+- `AriMessageAgent`: si el contacto no está guardado → `pendingSave` y MainActivity pregunta (`askSaveQuickContact`: Guardar y enviar; en la CEO también Solo enviar). Lleno → explica cómo quitar uno.
+- Burbuja: fila "Recados" con los contactos; el campo manda el recado con `ACTION_SENDTO smsto:` + `sms_body` (el usuario toca enviar en su app de mensajes).
+

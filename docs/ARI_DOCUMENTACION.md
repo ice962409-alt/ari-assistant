@@ -89,6 +89,8 @@ Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que y
 - Si no tiene Ari, le llega como un SMS normal que se entiende.
 - Ari no lee tus SMS ni pide permisos de SMS: tu teléfono (POCO/Xiaomi con Android nuevo) no deja instalar apps de fuera de la tienda que los piden, para proteger de fraudes. Por eso en 0.24 la app no se instalaba; se corrigió en 0.26.1.
 - Un recado es un mensaje para ti, nunca una orden para Ari. Solo tú puedes mandar recados (no un invitado).
+- **Contactos de recados**: la primera vez que le mandas un recado a alguien, Ari pregunta "¿Guardo a Mamá en tus contactos de recados?". La Ari para otros guarda **máximo 4** (y solo manda recados a ellos); la Ari CEO no tiene límite (y puede "Solo enviar" sin guardar). Se quitan en Ajustes → Recados entre Ari → Quitar contacto.
+- **En la burbuja**: la tarjeta muestra tus contactos de recados. Toca uno, escribe el recado y Enviar: se abre tu app de mensajes con el recado listo y das el último toque (Android no deja que una app de fuera de la tienda mande SMS sola).
 - No usa internet: cuesta lo que un SMS normal.
 
 ### La burbuja flotante (en lugar del widget)
@@ -503,6 +505,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Contactos de recados (0.33.0): la primera vez que mandas un recado a alguien, Ari pregunta si lo guarda. La Ari para otros guarda máximo 4; la Ari CEO, sin límite. Aparecen en la tarjeta de la burbuja: tocas uno, escribes el recado y Enviar (se abre tu app de mensajes con el recado listo).
 - Ari lee sola los recados (0.32.0): con el acceso a notificaciones, Ari reconoce los SMS "[Ari de …]" de tu app de mensajes y te los dice sin que se los compartas.
 - Ari CEO exclusiva (0.31.0): la Ari CEO solo abre en los teléfonos del dueño (por su código de teléfono, en Ajustes → Acerca de Ari). En otro teléfono dice "Esta Ari es exclusiva de su dueño" y no abre.
 - Tarjeta de la burbuja (0.30.0): al tocar la burbuja se abre la tarjeta del boceto del dueño, con campo para escribir y botones Escribir, Hablar y Claude (solo CEO).

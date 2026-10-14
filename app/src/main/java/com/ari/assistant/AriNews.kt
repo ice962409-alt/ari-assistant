@@ -32,6 +32,9 @@ object AriNews {
         46 to listOf(
             Item("Leo sola los recados de otras Ari", "Ajustes → Recados entre Ari → Activar. Te explico cómo dar el acceso a notificaciones."),
         ),
+        47 to listOf(
+            Item("Contactos de recados", "La primera vez que le mandas un recado a alguien te pregunto si lo guardo; luego lo tienes a mano en mi burbuja: tócalo, escribe y Enviar."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

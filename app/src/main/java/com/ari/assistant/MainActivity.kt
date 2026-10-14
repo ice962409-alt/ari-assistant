@@ -208,7 +208,9 @@ class MainActivity : Activity() {
         reminderAlarms = AlarmReminders(this)
         reminders = ReminderAgent(database, reminderAlarms)
         // Primero los recados ("dile a mi mamá que…"): su frase es muy precisa.
-        messageAgent = AriMessageAgent(AndroidPhone(this)) { profile.userName }
+        messageAgent = AriMessageAgent(
+            AndroidPhone(this), { profile.userName }, { QuickContacts.all(this) }, QuickContacts.limit(this)
+        )
         ceo.hire(messageAgent)
         // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
         ceo.hire(reminders)
@@ -569,6 +571,57 @@ class MainActivity : Activity() {
     // true mientras el usuario está en los ajustes del teléfono dando el acceso a notificaciones.
     private var recadosPermissionAsked = false
 
+    /** "¿Guardo a Mamá en tus contactos de recados?" y luego manda el recado. */
+    private fun askSaveQuickContact(contact: QuickContact, text: String) {
+        val ceo = QuickContacts.limit(this) == null
+        AlertDialog.Builder(this)
+            .setTitle("Contactos de recados")
+            .setMessage("¿Guardo a ${contact.name} en tus contactos de recados? Lo tendrás a mano en la burbuja.")
+            .setPositiveButton("Guardar y enviar") { _, _ ->
+                if (QuickContacts.add(this, contact)) {
+                    input.setText(text)
+                    sendMessage()
+                } else {
+                    chat.addNote("Ya tienes el máximo de contactos de recados. Quita uno en Ajustes → Recados entre Ari.")
+                }
+            }
+            .apply {
+                if (ceo) setNeutralButton("Solo enviar") { _, _ ->
+                    AriMessages.request(text)?.let { request ->
+                        val result = messageAgent.send(contact.name, contact.number, request.text)
+                        chat.addAri(result.reply)
+                        saveMessage(ROLE_ARI, result.reply)
+                    }
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun quickContactsLine(): String {
+        val list = QuickContacts.all(this)
+        val max = QuickContacts.limit(this)
+        val names = if (list.isEmpty()) "ninguno todavía" else list.joinToString(", ") { it.name }
+        return "Tus contactos de recados" + (max?.let { " (máximo $it)" } ?: "") + ": $names."
+    }
+
+    /** Quitar un contacto de recados (para hacer lugar en la Ari para otros). */
+    private fun removeQuickContact() {
+        val list = QuickContacts.all(this)
+        if (list.isEmpty()) {
+            chat.addNote("Todavía no tienes contactos de recados. Se guardan cuando le mandas un recado a alguien.")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("¿A quién quito?")
+            .setItems(list.map { it.name }.toTypedArray()) { _, which ->
+                QuickContacts.remove(this, list[which])
+                chat.addNote("Quité a ${list[which].name} de tus contactos de recados.")
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
     private fun setupAriMessages() {
         val reading = AriRecados.enabled(this)
         AlertDialog.Builder(this)
@@ -585,8 +638,10 @@ class MainActivity : Activity() {
                         "4. Regresa a Ari.\n\n" +
                         "Solo miro las notificaciones de tu app de mensajes y solo hago caso a las que empiezan con \"[Ari de …]\"; " +
                         "las demás no las leo ni las guardo.\n\n") +
-                    "No uso internet: cada recado cuesta lo que un SMS normal."
+                    "No uso internet: cada recado cuesta lo que un SMS normal.\n\n" +
+                    quickContactsLine()
             )
+            .setNeutralButton("Quitar contacto") { _, _ -> removeQuickContact() }
             .apply {
                 if (!reading) setPositiveButton("Activar") { _, _ ->
                     recadosPermissionAsked = true
@@ -2563,6 +2618,10 @@ class MainActivity : Activity() {
                 calendarAgent.needsPermission = false
                 pendingCalendarRequest = text
                 requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), REQUEST_CALENDAR)
+            }
+            if (agent === messageAgent) messageAgent.pendingSave?.let { contact ->
+                messageAgent.pendingSave = null
+                askSaveQuickContact(contact, text)
             }
             if (agent === messageAgent && messageAgent.needsPermission) {
                 messageAgent.needsPermission = false

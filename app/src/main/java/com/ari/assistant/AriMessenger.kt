@@ -20,8 +20,16 @@ import com.ari.assistant.agents.PhoneLauncher
  */
 class AriMessageAgent(
     private val phone: PhoneLauncher,
-    private val ownerName: () -> String
+    private val ownerName: () -> String,
+    /** Los contactos de recados guardados (acceso rápido). */
+    private val quick: () -> List<QuickContact> = { emptyList() },
+    /** Máximo de contactos de recados; null sin límite (Ari CEO). */
+    private val limit: Int? = null
 ) : Agent {
+
+    /** Recado que espera a que digas si guardas al contacto (la app pregunta y lo vuelve a intentar). */
+    @Volatile
+    var pendingSave: QuickContact? = null
 
     /** true cuando falta el permiso de contactos: la app lo pide y lo vuelve a intentar. */
     @Volatile
@@ -54,9 +62,27 @@ class AriMessageAgent(
             PhoneCommands.ContactChoice.None ->
                 return AgentResult("No encontré a \"${request.recipient}\" en tus contactos.", success = false)
         }
-        val sms = AriMessages.encode(ownerName(), request.text)
-        return if (phone.launch(PhoneAction.Sms(contact.number, sms))) {
-            AgentResult("Abrí tu app de mensajes con el recado para ${contact.name}: \"${request.text}\". Toca enviar. Si tiene Ari, ella se lo dice.")
+        when (val check = QuickContactRules.check(contact.number, quick(), limit)) {
+            is QuickContactRules.Check.Saved -> Unit
+            is QuickContactRules.Check.AskToSave -> {
+                pendingSave = QuickContact(contact.name, contact.number)
+                val left = check.left?.let { " (te quedan $it de ${QuickContactRules.LIMIT_OTHERS})" } ?: ""
+                return AgentResult("¿Guardo a ${contact.name} en tus contactos de recados$left? Así lo tienes a mano en la burbuja.", success = false)
+            }
+            is QuickContactRules.Check.Full -> return AgentResult(
+                "Ya tienes ${check.saved.size} contactos de recados: ${check.saved.joinToString(", ") { it.name }}. " +
+                    "Es el máximo. Para mandarle a ${contact.name}, quita uno en Ajustes → Recados entre Ari.",
+                success = false
+            )
+        }
+        return send(contact.name, contact.number, request.text)
+    }
+
+    /** Abre tu app de mensajes con el recado listo (tú tocas enviar). */
+    fun send(name: String, number: String, text: String): AgentResult {
+        val sms = AriMessages.encode(ownerName(), text)
+        return if (phone.launch(PhoneAction.Sms(number, sms))) {
+            AgentResult("Abrí tu app de mensajes con el recado para $name: \"$text\". Toca enviar. Si tiene Ari, ella se lo dice.")
         } else {
             AgentResult("No encontré una app de mensajes para mandar el recado.", success = false)
         }
