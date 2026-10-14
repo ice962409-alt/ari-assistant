@@ -185,6 +185,8 @@ Cuando Ari habla por la bocina, su micrófono también la oye a ella. Si solo mi
 
 Una app normalmente solo dibuja dentro de su propia pantalla. Con el permiso **"Mostrar sobre otras apps"** puede poner una ventanita encima de todo (como las burbujas de chat). Es un permiso delicado, porque una app tramposa podría tapar botones; por eso Android pide que tú lo actives a mano en los ajustes.
 
+Mientras una app usa ese permiso, Android pone un aviso fijo: "ARI se muestra sobre otras apps". Así siempre sabes quién está dibujando encima. Hay otra forma de dibujar encima: la **ventana de accesibilidad**, que solo puede usar una app a la que le diste el permiso de Accesibilidad. Como ese permiso ya es el más vigilado de Android, esa ventana no lleva el aviso. Desde la 0.55, si tienes encendido "Manejar mis apps", la burbuja de ARI usa esa ventana y el aviso desaparece.
+
 ### ¿Puede una IA aprender sola? Entrenar frente a recordar
 
 - **Entrenar** un modelo es cambiar sus "pesos" (los miles de millones de números que tiene dentro). Necesita muchísimos datos y computadoras muy potentes durante horas o días; un teléfono no puede.
@@ -615,3 +617,4 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **MessagingStyle**: el estilo de notificación de Android que muestra un chat y deja contestar ahí mismo.
 - **Receptor (BroadcastReceiver)**: una parte de la app que despierta para atender un aviso de Android.
 - **Código 401, 403, 404**: respuestas de un servidor como GitHub. 401: la llave no sirve. 403: no tienes permiso o hiciste demasiadas consultas. 404: no existe, o es privado y no puedes verlo.
+- **Ventana de accesibilidad (TYPE_ACCESSIBILITY_OVERLAY)**: una ventana encima de todo que solo puede dibujar una app con el permiso de Accesibilidad. No genera el aviso de "se muestra sobre otras apps".
