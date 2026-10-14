@@ -37,6 +37,21 @@ class AriBubbleService : Service() {
     private var params: WindowManager.LayoutParams? = null
     private var panel: android.view.View? = null
     private var panelOrb: AriOrbView? = null
+    /** Dónde se dibujó la burbuja: hay que moverla y quitarla con el mismo. */
+    private var host: WindowManager? = null
+
+    /**
+     * Con el servicio de Accesibilidad de ARI encendido, la burbuja se dibuja a través de él
+     * (ventana de accesibilidad): así Android no muestra su aviso "ARI se muestra sobre otras
+     * apps". Si no, se usa el permiso "Mostrar sobre otras apps", como siempre.
+     */
+    private fun windowHost(): Pair<WindowManager, Int>? {
+        OverlayHost.accessibility?.getSystemService(WindowManager::class.java)?.let {
+            return it to WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+        }
+        if (!Settings.canDrawOverlays(this)) return null
+        return getSystemService(WindowManager::class.java)?.let { it to WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -63,11 +78,11 @@ class AriBubbleService : Service() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun show() {
-        val manager = getSystemService(WindowManager::class.java) ?: return
+        val (manager, type) = windowHost() ?: run { stopSelf(); return }
         val size = (56 * resources.displayMetrics.density).toInt()
         val layout = WindowManager.LayoutParams(
             size, size,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -126,6 +141,7 @@ class AriBubbleService : Service() {
         }
         orb = view
         params = layout
+        host = manager
     }
 
     private fun dp(value: Float) = (value * resources.displayMetrics.density).toInt()
@@ -134,7 +150,7 @@ class AriBubbleService : Service() {
     @SuppressLint("SetTextI18n")
     private fun openPanel() {
         if (panel != null) return
-        val manager = getSystemService(WindowManager::class.java) ?: return
+        val manager = host ?: return
         orb?.visibility = android.view.View.GONE
         val card = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
@@ -294,7 +310,7 @@ class AriBubbleService : Service() {
 
         val layout = WindowManager.LayoutParams(
             dp(300f), WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            params?.type ?: WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             // Se puede escribir en ella; un toque fuera la cierra.
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
@@ -328,7 +344,7 @@ class AriBubbleService : Service() {
         val view = panel ?: return
         panel = null
         panelOrb = null
-        runCatching { getSystemService(WindowManager::class.java)?.removeView(view) }
+        runCatching { host?.removeView(view) }
         orb?.visibility = android.view.View.VISIBLE
     }
 
@@ -374,8 +390,9 @@ class AriBubbleService : Service() {
     override fun onDestroy() {
         if (running === this) running = null
         closePanel()
-        orb?.let { view -> runCatching { getSystemService(WindowManager::class.java)?.removeView(view) } }
+        orb?.let { view -> runCatching { host?.removeView(view) } }
         orb = null
+        host = null
         super.onDestroy()
     }
 
@@ -413,11 +430,18 @@ class AriBubbleService : Service() {
     }
 }
 
+/** El servicio de Accesibilidad de ARI, mientras está encendido (solo en la Ari CEO). */
+object OverlayHost {
+    @Volatile
+    var accessibility: Context? = null
+}
+
 object AriBubble {
     private const val PREFS = "ari_burbuja"
     private const val KEY_ON = "activa"
 
-    fun canShow(context: Context) = Settings.canDrawOverlays(context)
+    /** Se puede con el permiso "Mostrar sobre otras apps" o con la Accesibilidad de ARI encendida. */
+    fun canShow(context: Context) = OverlayHost.accessibility != null || Settings.canDrawOverlays(context)
 
     fun isEnabled(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_ON, false)
 

@@ -508,6 +508,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
 - Ari Estado 0.2.0: notificación con barra de progreso de lo que Claude está haciendo (tarea, paso y porcentaje). Se actualiza cada 15 minutos.
+- Cumpleaños (0.55.0): un día antes de cada cumpleaños de tu libreta ("Luis cumple el 5 de mayo"), a las 9 de la mañana, te llega un aviso.
+- Burbuja sin el aviso de Android (0.55.0, solo ARI): con Ajustes → Manejar mis apps encendido, la burbuja ya no hace salir "ARI se muestra sobre otras apps".
 - Configurar Ari (0.54.0): Ajustes → Configurar Ari o "configúrame" muestra todos los pasos para dejarla lista, con palomitas.
 - Ari Estado 0.3.0: ya no necesita llave (Ari-estado es público). Abre la app, toca "Probar ahora" y agrega el widget. La llave queda en "Opciones avanzadas" por si el repositorio vuelve a ser privado.
 - Tarea automática de Claude: cada día a las 8:52 revisa las fichas de ARI, programa lo seguro y te avisa.

@@ -25,15 +25,30 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
     override fun onServiceConnected() {
         super.onServiceConnected()
         AppControl.controller = this
+        OverlayHost.accessibility = this
+        // La burbuja se vuelve a dibujar a través de este servicio, sin el aviso de Android.
+        if (AriBubble.isEnabled(this)) {
+            AriBubble.stop(this)
+            AriBubble.start(this)
+        }
     }
 
     override fun onUnbind(intent: android.content.Intent?): Boolean {
         if (AppControl.controller === this) AppControl.controller = null
+        if (OverlayHost.accessibility === this) {
+            OverlayHost.accessibility = null
+            // Sin Accesibilidad, la burbuja vuelve a la forma normal (si hay permiso de mostrarse encima).
+            if (AriBubble.isEnabled(this)) {
+                AriBubble.stop(this)
+                AriBubble.start(this)
+            }
+        }
         return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
         if (AppControl.controller === this) AppControl.controller = null
+        if (OverlayHost.accessibility === this) OverlayHost.accessibility = null
         super.onDestroy()
     }
 

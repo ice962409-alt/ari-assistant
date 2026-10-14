@@ -261,6 +261,13 @@ class MainActivity : Activity() {
         handleLaunch(intent)
         // Por si Android borró las alarmas (reinicio, actualización, respaldo recuperado).
         storage.execute { runCatching { AlarmReminders.rescheduleAll(this, database) } }
+        // Cumpleaños de la libreta: revisión diaria a las 9; si ya pasó la hora y hoy no se revisó, ahora.
+        storage.execute {
+            runCatching {
+                BirthdayReminders.schedule(this)
+                if (java.time.LocalTime.now().hour >= 9) BirthdayReminders.check(this, database.people())
+            }
+        }
     }
 
     /**

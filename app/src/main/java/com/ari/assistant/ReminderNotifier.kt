@@ -135,6 +135,7 @@ class ReminderBootReceiver : BroadcastReceiver() {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED && intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
         try {
             AriDatabase(context).use { AlarmReminders.rescheduleAll(context, it) }
+            BirthdayReminders.schedule(context)
         } catch (_: Throwable) {
         }
     }

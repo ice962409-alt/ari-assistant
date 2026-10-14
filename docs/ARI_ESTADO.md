@@ -670,3 +670,15 @@ Decisión del usuario: el repositorio `Ari-estado` es público (comprobado: la A
 - `RefreshJob.refresh` ya no exige llave; la app programa la revisión al abrirse. El widget ya no muestra "Sin configurar".
 - `SetupActivity`: botón "Probar ahora"; la llave queda en "Opciones avanzadas" (oculta salvo que ya haya una guardada).
 - El README de Ari-estado avisa que es público y que en `estado.json` nunca va nada sensible.
+
+## Cumpleaños un día antes y burbuja sin el aviso de Android (versión 0.55.0)
+
+- Informe atendido: "Informe de fallo de Ari 0.36.0" (14/10, el POCO del dueño, error del motor con GPU). La protección que pasa a CPU ya existía, y después el dueño confirmó en el tablero que Gemma contesta (tarea 3). No hizo falta otro cambio.
+- `BirthdayReminders.kt` (backlog [autónomo] de la libreta):
+  - Una revisión al día a las 9 con `setAndAllowWhileIdle` (no necesita alarmas exactas). `BirthdayReceiver` avisa "Mañana cumple años Luis (5 de mayo)" y programa la siguiente.
+  - Avisa una sola vez por día (prefs `ari_cumpleanos`). El 29 de febrero se avisa el 27 en los años no bisiestos.
+  - Se programa al abrir Ari (si ya pasaron las 9, revisa en ese momento) y al reiniciar el teléfono. Pruebas en `BirthdayRemindersTest`.
+- Pedido del usuario (captura): ocultar el aviso de Android "ARI se muestra sobre otras apps".
+  - Con la Accesibilidad de ARI encendida (Manejar mis apps), `AriBubbleService` dibuja la burbuja y su tarjeta como `TYPE_ACCESSIBILITY_OVERLAY` a través de `OverlayHost.accessibility` (lo pone `AriSendService`). Ese tipo de ventana no genera el aviso.
+  - Sin Accesibilidad, sigue como antes (`TYPE_APPLICATION_OVERLAY`). Al encender o apagar la Accesibilidad, la burbuja se vuelve a dibujar.
+  - Falta [prueba]: que se pueda escribir en la tarjeta de la burbuja con el teclado.

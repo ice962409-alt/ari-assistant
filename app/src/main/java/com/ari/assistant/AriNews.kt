@@ -53,6 +53,10 @@ object AriNews {
         65 to listOf(Item("Busco en internet", "Pregunta: \"¿quién fue Benito Juárez?\", \"busca en internet qué es la fotosíntesis\" o \"¿cómo está el clima en Monterrey?\". Solo sale lo que buscas.", ceoOnly = true)),
         67 to listOf(Item("Le dejo fichas a Claude en GitHub", "Ajustes → GitHub de ARI: pega tu llave. Luego \"propón mejoras\" → Crear ficha en GitHub, y Claude la programa.", ceoOnly = true)),
         68 to listOf(Item("Configúrame en un minuto", "Ajustes → Configurar Ari, o dime \"configúrame\": una lista con todos los pasos, palomeados según lo que ya hiciste.")),
+        69 to listOf(
+            Item("Te aviso los cumpleaños un día antes", "Dime: \"Luis cumple el 5 de mayo\". El día anterior, a las 9 de la mañana, te llega un aviso."),
+            Item("Burbuja sin el aviso de Android", "Con Ajustes → Manejar mis apps encendido, mi burbuja ya no hace salir el aviso \"ARI se muestra sobre otras apps\".", ceoOnly = true),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */
