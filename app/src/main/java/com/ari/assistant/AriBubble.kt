@@ -201,7 +201,7 @@ class AriBubbleService : Service() {
         val field = android.widget.EditText(this)
         if (quick.isNotEmpty()) {
             card.addView(android.widget.TextView(this).apply {
-                text = "Recados"
+                text = "Recados (toca y dilo en voz)"
                 textSize = 12f
                 setTextColor(com.ari.assistant.ui.AriTheme.muted)
                 setPadding(0, dp(14f), 0, dp(4f))
@@ -216,13 +216,24 @@ class AriBubbleService : Service() {
                     setPadding(dp(12f), dp(6f), dp(12f), dp(6f))
                     background = com.ari.assistant.ui.AriTheme.rounded(this@AriBubbleService, com.ari.assistant.ui.AriTheme.bubble, 16f)
                 }
+                // Un toque: dices el recado en voz. Mantener: lo escribes abajo.
                 chip.setOnClickListener {
+                    closePanel()
+                    startActivity(
+                        Intent(this, DictateRecadoActivity::class.java)
+                            .putExtra(DictateRecadoActivity.EXTRA_NAME, contact.name)
+                            .putExtra(DictateRecadoActivity.EXTRA_NUMBER, contact.number)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+                chip.setOnLongClickListener {
                     recipient = if (recipient == contact) null else contact
                     chipViews.forEach { other ->
                         other.background = com.ari.assistant.ui.AriTheme.rounded(this, com.ari.assistant.ui.AriTheme.bubble, 16f,
                             if (other === chip && recipient != null) com.ari.assistant.ui.AriTheme.ice else null)
                     }
                     field.hint = recipient?.let { "Recado para ${it.name.substringBefore(' ')}…" } ?: "Escribe aquí…"
+                    true
                 }
                 chipViews.add(chip)
                 chips.addView(chip, android.widget.LinearLayout.LayoutParams(

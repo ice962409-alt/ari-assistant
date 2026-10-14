@@ -94,6 +94,14 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <!-- Recado por voz desde la burbuja (pregunta "¿Qué le digo a…?"). -->
+        <activity
+            android:name=".DictateRecadoActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <!-- La burbuja flotante de Ari (reemplaza al widget). -->
         <service
             android:name=".AriBubbleService"

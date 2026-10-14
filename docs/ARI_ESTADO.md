@@ -502,4 +502,5 @@ Pedido del usuario: máximo 4 contactos de recados en la Ari para otros (Ari pid
 - `QuickContacts` (prefs `ari_recados_contactos`, JSON) y `QuickContactRules` (pruebas en `QuickContactsTest`; compara los últimos 10 dígitos). Límite por `R.bool.ari_ceo`.
 - `AriMessageAgent`: si el contacto no está guardado → `pendingSave` y MainActivity pregunta (`askSaveQuickContact`: Guardar y enviar; en la CEO también Solo enviar). Lleno → explica cómo quitar uno.
 - Burbuja: fila "Recados" con los contactos; el campo manda el recado con `ACTION_SENDTO smsto:` + `sms_body` (el usuario toca enviar en su app de mensajes).
+- 0.34.0: pedido del usuario "no quiero escribir el recado, quiero decírselo por voz". `DictateRecadoActivity` (translúcida, no exportada): `ACTION_RECOGNIZE_SPEECH` con "¿Qué le digo a X?" y abre `smsto:` con el recado. En la burbuja: tocar el contacto = voz; mantener = escribir.
 
