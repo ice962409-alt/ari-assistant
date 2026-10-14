@@ -81,8 +81,10 @@ object StatusStore {
 }
 
 /**
- * Lee estado.json con la API de GitHub, por HTTPS y con la llave de solo
- * lectura. Es la única conexión a internet de la app.
+ * Lee estado.json con la API de GitHub, por HTTPS. El repositorio Ari-estado es
+ * público, así que no hace falta llave; si hay una guardada (opción avanzada) se
+ * usa, y si GitHub la rechaza se vuelve a intentar sin ella. Es la única conexión
+ * a internet de la app.
  */
 object StatusFetcher {
     private const val URL_STATUS =
@@ -90,24 +92,40 @@ object StatusFetcher {
     private const val MAX_BYTES = 64 * 1024
 
     /** Devuelve el JSON de estado, o lanza una excepción con un mensaje para el usuario. */
-    fun fetch(token: String): String {
+    fun fetch(token: String?): String {
+        if (token != null) {
+            val (code, json) = request(token)
+            if (json != null) return json
+            if (code !in listOf(401, 403, 404)) throw IllegalStateException(explain(code, withToken = true))
+        }
+        val (code, json) = request(null)
+        return json ?: throw IllegalStateException(explain(code, withToken = false))
+    }
+
+    /** Qué significa cada respuesta de GitHub, en palabras. */
+    fun explain(code: Int, withToken: Boolean): String = when (code) {
+        401 -> "La llave no es válida o ya venció. Bórrala: ya no hace falta."
+        403 -> "GitHub está limitando las consultas. Se reintenta solo en unos minutos."
+        404 -> if (withToken) "La llave no tiene acceso a Ari-estado, o falta estado.json."
+        else "No veo Ari-estado: el repositorio sigue privado. En GitHub → Ari-estado → Settings → " +
+            "Change visibility → Public. O pon una llave en Opciones avanzadas."
+        else -> "GitHub respondió con el código $code."
+    }
+
+    /** Hace una consulta. Devuelve el código y, si salió bien, el JSON. */
+    private fun request(token: String?): Pair<Int, String?> {
         val connection = URL(URL_STATUS).openConnection() as HttpURLConnection
         try {
             connection.connectTimeout = 10_000
             connection.readTimeout = 15_000
             connection.instanceFollowRedirects = true
             connection.setRequestProperty("Accept", "application/vnd.github.raw+json")
-            connection.setRequestProperty("Authorization", "Bearer $token")
+            if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
             connection.setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
             connection.setRequestProperty("User-Agent", "AriEstado")
 
-            when (val code = connection.responseCode) {
-                in 200..299 -> {}
-                401 -> throw IllegalStateException("La llave no es válida o ya venció. Crea una nueva.")
-                403 -> throw IllegalStateException("GitHub rechazó la llave (sin permiso o demasiadas consultas).")
-                404 -> throw IllegalStateException("La llave no tiene acceso a Ari-estado, o falta estado.json.")
-                else -> throw IllegalStateException("GitHub respondió con el código $code.")
-            }
+            val code = connection.responseCode
+            if (code !in 200..299) return code to null
 
             val buffer = ByteArrayOutputStream()
             connection.inputStream.use { input ->
@@ -121,7 +139,7 @@ object StatusFetcher {
             }
             val json = buffer.toString(Charsets.UTF_8.name())
             ClaudeStatus.parse(json) // comprobar que es un estado válido antes de guardarlo
-            return json
+            return code to json
         } finally {
             connection.disconnect()
         }

@@ -91,15 +91,10 @@ class RefreshJob : JobService() {
 
         /** Consulta, guarda y redibuja. Se llama fuera del hilo principal. */
         fun refresh(context: Context) {
-            val token = TokenVault.load(context)
-            if (token == null) {
-                StatusStore.saveError(context, "Configura la llave en la app Ari Estado.")
-            } else {
-                try {
-                    StatusStore.saveStatus(context, StatusFetcher.fetch(token))
-                } catch (e: Exception) {
-                    StatusStore.saveError(context, e.message ?: "No se pudo leer el estado.")
-                }
+            try {
+                StatusStore.saveStatus(context, StatusFetcher.fetch(TokenVault.load(context)))
+            } catch (e: Exception) {
+                StatusStore.saveError(context, e.message ?: "No se pudo leer el estado.")
             }
             StatusWidget.renderAll(context)
             StatusStore.status(context)?.let {

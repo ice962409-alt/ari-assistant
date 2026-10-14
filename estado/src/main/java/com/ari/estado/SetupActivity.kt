@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
+import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
@@ -16,8 +17,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 
 /**
- * Configuración de Ari Estado: explica cómo crear la llave de solo lectura y
- * la guarda cifrada. La llave se pega aquí, nunca en un chat.
+ * Configuración de Ari Estado. El estado se lee sin llave (Ari-estado es público);
+ * la llave de solo lectura queda como opción avanzada, cifrada y pegada aquí,
+ * nunca en un chat.
  */
 class SetupActivity : Activity() {
 
@@ -42,13 +44,24 @@ class SetupActivity : Activity() {
         column.addView(
             text(
                 "Este widget muestra en qué trabaja Claude, su barra de progreso y te avisa cuando te necesita. " +
-                    "Lee el estado del repositorio privado Ari-estado con una llave de solo lectura.",
+                    "Lee el estado del repositorio público Ari-estado: no necesita llave ni cuenta.",
                 15f, muted
             )
         )
+        column.addView(button("Probar ahora") { saveAndTest() })
 
-        column.addView(text("Cómo crear la llave (una sola vez)", 18f, green))
-        column.addView(
+        // La llave solo hace falta si Ari-estado vuelve a ser privado.
+        val advanced = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = if (TokenVault.hasToken(this@SetupActivity)) View.VISIBLE else View.GONE
+        }
+        column.addView(button("Opciones avanzadas: llave de GitHub") {
+            advanced.visibility = if (advanced.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        })
+        column.addView(advanced)
+
+        advanced.addView(text("Llave (solo si Ari-estado es privado)", 18f, green))
+        advanced.addView(
             text(
                 "1. Toca \"Abrir GitHub\" (inicia sesión si te lo pide).\n" +
                     "2. Token name: Ari Estado widget.\n" +
@@ -60,7 +73,7 @@ class SetupActivity : Activity() {
                 15f, Color.WHITE
             )
         )
-        column.addView(button("Abrir GitHub") {
+        advanced.addView(button("Abrir GitHub") {
             startActivity(
                 Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/settings/personal-access-tokens/new"))
             )
@@ -74,16 +87,15 @@ class SetupActivity : Activity() {
             setPadding(24, 24, 24, 24)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
-        column.addView(tokenInput, spaced())
+        advanced.addView(tokenInput, spaced())
         tokenInfo = text("", 13f, muted)
-        column.addView(tokenInfo)
+        advanced.addView(tokenInfo)
         showTokenInfo()
-        column.addView(button("Guardar y probar") { saveAndTest() })
-        column.addView(button("Borrar la llave") {
+        advanced.addView(button("Guardar llave y probar") { saveAndTest() })
+        advanced.addView(button("Borrar la llave") {
             TokenVault.clear(this)
-            RefreshJob.cancelAll(this)
             StatusWidget.renderAll(this)
-            status.text = "Llave borrada. El widget dejó de consultar."
+            status.text = "Llave borrada. El widget sigue leyendo el estado sin llave."
             showTokenInfo()
         })
 
@@ -115,6 +127,9 @@ class SetupActivity : Activity() {
             addView(column)
         })
 
+        // Sin llave que esperar: la revisión cada 15 minutos arranca al abrir la app.
+        RefreshJob.schedule(this)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }
@@ -124,8 +139,7 @@ class SetupActivity : Activity() {
         // Una llave de GitHub no lleva espacios ni saltos de línea: se quitan por si se colaron al copiar.
         val token = tokenInput.text.toString().replace(Regex("\\s"), "")
         if (token.isEmpty()) {
-            status.text = if (TokenVault.hasToken(this)) "Probando la llave guardada…" else "Primero pega la llave."
-            if (!TokenVault.hasToken(this)) return
+            status.text = "Probando…"
         } else {
             TokenVault.save(this, token)
             tokenInput.text.clear()
@@ -135,10 +149,8 @@ class SetupActivity : Activity() {
         }
 
         Thread {
-            val saved = TokenVault.load(this)
             val message = try {
-                if (saved == null) throw IllegalStateException("No se pudo leer la llave guardada.")
-                val json = StatusFetcher.fetch(saved)
+                val json = StatusFetcher.fetch(TokenVault.load(this))
                 StatusStore.saveStatus(this, json)
                 val current = ClaudeStatus.parse(json)
                 "¡Funciona! Claude: ${current.task.ifBlank { "sin tarea" }} (${current.progress}%)."

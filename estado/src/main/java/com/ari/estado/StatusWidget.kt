@@ -49,16 +49,6 @@ class StatusWidget : AppWidgetProvider() {
             val orange = context.getColor(R.color.orange)
 
             when {
-                !TokenVault.hasToken(context) -> {
-                    views.setTextViewText(R.id.widget_state, "Sin configurar")
-                    views.setTextColor(R.id.widget_state, orange)
-                    views.setTextViewText(R.id.widget_task, "Toca aquí para poner la llave de solo lectura.")
-                    views.setProgressBar(R.id.widget_progress, 100, 0, false)
-                    views.setViewVisibility(R.id.widget_activity, View.GONE)
-                    views.setTextViewText(R.id.widget_meta, "")
-                    views.setTextViewText(R.id.widget_note, "")
-                }
-
                 status == null -> {
                     views.setTextViewText(R.id.widget_state, if (refreshing) "Consultando…" else "Sin datos")
                     views.setTextColor(R.id.widget_state, green)

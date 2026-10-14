@@ -37,7 +37,7 @@ El usuario quiere aprender y pidió guardar todo lo que Claude le enseña en una
 
 ## Estado para el widget "Ari Estado" (actualizarlo siempre)
 
-- La app aparte `estado/` (Ari Estado) muestra en un widget lo que Claude está haciendo. Lee `estado.json` del repositorio privado `javierhedzd-ops/Ari-estado` con una llave de solo lectura que el usuario pega en la app (nunca en el chat).
+- La app aparte `estado/` (Ari Estado) muestra en un widget lo que Claude está haciendo. Lee `estado.json` del repositorio **público** `javierhedzd-ops/Ari-estado` sin llave (desde Ari Estado 0.3.0; la llave queda como opción avanzada si vuelve a ser privado). Como es público, en `estado.json` nunca va nada sensible.
 - Cada vez que actualices `estado/actual` en el tablero, actualiza también `estado.json` en `Ari-estado` (rama main) con los mismos datos: `activo`, `haciendo`, `paso`, `pasos`, `progreso`, `siguiente`, `pendientes` (pendientes sin responder en el tablero), `actualizado` (UTC, ISO 8601) y `sesion` (el enlace https://claude.ai/code/session_... de la sesión actual: el widget y la notificación lo abren para que el usuario escriba "sigue"; búscalo en las líneas Claude-Session de tus commits). Clona el repositorio con `add_repo` si la sesión no lo tiene.
 - Al detenerte, pon `activo: false`. Si `activo` es true y `actualizado` tiene más de 45 minutos, el widget avisa que la sesión probablemente se cerró: por eso hay que actualizar la hora en cada paso.
 

@@ -662,3 +662,11 @@ Pedido del usuario: que ARI trabaje a través de GitHub. ARI no programa; crea i
 - `SetupGuide.kt` (puro; pruebas en `SetupGuideTest`): pasos nombre, modelo, notificaciones, micrófono, contactos, calendario, burbuja, responder a su nombre y lecciones, con "✓/○", para qué sirve cada uno y el avance. MainActivity: `setupDone()`, `showSetupGuide()` (Ajustes → "Configurar Ari (n de 9 listos)" o "configúrame"), `runSetupStep` pide el permiso (REQUEST_SETUP = 119) y vuelve a la lista. Si falta lo esencial, al abrir lo recuerda con una nota. Ambas versiones.
 - Tarea automática "Relevo de Claude para ARI" (trig_01U44nT45SYEeYexGZCEJriJ): diario 8:52 hora de CDMX, sesión nueva; revisa fichas [ARI], informes y el tablero, hace cambios pequeños y seguros, compila y avisa. Limitación: corre sin conectores (sin Gmail ni Drive); para agregarlos, crearla desde la pantalla de rutinas de claude.ai. La hora se ajusta con el pendiente "hora-relevo".
 - Página oficial: correo de contacto javierhedzd@gmail.com en privacidad.html (cambiable).
+
+## Ari Estado 0.3.0: sin llave
+
+Decisión del usuario: el repositorio `Ari-estado` es público (comprobado: la API responde 200 sin llave), así que no hace falta llave.
+- `StatusFetcher.fetch(token: String?)`: sin llave no manda `Authorization`. Si hay llave guardada y GitHub responde 401/403/404, reintenta sin ella. Si sin llave da 404, dice que el repositorio sigue privado y cómo hacerlo público.
+- `RefreshJob.refresh` ya no exige llave; la app programa la revisión al abrirse. El widget ya no muestra "Sin configurar".
+- `SetupActivity`: botón "Probar ahora"; la llave queda en "Opciones avanzadas" (oculta salvo que ya haya una guardada).
+- El README de Ari-estado avisa que es público y que en `estado.json` nunca va nada sensible.
