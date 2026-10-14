@@ -361,6 +361,11 @@ class AriBubbleService : Service() {
         }
     }
 
+    fun talk(chars: Int) {
+        orb?.talk(chars)
+        panelOrb?.talk(chars)
+    }
+
     fun setMood(mood: AriOrbView.Mood) {
         orb?.mood = mood
         panelOrb?.mood = mood
@@ -433,6 +438,11 @@ object AriBubble {
     /** La pantalla de Android donde se da el permiso "Mostrar sobre otras apps" a Ari. */
     fun permissionIntent(context: Context) =
         Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+
+    /** La burbuja mueve la boca con cada palabra que Ari dice en voz. */
+    fun talk(chars: Int) {
+        AriBubbleService.running?.talk(chars)
+    }
 
     /** La carita de la burbuja copia el ánimo de Ari (escuchando, pensando, hablando). */
     fun mood(mood: AriOrbView.Mood) {

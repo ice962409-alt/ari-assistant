@@ -507,6 +507,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Carita nueva (0.40.0): Ari mueve la boca sílaba por sílaba cuando escribe o habla, murmura y mira hacia arriba cuando piensa, y parpadea suave. Su carita está arriba en el chat y junto a cada mensaje suyo.
 - Ari CEO se propone mejoras (0.39.0): cuando algo no le sale, lo anota. Di "propón mejoras" y arma el pedido técnico; con "Copiar y abrir Claude" lo pegas en la sesión de Claude Code, y Claude lo programa y te manda el APK. También: "anota una mejora: …".
 - Rutinas (0.38.0): le enseñas órdenes nuevas sin reinstalar. Ejemplo: "cuando te diga buenos días, dime qué tengo hoy y pon música". Luego dices "buenos días" y Ari hace cada paso. "mis rutinas" las muestra y "olvida la rutina buenos días" la borra. Viajan en el respaldo.
 - Ari responde a su nombre (0.37.0): Ajustes → Responder a "Ari". Le enseñas cómo dices su nombre (3 veces) y, cuando sales de la app, dices "Ari" y se abre escuchándote. No graba nada ni usa internet; se apaga desde su notificación.

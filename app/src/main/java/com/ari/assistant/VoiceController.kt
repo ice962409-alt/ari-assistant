@@ -34,6 +34,9 @@ class VoiceController(
         /** Ari empezó a decir algo en voz alta (para animar su cara). */
         fun onSpeakingStarted() {}
 
+        /** Ari va a decir una palabra de [chars] letras (para mover su boca al ritmo de la voz). */
+        fun onWordSpoken(chars: Int) {}
+
         /** Volumen de tu voz mientras te escucha, de 0 a 1 (para animar su cara). */
         fun onVoiceLevel(level: Float) {}
 
@@ -118,6 +121,12 @@ class VoiceController(
                     }
                     if (utteranceId != null && streamIds.remove(utteranceId)) finishStreamIfDone()
                 }
+            }
+
+            // La voz del teléfono avisa cada palabra que va a decir (si sabe hacerlo).
+            override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                val chars = (end - start).coerceIn(1, 20)
+                activity.runOnUiThread { listener.onWordSpoken(chars) }
             }
 
             @Deprecated("Requerido por versiones anteriores de la API")

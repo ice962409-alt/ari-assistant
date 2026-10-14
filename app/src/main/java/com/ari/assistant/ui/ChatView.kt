@@ -32,10 +32,21 @@ class ChatView(context: Context) : ScrollView(context) {
     var onSuggestion: ((String) -> Unit)? = null
     private var welcomeOrb: AriOrbView? = null
 
-    /** Pausa la carita de la bienvenida mientras algo la tapa (el modo live). */
+    /** Pausa las caritas que se mueven mientras algo las tapa (el modo live). */
     fun pauseWelcome(paused: Boolean) {
         welcomeOrb?.paused = paused
+        currentFace?.paused = paused || current == null
     }
+
+    /**
+     * Lo que hace Ari en el chat, para que su carita de arriba la acompañe:
+     * true = está pensando; un número = acaba de escribir esa cantidad de letras.
+     */
+    var onAriThinking: (() -> Unit)? = null
+    var onAriWrote: ((Int) -> Unit)? = null
+
+    /** La carita junto al mensaje que Ari está escribiendo: piensa y mueve la boca. */
+    private var currentFace: AriOrbView? = null
     private var olderButton: View? = null
     private var current: TextView? = null
     private val currentText = StringBuilder()
@@ -99,6 +110,7 @@ class ChatView(context: Context) : ScrollView(context) {
         currentText.setLength(0)
         welcome = null
         welcomeOrb = null
+        currentFace = null
         olderButton = null
         column.removeAllViews()
     }
@@ -107,7 +119,9 @@ class ChatView(context: Context) : ScrollView(context) {
         clearWelcome()
         finishAri()
         image?.let { file -> thumbnail(file)?.let { column.addView(it, spaced(top = 14f)) } }
-        column.addView(userRow(text), spaced(top = if (image != null) 6f else 14f))
+        val row = userRow(text)
+        column.addView(row, spaced(top = if (image != null) 6f else 14f))
+        appear(row)
         // Mandaste algo: el chat vuelve abajo para seguir la respuesta.
         jumpToEnd()
     }
@@ -159,23 +173,34 @@ class ChatView(context: Context) : ScrollView(context) {
         clearWelcome()
         finishAri()
 
-        column.addView(ariLabel(who), spaced(top = 18f))
+        val label = ariLabel(who, live = true)
+        column.addView(label, spaced(top = 18f))
+        appear(label)
         val body = ariBody()
         column.addView(body, spaced(top = 6f))
         current = body
         currentText.setLength(0)
         startThinking(body)
+        currentFace?.mood = AriOrbView.Mood.THINKING
+        onAriThinking?.invoke()
         scrollToEnd()
     }
 
-    private fun ariLabel(who: String?): View {
+    /** "Ari" con su carita. La del mensaje en curso se mueve; las de antes se quedan quietas. */
+    private fun ariLabel(who: String?, live: Boolean = false): View {
         val label = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        label.addView(View(context).apply {
-            background = AriTheme.circle(AriTheme.ice)
-        }, LinearLayout.LayoutParams(dp(8f), dp(8f)).apply { rightMargin = dp(8f) })
+        val face = AriOrbView(context).apply { paused = !live }
+        if (live) {
+            currentFace?.let { rest(it) }
+            currentFace = face
+        }
+        label.addView(face, LinearLayout.LayoutParams(dp(30f), dp(30f)).apply {
+            rightMargin = dp(4f)
+            leftMargin = -dp(6f)
+        })
         label.addView(TextView(context).apply {
             text = if (who == null) "Ari" else "Ari · $who"
             textSize = 13f
@@ -245,6 +270,11 @@ class ChatView(context: Context) : ScrollView(context) {
     fun appendAri(chunk: String) {
         val body = current ?: run { startAri(); current!! }
         stopThinking()
+        currentFace?.let {
+            it.mood = AriOrbView.Mood.IDLE
+            it.talk(chunk.length)
+        }
+        onAriWrote?.invoke(chunk.length)
         currentText.append(chunk)
         body.text = Markdown.render(currentText.toString())
         scrollToEnd()
@@ -272,6 +302,11 @@ class ChatView(context: Context) : ScrollView(context) {
     /** Cierra el mensaje de Ari en curso. Si quedó vacío, lo quita. */
     fun finishAri() {
         stopThinking()
+        currentFace?.let { face ->
+            if (face.mood == AriOrbView.Mood.THINKING) face.mood = AriOrbView.Mood.IDLE
+            // Termina de "decir" lo último y se queda quieta (sin gastar batería).
+            face.postDelayed({ if (face !== currentFace || current == null) rest(face) }, 3_200)
+        }
         val body = current ?: return
         if (currentText.isBlank()) {
             val index = column.indexOfChild(body)
@@ -280,6 +315,19 @@ class ChatView(context: Context) : ScrollView(context) {
         }
         current = null
         currentText.setLength(0)
+    }
+
+    private fun rest(face: AriOrbView) {
+        face.mood = AriOrbView.Mood.IDLE
+        face.paused = true
+        face.invalidate()
+    }
+
+    /** Los mensajes nuevos aparecen suavecito, subiendo un poco. */
+    private fun appear(view: View) {
+        view.alpha = 0f
+        view.translationY = dp(8f).toFloat()
+        view.animate().alpha(1f).translationY(0f).setDuration(220).start()
     }
 
     private fun startThinking(body: TextView) {

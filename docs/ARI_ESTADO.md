@@ -541,3 +541,12 @@ Parte A de "Ari se mejora sola". Solo la Ari CEO (`R.bool.ari_ceo`) y solo con e
 - "propón mejoras" / "¿qué mejorarías?" / "tus mejoras": arma un pedido para Claude con versión, teléfono, fecha, la lista y las reglas del proyecto; diálogo "Copiar y abrir Claude" (portapapeles + app de Claude o claude.ai/code). "borra las mejoras" las limpia.
 - `AriBrain.withoutNotes` también quita las líneas "MEJORA:" al hablar.
 - Ari no cambia su propio código: Claude programa, prueba y compila. La parte D (programar con la laptop) espera a que la laptop tenga Linux.
+
+## Carita de Ari que habla y piensa (versión 0.40.0)
+
+Pedido del usuario: que mueva la boca al hablar y al pensar, con amor en el diseño y la interfaz.
+- `ui/AriOrbView`: boca por sílabas (a, e, i, o, u, m, s) con lengua y dientes, comisuras que sonríen; al pensar murmura con la boca de lado, mira arriba y sube las cejas; parpadeo suave (a veces doble); mirada, cejas, sonrisa y entrecerrar los ojos cambian con suavidad. `talk(chars)` abre la boca y la deja "hablando" un rato según el texto. Quieta dibuja a 20 cuadros por segundo para gastar menos. Las caritas chicas llevan menos adornos.
+- `VoiceController.onRangeStart` → `Listener.onWordSpoken`: cada palabra de la voz del teléfono mueve la boca (modo live, carita de arriba y burbuja).
+- Barra superior: la carita (52dp) en lugar del puntito; piensa mientras Gemma prepara la respuesta y mueve la boca con cada pedazo de texto. Tocarla abre el modo live.
+- Chat: cada mensaje de Ari lleva su carita; la del mensaje en curso piensa y habla, y se queda quieta 3 s después (sin animarse). Los mensajes aparecen con una animación suave.
+- Vista previa del diseño: `docs/ari_carita_preview.png` y `docs/ari_carita_hablando.gif` (dibujadas en Python con la misma geometría).

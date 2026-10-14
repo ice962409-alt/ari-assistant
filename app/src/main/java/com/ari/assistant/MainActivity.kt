@@ -113,7 +113,7 @@ class MainActivity : Activity() {
     private var pendingMessageRequest: String? = null
 
     // El puntito de color junto a "Ari" (cambia con el color de Ari).
-    private lateinit var headerDot: android.view.View
+    private lateinit var headerOrb: AriOrbView
 
     // true si Gemma cargó con la memoria de plática grande (más historial cabe).
     @Volatile
@@ -362,7 +362,7 @@ class MainActivity : Activity() {
         currentColor = palette
         AriTheme.setColors(palette.light, palette.main, palette.deep)
         if (save) getSharedPreferences(COLOR_PREFS, MODE_PRIVATE).edit().putString(KEY_COLOR, palette.id).apply()
-        if (::headerDot.isInitialized) headerDot.background = AriTheme.circle(AriTheme.ice)
+        if (::headerOrb.isInitialized) headerOrb.invalidate()
         if (::sendButton.isInitialized) sendButton.background = AriTheme.circle(AriTheme.ice)
         if (::chat.isInitialized) chat.invalidate()
         // El widget toma el color al actualizarse.
@@ -1432,16 +1432,18 @@ class MainActivity : Activity() {
             insets
         }
 
-        // Barra superior: punto hielo, "Ari", su estado y los accesos.
+        // Barra superior: la carita de Ari (piensa y habla contigo), "Ari", su estado y los accesos.
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(16f), dp(12f), dp(8f), dp(12f))
+            setPadding(dp(8f), dp(6f), dp(8f), dp(6f))
         }
-        headerDot = android.view.View(this).apply {
-            background = AriTheme.circle(AriTheme.ice)
+        headerOrb = AriOrbView(this).apply {
+            contentDescription = "Ari"
+            // Tocarla abre el modo live, como en el centro de la pantalla.
+            setOnClickListener { if (!voiceMode) openLive() }
         }
-        header.addView(headerDot, LinearLayout.LayoutParams(dp(10f), dp(10f)).apply { rightMargin = dp(10f) })
+        header.addView(headerOrb, LinearLayout.LayoutParams(dp(52f), dp(52f)).apply { rightMargin = dp(4f) })
 
         val titles = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         titles.addView(TextView(this).apply {
@@ -1474,6 +1476,12 @@ class MainActivity : Activity() {
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1))
 
         chat = ChatView(this)
+        // La carita de arriba acompaña lo que Ari hace en el chat: piensa y mueve la boca al escribir.
+        chat.onAriThinking = { headerOrb.mood = AriOrbView.Mood.THINKING }
+        chat.onAriWrote = { chars ->
+            if (headerOrb.mood == AriOrbView.Mood.THINKING) headerOrb.mood = AriOrbView.Mood.IDLE
+            headerOrb.talk(chars)
+        }
         chat.onSuggestion = { suggestion ->
             input.setText(suggestion)
             sendMessage()
@@ -1631,6 +1639,7 @@ class MainActivity : Activity() {
     private fun openLive() {
         liveOverlay.visibility = android.view.View.VISIBLE
         chat.pauseWelcome(true)
+        headerOrb.paused = true
         // Mientras platican, la pantalla no se apaga (si se apagara, Ari dejaría de escucharte).
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         liveOrb.mood = AriOrbView.Mood.IDLE
@@ -1646,6 +1655,7 @@ class MainActivity : Activity() {
         if (voiceMode) stopVoiceMode("Modo live terminado.")
         liveOverlay.visibility = android.view.View.GONE
         chat.pauseWelcome(false)
+        headerOrb.paused = false
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
@@ -3521,6 +3531,13 @@ class MainActivity : Activity() {
                 checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
             ) bargeIn.start()
             if (voiceMode) setLive(AriOrbView.Mood.SPEAKING, "Hablando · háblale o tócala para interrumpir")
+        }
+
+        override fun onWordSpoken(chars: Int) {
+            // Cada palabra que dice en voz le abre la boca: así habla al ritmo de su voz.
+            if (::liveOrb.isInitialized) liveOrb.talk(chars)
+            if (::headerOrb.isInitialized) headerOrb.talk(chars)
+            AriBubble.talk(chars)
         }
 
         override fun onVoiceLevel(level: Float) {
