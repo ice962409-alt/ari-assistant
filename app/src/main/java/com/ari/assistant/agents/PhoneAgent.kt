@@ -7,6 +7,8 @@ interface PhoneLauncher {
     fun launch(action: PhoneAction, app: InstalledApp? = null): Boolean
     /** Los contactos con teléfono; null si el usuario aún no dio permiso. */
     fun contacts(): List<PhoneContact>?
+    /** true si al marcar, Ari también toca "llamar" (solo la Ari CEO con Accesibilidad). */
+    val callsDirectly: Boolean get() = false
 }
 
 /**
@@ -43,7 +45,10 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
 
         if (action is PhoneAction.DialContact) return withContact(action.name) { contact ->
             if (phone.launch(PhoneAction.Dial(contact.number)))
-                AgentResult("Te dejé marcado a ${contact.name} (${contact.number}). Toca llamar para confirmar.")
+                AgentResult(
+                    if (phone.callsDirectly) "Llamando a ${contact.name} (${contact.number})…"
+                    else "Te dejé marcado a ${contact.name} (${contact.number}). Toca llamar para confirmar."
+                )
             else AgentResult("No encontré una app de teléfono.", success = false)
         }
 
@@ -115,7 +120,8 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
     }
 
     private fun confirmation(action: PhoneAction): String = when (action) {
-        is PhoneAction.Dial -> "Te dejé marcado el ${action.number}. Toca llamar para confirmar."
+        is PhoneAction.Dial ->
+            if (phone.callsDirectly) "Llamando al ${action.number}…" else "Te dejé marcado el ${action.number}. Toca llamar para confirmar."
         is PhoneAction.WhatsApp ->
             if (action.number.isEmpty()) "Abrí WhatsApp con el mensaje listo: elige el chat y toca enviar."
             else "Abrí el chat de WhatsApp con el mensaje listo. Revísalo y toca enviar."

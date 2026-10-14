@@ -24,10 +24,12 @@ class AriRecadosListener : NotificationListenerService(), AriInbox.Replier {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        instance = this
         if (resources.getBoolean(R.bool.ari_ceo)) AriInbox.replier = this
     }
 
     override fun onListenerDisconnected() {
+        if (instance === this) instance = null
         if (AriInbox.replier === this) AriInbox.replier = null
         super.onListenerDisconnected()
     }
@@ -49,6 +51,12 @@ class AriRecadosListener : NotificationListenerService(), AriInbox.Replier {
 
     private fun remember(sbn: StatusBarNotification) {
         runCatching { rememberInto(replies, sbn) }
+    }
+
+    companion object {
+        /** El servicio conectado (para pedir No molestar sin otro permiso). */
+        @Volatile
+        var instance: AriRecadosListener? = null
     }
 
     /** Contesta desde la notificación, como si escribieras en su cajita "Responder". */

@@ -38,6 +38,10 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        AutoCall.current()?.let { call ->
+            placeCall(event, call)
+            return
+        }
         // Solo los recados armados, y solo en las apps de mensajes.
         val pending = AutoSend.current() ?: return
         if (event?.packageName?.toString() !in MESSAGING) return
@@ -159,8 +163,19 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
             AppControl.GlobalAction.RECENTS -> GLOBAL_ACTION_RECENTS
             AppControl.GlobalAction.NOTIFICATIONS -> GLOBAL_ACTION_NOTIFICATIONS
             AppControl.GlobalAction.QUICK_SETTINGS -> GLOBAL_ACTION_QUICK_SETTINGS
+            AppControl.GlobalAction.LOCK_SCREEN, AppControl.GlobalAction.SCREENSHOT -> {
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
+                    return AppControl.Result(false, "Tu versión de Android no me deja hacer eso.")
+                }
+                if (action == AppControl.GlobalAction.LOCK_SCREEN) GLOBAL_ACTION_LOCK_SCREEN else GLOBAL_ACTION_TAKE_SCREENSHOT
+            }
         }
-        return if (performGlobalAction(code)) AppControl.Result(true, "Listo.") else AppControl.Result(false, "No pude hacerlo.")
+        val done = when (action) {
+            AppControl.GlobalAction.SCREENSHOT -> "Listo, tomé la captura (está en tu galería)."
+            AppControl.GlobalAction.LOCK_SCREEN -> "Listo, bloqueé la pantalla."
+            else -> "Listo."
+        }
+        return if (performGlobalAction(code)) AppControl.Result(true, done) else AppControl.Result(false, "No pude hacerlo.")
     }
 
     private fun read(): AppControl.Result {
@@ -216,6 +231,25 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
         dispatchGesture(GestureDescription.Builder().addStroke(GestureDescription.StrokeDescription(path, 0, ms)).build(), null, null)
     }
 
+    // --- Llamar directo ("llama a mamá") ---
+
+    /** En el marcador, con el número que Ari dejó, toca "llamar". */
+    private fun placeCall(event: AccessibilityEvent?, call: AutoCall.Pending) {
+        val app = event?.packageName?.toString().orEmpty()
+        if (DIALER_HINTS.none { app.contains(it) }) return
+        val root = rootInActiveWindow ?: return
+        val screen = StringBuilder()
+        walk(root) { node -> label(node)?.let { screen.append(it).append(' ') } }
+        if (!AutoCall.matches(screen.toString(), call.number)) return
+        val button = CALL_IDS.firstNotNullOfOrNull { id -> root.findAccessibilityNodeInfosByViewId(id)?.firstOrNull { it.isEnabled } }
+            ?: find(root) { node ->
+                val text = (node.contentDescription ?: node.text)?.toString()?.lowercase()?.trim().orEmpty()
+                node.isEnabled && CALL_WORDS.any { text == it || text.startsWith("$it ") }
+            }
+            ?: return
+        if (clickableAncestor(button)?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) AutoCall.disarm()
+    }
+
     // --- Recados ---
 
     /** La caja donde se escribe el mensaje (editable y con el recado de Ari). */
@@ -251,6 +285,17 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
             "com.miui.mms:id/send_button",
             "com.android.mms:id/send_button_sms",
         )
+        val DIALER_HINTS = listOf("dialer", "contacts", "phone", "incallui", "telecom")
+        val CALL_IDS = listOf(
+            "com.google.android.dialer:id/dialpad_floating_action_button",
+            "com.android.dialer:id/dialpad_floating_action_button",
+            "com.android.contacts:id/dialpad_floating_action_button",
+            "com.android.contacts:id/call_sim1",
+            "com.android.contacts:id/dial_button",
+            "com.samsung.android.dialer:id/dialButton",
+            "com.samsung.android.dialer:id/dial_button",
+        )
+        val CALL_WORDS = listOf("llamar", "marcar", "call", "dial", "llamada", "llamar con sim 1", "sim 1")
         val SEND_WORDS = listOf("enviar", "send", "enviar sms", "enviar mensaje", "send sms", "send message")
     }
 }

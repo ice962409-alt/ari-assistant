@@ -19,7 +19,7 @@ import com.ari.assistant.agents.normalizeForAgents
 object AppControl {
 
     enum class Direction { UP, DOWN, LEFT, RIGHT }
-    enum class GlobalAction { BACK, HOME, RECENTS, NOTIFICATIONS, QUICK_SETTINGS }
+    enum class GlobalAction { BACK, HOME, RECENTS, NOTIFICATIONS, QUICK_SETTINGS, LOCK_SCREEN, SCREENSHOT }
 
     sealed class Command {
         data class Tap(val target: String) : Command()
@@ -54,6 +54,8 @@ object AppControl {
     private val RECENTS = Regex("^(?:recientes|apps recientes|aplicaciones recientes|muestra las apps abiertas|apps abiertas)$")
     private val NOTIFICATIONS = Regex("^(?:abre |muestra |muestrame |baja )?(?:las |mis )?notificaciones$")
     private val QUICK = Regex("^(?:abre |muestra |muestrame |baja )?(?:los )?ajustes rapidos$")
+    private val LOCK = Regex("^(?:bloquea|apaga)\\s+(?:la\\s+pantalla|el\\s+telefono|el\\s+celular)$")
+    private val SCREENSHOT = Regex("^(?:toma|tomame|haz|hazme|saca|sacame)\\s+(?:una\\s+)?captura(?:\\s+de\\s+pantalla)?$|^captura\\s+(?:la|mi)\\s+pantalla$|^screenshot$")
     private val READ = Regex("^(?:lee|leeme) (?:lo que dice |lo que hay en )?(?:la|mi) pantalla$|^que (?:dice|hay en) (?:la|mi) pantalla$")
 
     /** Lo que no es tocar un botón: "toca música de…" es para poner música. */
@@ -99,6 +101,8 @@ object AppControl {
         if (RECENTS.matches(normalized)) return Command.Global(GlobalAction.RECENTS)
         if (NOTIFICATIONS.matches(normalized)) return Command.Global(GlobalAction.NOTIFICATIONS)
         if (QUICK.matches(normalized)) return Command.Global(GlobalAction.QUICK_SETTINGS)
+        if (LOCK.matches(normalized)) return Command.Global(GlobalAction.LOCK_SCREEN)
+        if (SCREENSHOT.matches(normalized)) return Command.Global(GlobalAction.SCREENSHOT)
         if (READ.matches(normalized)) return Command.ReadScreen
         return null
     }

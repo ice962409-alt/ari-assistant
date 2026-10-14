@@ -60,9 +60,14 @@ class AndroidPhone(context: Context) : PhoneLauncher {
         return result
     }
 
+    /** Solo la Ari CEO con su permiso de Accesibilidad toca "llamar" sola. */
+    override val callsDirectly: Boolean
+        get() = context.resources.getBoolean(com.ari.assistant.R.bool.ari_ceo) && AutoSend.enabled(context)
+
     override fun launch(action: PhoneAction, app: InstalledApp?): Boolean {
         val intents = intentsFor(action, app)
         if (intents.isEmpty()) return false
+        if (action is PhoneAction.Dial && callsDirectly) AutoCall.arm(action.number)
         // Las pantallas se abren desde el hilo principal; el agente espera el resultado.
         var opened = false
         val done = CountDownLatch(1)

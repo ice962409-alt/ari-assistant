@@ -576,3 +576,10 @@ Decisión del usuario: darle más accesos a la Ari CEO (notificaciones, teléfon
 - `AriInbox.kt` (puro; pruebas en `AriInboxTest`): notificaciones recientes solo en memoria (máximo 60, 12 h), `summarize` por app y persona, `parse` ("¿qué notificaciones tengo?", "¿quién me escribió?", "respóndele/contéstale a X que …"), `findReplyTarget`.
 - `AriRecadosListener`: en la CEO guarda cada notificación (no las fijas ni los resúmenes de grupo ni las de Ari) y su botón "Responder" (RemoteInput); `reply(key, text)` contesta como la cajita de la notificación. Etiqueta del permiso por sabor: `ari_listener_label` ("Ari CEO: tus notificaciones" en completa).
 - MainActivity: `handleInbox` antes de manejar apps; contestar siempre pide "sí" (`pendingReply`). Ajustes → "Leer mis notificaciones" (solo CEO).
+
+## Ari CEO: teléfono y ajustes por voz (versión 0.44.0)
+
+- `PhoneSettings.kt` (puro en las frases; pruebas en `PhoneSettingsTest`): linterna (CameraManager), volumen (subir, bajar, máximo, silencio/vibrar, quitar silencio), música (pausa, sigue, siguiente, anterior con teclas multimedia), No molestar (con el acceso a notificaciones vía `requestInterruptionFilter`, o el permiso de No molestar), brillo (`WRITE_SETTINGS`; si falta, abre la pantalla del permiso). "cállate", "silencio" o "siguiente" a secas no cuentan (son para Ari).
+- `AppControl`: "bloquea la pantalla" y "toma una captura" (acciones globales de Accesibilidad, Android 9+).
+- Llamar directo: con "Manejar mis apps", `AndroidPhone.callsDirectly`; al marcar se arma `AutoCall` (15 s) y `AriSendService` toca "llamar" en el marcador solo si el número en pantalla coincide (últimos 7 dígitos). Sin el permiso, sigue igual (tú tocas llamar).
+- Manifiesto de la CEO: `WRITE_SETTINGS` y `ACCESS_NOTIFICATION_POLICY` (permisos especiales que da el dueño en pantallas de Android).

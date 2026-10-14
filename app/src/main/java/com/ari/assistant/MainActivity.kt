@@ -770,6 +770,20 @@ class MainActivity : Activity() {
             .show()
     }
 
+    // --- Solo Ari CEO: ajustes del teléfono por voz (ver PhoneSettings) ---
+
+    private fun handlePhoneSettings(text: String): Boolean {
+        if (!resources.getBoolean(R.bool.ari_ceo)) return false
+        val command = PhoneSettings.parse(text) ?: return false
+        input.text.clear()
+        val outcome = PhoneSettings.run(this, command)
+        answerLocally(text, outcome.message)
+        outcome.needs?.let { screen ->
+            runCatching { startActivity(screen.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        }
+        return true
+    }
+
     // --- Solo Ari CEO: tus notificaciones (ver AriInbox) ---
 
     private fun setupInbox() {
@@ -2507,6 +2521,7 @@ class MainActivity : Activity() {
 
         if (!guestMode && handleRoutine(text)) return
         if (!guestMode && handleInbox(text)) return
+        if (!guestMode && handlePhoneSettings(text)) return
         if (!guestMode && handleAppControl(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 

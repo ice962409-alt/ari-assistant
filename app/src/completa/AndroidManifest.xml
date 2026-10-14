@@ -10,6 +10,10 @@
          Ari lo usa únicamente para saber si la red está aprobada. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Ajustes por voz (solo la Ari CEO): brillo y No molestar. Los das tú en pantallas de Android. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
     <!-- usesCleartextTraffic: Ollama y LM Studio sirven HTTP sin cifrar. El único
          código de red (TeamAgent) solo se conecta a direcciones IPv4 privadas
