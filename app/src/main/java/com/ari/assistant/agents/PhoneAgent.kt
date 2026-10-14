@@ -9,6 +9,8 @@ interface PhoneLauncher {
     fun contacts(): List<PhoneContact>?
     /** true si al marcar, Ari también toca "llamar" (solo la Ari CEO con Accesibilidad). */
     val callsDirectly: Boolean get() = false
+    /** Guarda la cita directo en tu calendario (solo la Ari CEO con permiso). false si no se pudo. */
+    fun saveEvent(title: String, start: java.time.LocalDateTime): Boolean = false
 }
 
 /**
@@ -76,6 +78,10 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
                 PhoneCommands.AppChoice.None ->
                     AgentResult("No encontré una app llamada \"${action.name}\" en tu teléfono.", success = false)
             }
+        }
+
+        if (action is PhoneAction.CalendarEvent && phone.saveEvent(action.title, action.start)) {
+            return AgentResult("Listo, agendé \"${action.title}\" para el ${describe(action.start)}.")
         }
 
         if (!phone.launch(action)) {

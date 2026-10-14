@@ -770,6 +770,85 @@ class MainActivity : Activity() {
             .show()
     }
 
+    // --- Solo Ari CEO: agenda y fotos (ver AriMedia) ---
+
+    private fun agendaAndPhotoPermissions(): Array<String> = arrayOf(
+        Manifest.permission.READ_CALENDAR,
+        Manifest.permission.WRITE_CALENDAR,
+        AriMedia.photoPermission()
+    ).filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }.toTypedArray()
+
+    private fun setupAgendaAndPhotos() {
+        val missing = agendaAndPhotoPermissions()
+        AlertDialog.Builder(this)
+            .setTitle("Agenda y fotos")
+            .setMessage(
+                "• \"agenda cita con el dentista el viernes a las 5\": la guardo directo en tu calendario.\n" +
+                    "• \"muéstrame las fotos de ayer\", \"mi última foto\", \"mi última captura\".\n" +
+                    "• \"busca el archivo factura\": encuentro documentos por su nombre.\n\n" +
+                    "Nada sale del teléfono." +
+                    (if (missing.isEmpty() && AriMedia.canSeeFiles(this)) "\n\nYa tengo los permisos." else "\n\nToca \"Dar permisos\": Android te pregunta por el calendario y las fotos, y luego por \"Acceso a todos los archivos\" (para los documentos).")
+            )
+            .setPositiveButton(if (missing.isEmpty() && AriMedia.canSeeFiles(this)) "Entendido" else "Dar permisos") { _, _ ->
+                when {
+                    missing.isNotEmpty() -> requestPermissions(missing, REQUEST_AGENDA_PHOTOS)
+                    !AriMedia.canSeeFiles(this) -> openFilesAccess()
+                }
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    private fun openFilesAccess() {
+        runCatching { startActivity(AriMedia.filesPermissionIntent(this)) }
+            .onFailure { chat.addNote("Búscalo en Ajustes del teléfono → Apps → Ari → Acceso a todos los archivos.") }
+    }
+
+    /** "muéstrame las fotos de ayer", "mi última captura", "busca el archivo factura". */
+    private fun handleMedia(text: String): Boolean {
+        if (!resources.getBoolean(R.bool.ari_ceo)) return false
+        val request = AriMedia.parse(text) ?: return false
+        input.text.clear()
+        if (request is AriMedia.Request.Files) {
+            if (!AriMedia.canSeeFiles(this)) {
+                answerLocally(text, "Para buscar tus documentos, Android pide \"Acceso a todos los archivos\". Te abro la pantalla: actívalo y vuelve a pedírmelo.")
+                openFilesAccess()
+                return true
+            }
+        } else if (!AriMedia.canSeePhotos(this)) {
+            answerLocally(text, "Para ver tus fotos necesito permiso. Ve a Ajustes → Agenda y fotos → Dar permisos.")
+            return true
+        }
+        Thread {
+            val found = runCatching {
+                if (request is AriMedia.Request.Files) AriMedia.files(this, request.name) else AriMedia.photos(this, request)
+            }.getOrDefault(emptyList())
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                when {
+                    found.isEmpty() -> answerLocally(
+                        text,
+                        if (request is AriMedia.Request.Files) "No encontré archivos que se llamen \"${request.name}\"." else "No encontré fotos de ese momento."
+                    )
+                    request is AriMedia.Request.Files -> {
+                        answerLocally(text, "Encontré: " + found.joinToString(", ") { it.name } + ". Toca uno para abrirlo.")
+                        AlertDialog.Builder(this)
+                            .setTitle("Archivos")
+                            .setItems(found.map { it.name }.toTypedArray()) { _, which -> AriMedia.open(this, found[which]) }
+                            .setNegativeButton("Cerrar", null)
+                            .show()
+                    }
+                    else -> {
+                        val reply = if (found.size == 1) "Aquí está. Tócala para abrirla." else "Aquí están (${found.size}). Toca una para abrirla."
+                        answerLocally(text, reply)
+                        chat.addPhotos(found.map { it.uri }) { index -> AriMedia.open(this, found[index]) }
+                    }
+                }
+            }
+        }.start()
+        return true
+    }
+
     // --- Solo Ari CEO: ajustes del teléfono por voz (ver PhoneSettings) ---
 
     private fun handlePhoneSettings(text: String): Boolean {
@@ -1016,6 +1095,7 @@ class MainActivity : Activity() {
         )
         if (ceo) items += item("Manejar mis apps: ${if (AutoSend.enabled(this)) "sí" else "no"}") { setupAppControl() }
         if (ceo) items += item("Leer mis notificaciones: ${if (AriRecados.enabled(this)) "sí" else "no"}") { setupInbox() }
+        if (ceo) items += item("Agenda y fotos") { setupAgendaAndPhotos() }
         items += item("Recados entre Ari") { setupAriMessages() }
         items += item("Reportar un problema") { askProblemReport() }
         items += item("Acerca de Ari y licencias") { showAbout() }
@@ -2522,6 +2602,7 @@ class MainActivity : Activity() {
         if (!guestMode && handleRoutine(text)) return
         if (!guestMode && handleInbox(text)) return
         if (!guestMode && handlePhoneSettings(text)) return
+        if (!guestMode && handleMedia(text)) return
         if (!guestMode && handleAppControl(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 
@@ -3227,7 +3308,11 @@ class MainActivity : Activity() {
             if (agent === calendarAgent && calendarAgent.needsPermission) {
                 calendarAgent.needsPermission = false
                 pendingCalendarRequest = text
-                requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), REQUEST_CALENDAR)
+                requestPermissions(
+                    if (resources.getBoolean(R.bool.ari_ceo)) arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+                    else arrayOf(Manifest.permission.READ_CALENDAR),
+                    REQUEST_CALENDAR
+                )
             }
             if (agent === messageAgent) messageAgent.pendingSave?.let { contact ->
                 messageAgent.pendingSave = null
@@ -3455,6 +3540,15 @@ class MainActivity : Activity() {
         }
         if (requestCode == REQUEST_LOCATION) {
             ceoTeam.onLocationResult()
+            return
+        }
+        if (requestCode == REQUEST_AGENDA_PHOTOS) {
+            if (grantResults.any { it != PackageManager.PERMISSION_GRANTED }) {
+                chat.addNote("Faltó algún permiso. Puedes darlo en Ajustes del teléfono → Apps → Ari → Permisos.")
+            } else {
+                chat.addNote("¡Listo! Ya puedo guardar citas y mostrarte tus fotos.")
+            }
+            if (!AriMedia.canSeeFiles(this)) openFilesAccess()
             return
         }
         if (requestCode == REQUEST_AUDIO_WAKE) {
@@ -4075,6 +4169,7 @@ class MainActivity : Activity() {
         private val GUEST_AGENTS = setOf("reloj")
         private const val REQUEST_AUDIO_ENROLL = 112
         private const val REQUEST_AUDIO_WAKE = 116
+        private const val REQUEST_AGENDA_PHOTOS = 117
         private val ENROLL_PHRASES = listOf(
             "Hola Ari, soy yo. Hoy quiero platicar contigo un rato.",
             "El perro de mi vecino corre rápido por el parque grande.",

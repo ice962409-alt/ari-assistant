@@ -294,6 +294,45 @@ class ChatView(context: Context) : ScrollView(context) {
         finishAri()
     }
 
+    /** Miniaturas de fotos que Ari te muestra (tócalas para abrirlas). */
+    fun addPhotos(uris: List<android.net.Uri>, onTap: (Int) -> Unit) {
+        if (uris.isEmpty()) return
+        clearWelcome()
+        finishAri()
+        val strip = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
+        val size = dp(96f)
+        uris.forEachIndexed { index, uri ->
+            val image = android.widget.ImageView(context).apply {
+                scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                background = AriTheme.rounded(context, AriTheme.bubble, 12f)
+                clipToOutline = true
+                contentDescription = "Foto ${index + 1}. Tócala para abrirla."
+                setOnClickListener { onTap(index) }
+            }
+            strip.addView(image, LinearLayout.LayoutParams(size, size).apply { rightMargin = dp(8f) })
+            // Las miniaturas se cargan aparte para no trabar el chat.
+            Thread {
+                val bitmap = runCatching {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        context.contentResolver.loadThumbnail(uri, android.util.Size(size, size), null)
+                    } else {
+                        context.contentResolver.openInputStream(uri)?.use {
+                            android.graphics.BitmapFactory.decodeStream(it, null, android.graphics.BitmapFactory.Options().apply { inSampleSize = 8 })
+                        }
+                    }
+                }.getOrNull()
+                if (bitmap != null) image.post { image.setImageBitmap(bitmap) }
+            }.start()
+        }
+        val scroller = android.widget.HorizontalScrollView(context).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(strip)
+        }
+        column.addView(scroller, spaced(top = 8f))
+        appear(scroller)
+        scrollToEnd()
+    }
+
     /** Una nota pequeña de Ari, por ejemplo "El equipo no respondió". */
     fun addNote(text: String) {
         clearWelcome()

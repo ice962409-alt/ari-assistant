@@ -64,6 +64,41 @@ class AndroidPhone(context: Context) : PhoneLauncher {
     override val callsDirectly: Boolean
         get() = context.resources.getBoolean(com.ari.assistant.R.bool.ari_ceo) && AutoSend.enabled(context)
 
+    /** Solo la Ari CEO con el permiso de calendario: la cita se guarda sin abrir el calendario. */
+    override fun saveEvent(title: String, start: java.time.LocalDateTime): Boolean {
+        if (!context.resources.getBoolean(com.ari.assistant.R.bool.ari_ceo)) return false
+        if (context.checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) return false
+        return runCatching {
+            val calendarId = context.contentResolver.query(
+                CalendarContract.Calendars.CONTENT_URI,
+                arrayOf(CalendarContract.Calendars._ID, CalendarContract.Calendars.IS_PRIMARY, CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL),
+                "${CalendarContract.Calendars.VISIBLE} = 1 AND ${CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL} >= ${CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR}",
+                null, null
+            )?.use { cursor ->
+                var best = -1L
+                var primary = false
+                while (cursor.moveToNext()) {
+                    val isPrimary = cursor.getInt(1) == 1
+                    if (best < 0 || (isPrimary && !primary)) {
+                        best = cursor.getLong(0)
+                        primary = isPrimary
+                    }
+                }
+                best
+            } ?: -1L
+            if (calendarId < 0) return false
+            val begin = start.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val values = android.content.ContentValues().apply {
+                put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                put(CalendarContract.Events.TITLE, title)
+                put(CalendarContract.Events.DTSTART, begin)
+                put(CalendarContract.Events.DTEND, begin + 60 * 60 * 1000L)
+                put(CalendarContract.Events.EVENT_TIMEZONE, java.util.TimeZone.getDefault().id)
+            }
+            context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values) != null
+        }.getOrDefault(false)
+    }
+
     override fun launch(action: PhoneAction, app: InstalledApp?): Boolean {
         val intents = intentsFor(action, app)
         if (intents.isEmpty()) return false

@@ -14,6 +14,15 @@
     <uses-permission android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- Agenda y fotos (solo la Ari CEO): guardar citas y mostrarte tus fotos y archivos. -->
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- "busca el archivo…": Android 11+ pide "Acceso a todos los archivos" para ver documentos. -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
 
     <!-- usesCleartextTraffic: Ollama y LM Studio sirven HTTP sin cifrar. El único
          código de red (TeamAgent) solo se conecta a direcciones IPv4 privadas

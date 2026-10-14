@@ -583,3 +583,11 @@ Decisión del usuario: darle más accesos a la Ari CEO (notificaciones, teléfon
 - `AppControl`: "bloquea la pantalla" y "toma una captura" (acciones globales de Accesibilidad, Android 9+).
 - Llamar directo: con "Manejar mis apps", `AndroidPhone.callsDirectly`; al marcar se arma `AutoCall` (15 s) y `AriSendService` toca "llamar" en el marcador solo si el número en pantalla coincide (últimos 7 dígitos). Sin el permiso, sigue igual (tú tocas llamar).
 - Manifiesto de la CEO: `WRITE_SETTINGS` y `ACCESS_NOTIFICATION_POLICY` (permisos especiales que da el dueño en pantallas de Android).
+
+## Ari CEO: agenda y fotos (versión 0.45.0)
+
+- Citas directas: `PhoneLauncher.saveEvent` (AndroidPhone, solo CEO con `WRITE_CALENDAR`) guarda en el calendario principal editable (1 h); sin permiso sigue abriendo el calendario como antes. La CEO pide leer y escribir el calendario juntos.
+- `AriMedia.kt` (frases puras; pruebas en `AriMediaTest`): "fotos de hoy/ayer/esta semana", "mi última foto", "mi última captura" (MediaStore Images, DATE_ADDED; capturas por carpeta/nombre "Screenshot") y "busca el archivo X" (MediaStore Files por nombre; Android 11+ pide "Acceso a todos los archivos", `MANAGE_EXTERNAL_STORAGE`). Abrir con ACTION_VIEW y permiso de lectura.
+- `ChatView.addPhotos`: tira de miniaturas (96dp, `loadThumbnail` en otro hilo) que se abren al tocarlas.
+- Ajustes → "Agenda y fotos" (solo CEO) explica y pide los permisos. Manifiesto de la CEO: `WRITE_CALENDAR`, `READ_MEDIA_IMAGES`, `READ_MEDIA_VISUAL_USER_SELECTED`, `READ_EXTERNAL_STORAGE` (≤32), `MANAGE_EXTERNAL_STORAGE`.
+- Pendiente: buscar una foto por lo que sale en ella ("la del recibo") con la vista de Gemma; es lento en el teléfono.

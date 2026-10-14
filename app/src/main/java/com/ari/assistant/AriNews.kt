@@ -45,6 +45,7 @@ object AriNews {
         56 to listOf(Item("Manejo tus apps", "Ajustes → Manejar mis apps. Luego, en cualquier app: \"toca Siguiente\", \"teclea hola\", \"desliza hacia abajo\", \"atrás\" o \"lee mi pantalla\". Antes de enviar, pagar o borrar te pregunto.", ceoOnly = true)),
         57 to listOf(Item("Te resumo tus notificaciones", "Ajustes → Leer mis notificaciones. Luego: \"¿qué notificaciones tengo?\" o \"respóndele a Juan que ya voy\" (te pregunto antes de enviar).", ceoOnly = true)),
         58 to listOf(Item("Manejo tu teléfono", "Di: \"prende la linterna\", \"sube el volumen\", \"pausa la música\", \"siguiente canción\", \"activa no molestar\", \"sube el brillo\", \"bloquea la pantalla\" o \"toma una captura\". Con Manejar mis apps, \"llama a mamá\" ya llama sola.", ceoOnly = true)),
+        59 to listOf(Item("Agenda y fotos", "Ajustes → Agenda y fotos. Luego: \"agenda cita con el dentista el viernes a las 5\", \"muéstrame las fotos de ayer\", \"mi última captura\" o \"busca el archivo factura\".", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */
