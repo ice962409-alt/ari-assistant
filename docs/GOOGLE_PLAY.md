@@ -65,3 +65,10 @@ Respuestas según cómo funciona Ari hoy:
 - **Nivel de API**: Google Play exige apuntar a una versión reciente de Android. Hoy Ari usa targetSdk 35; hay que comprobar el mínimo vigente al publicar y subir a 36 si hace falta (requiere probar en el teléfono).
 - **Formato**: Google Play pide un paquete AAB (`bundleRelease`) en lugar de APK.
 - **Ficha de la tienda**: icono de 512 px, gráfico de 1024 × 500, capturas de pantalla y descripción.
+
+## Página oficial de descarga (14/10/2026)
+
+- Decisión del dueño: GitHub Pages, dirección gratis por ahora (javierhedzd-ops.github.io/ari-web).
+- Archivos listos en `web/` (index.html y privacidad.html). Van al repositorio público `javierhedzd-ops/ari-web` (lo crea el dueño; Claude no tiene permiso para crear repositorios).
+- La descarga apunta a `releases/latest/download/Ari.apk` de ari-web: solo la Ari comercial (ari-otros-apk), nunca la ARI del dueño.
+- Pendiente: correo de contacto público para la política de privacidad (hoy dice ari.contacto@ejemplo.com).

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ari · Tu asistente personal</title>
+<meta name="description" content="Ari es una asistente personal con inteligencia artificial que vive en tu teléfono. Privada, sin cuentas y funciona sin internet.">
+<meta name="theme-color" content="#16181C">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%239ED8EE'/%3E%3Cellipse cx='36' cy='45' rx='5' ry='8' fill='%230B1A22'/%3E%3Cellipse cx='64' cy='45' rx='5' ry='8' fill='%230B1A22'/%3E%3Cpath d='M38 62 Q50 72 62 62' stroke='%230B1A22' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #16181C; --surface: #1F2227; --bubble: #2A2F36; --border: #2F353D;
+    --text: #E8EEF2; --muted: #9AA6B2; --ice: #9ED8EE; --ice-light: #DEF6FD; --ice-deep: #5FB8DA; --on-ice: #0B1A22;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--ice); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  header { padding: 18px 0; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 600 22px Georgia, serif; color: var(--text); text-decoration: none; }
+  nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
+  nav a:hover { color: var(--text); }
+  .hero { text-align: center; padding: 48px 0 56px; }
+  .orb { width: 168px; height: 168px; margin: 0 auto 22px; filter: drop-shadow(0 0 36px rgba(158,216,238,.35)); animation: breathe 4s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.04); } }
+  @media (prefers-reduced-motion: reduce) { .orb { animation: none; } }
+  h1 { font: 600 clamp(34px, 6vw, 54px)/1.1 Georgia, serif; margin: 0 0 14px; }
+  .lead { color: var(--muted); font-size: clamp(17px, 2.4vw, 20px); max-width: 640px; margin: 0 auto 30px; }
+  .btn { display: inline-block; background: var(--ice); color: var(--on-ice); font-weight: 700; padding: 15px 30px; border-radius: 999px; text-decoration: none; font-size: 18px; }
+  .btn:hover { background: var(--ice-light); }
+  .small { color: var(--muted); font-size: 14px; margin-top: 12px; }
+  .badge { display: inline-block; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 3px 12px; font-size: 13px; margin-bottom: 18px; }
+  section { padding: 44px 0; border-top: 1px solid var(--border); }
+  h2 { font: 600 30px Georgia, serif; margin: 0 0 22px; text-align: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .icon { width: 38px; height: 38px; border-radius: 12px; background: var(--bubble); display: grid; place-items: center; margin-bottom: 12px; color: var(--ice); font-size: 20px; }
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .plan ul { margin: 10px 0 0; padding-left: 20px; color: var(--muted); }
+  .plan.premium { border-color: var(--ice-deep); }
+  .tag { color: var(--ice); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  ol.steps { max-width: 640px; margin: 0 auto; padding-left: 22px; }
+  ol.steps li { margin-bottom: 10px; }
+  details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; margin: 0 auto 10px; max-width: 720px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+  footer { border-top: 1px solid var(--border); padding: 28px 0 40px; color: var(--muted); font-size: 14px; text-align: center; }
+  @media (max-width: 520px) { nav a { margin-left: 10px; font-size: 14px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#"><svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#9ED8EE"/><ellipse cx="36" cy="45" rx="5" ry="8" fill="#0B1A22"/><ellipse cx="64" cy="45" rx="5" ry="8" fill="#0B1A22"/><path d="M38 62 Q50 72 62 62" stroke="#0B1A22" stroke-width="5" fill="none" stroke-linecap="round"/></svg>Ari</a>
+    <nav><a href="#que-hace">Qué hace</a><a href="#instalar">Instalar</a><a href="privacidad.html">Privacidad</a></nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero wrap">
+    <svg class="orb" viewBox="0 0 200 200" role="img" aria-label="La carita de Ari">
+      <defs>
+        <radialGradient id="g" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#DEF6FD"/><stop offset=".45" stop-color="#9ED8EE"/><stop offset="1" stop-color="#5FB8DA"/></radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="78" fill="url(#g)"/>
+      <ellipse cx="78" cy="62" rx="20" ry="10" fill="#fff" opacity=".35"/>
+      <ellipse cx="76" cy="94" rx="8" ry="13" fill="#0B1A22"/><circle cx="74" cy="89" r="3" fill="#fff"/>
+      <ellipse cx="124" cy="94" rx="8" ry="13" fill="#0B1A22"/><circle cx="122" cy="89" r="3" fill="#fff"/>
+      <ellipse cx="66" cy="116" rx="9" ry="5" fill="#FF96AA" opacity=".35"/><ellipse cx="134" cy="116" rx="9" ry="5" fill="#FF96AA" opacity=".35"/>
+      <path d="M82 124 Q100 140 118 124" stroke="#0B1A22" stroke-width="6" fill="none" stroke-linecap="round"/>
+    </svg>
+    <span class="badge">Versión beta</span>
+    <h1>Hola, soy Ari</h1>
+    <p class="lead">Tu asistente personal con inteligencia artificial que vive en tu teléfono. Platica contigo, te recuerda lo importante y te ayuda con tu día. Privada, sin cuentas y funciona sin internet.</p>
+    <a class="btn" href="https://github.com/javierhedzd-ops/ari-web/releases/latest/download/Ari.apk">Descargar para Android</a>
+    <p class="small">Gratis · Android 8 o más reciente · Recomendado: 8 GB de RAM</p>
+  </div>
+
+  <section id="que-hace">
+    <div class="wrap">
+      <h2>Lo que Ari hace por ti</h2>
+      <div class="grid">
+        <div class="card"><div class="icon">🔒</div><h3>Privada de verdad</h3><p>Tus pláticas y recuerdos se quedan en tu teléfono. Sin cuentas, sin publicidad.</p></div>
+        <div class="card"><div class="icon">✈</div><h3>Sin internet</h3><p>Su inteligencia corre dentro del teléfono. Solo usa internet una vez, para descargar su modelo.</p></div>
+        <div class="card"><div class="icon">🎙</div><h3>Platica en voz</h3><p>Háblale como a una persona y te contesta en voz. Si la interrumpes, se calla y te escucha.</p></div>
+        <div class="card"><div class="icon">⏰</div><h3>Recordatorios y alarmas</h3><p>"Recuérdame mañana a las 8 pagar la luz" y listo. También te dice tu agenda.</p></div>
+        <div class="card"><div class="icon">✉</div><h3>Recados entre Ari</h3><p>"Dile a mi mamá que llego a las 8": si ella también tiene Ari, se lo dice.</p></div>
+        <div class="card"><div class="icon">📚</div><h3>Tutora personal</h3><p>"Quiero aprender inglés": te da clases a tu ritmo y recuerda en qué ibas.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Gratis, con Premium opcional</h2>
+      <div class="plans">
+        <div class="card plan"><span class="tag">Gratis</span><h3>Todo lo esencial</h3>
+          <ul><li>Platicar con Ari sin internet</li><li>Recordatorios, alarmas y agenda</li><li>Llamadas, mensajes y abrir apps</li><li>Recados con hasta 4 contactos</li><li>Lecciones para aprender a usarla</li></ul></div>
+        <div class="card plan premium"><span class="tag">Premium · muy pronto</span><h3>Más poder</h3>
+          <ul><li>Contactos de recados sin límite</li><li>Tutora de varios temas a la vez</li><li>Rutinas sin límite</li><li>Responde a su nombre</li><li>Todos los colores de Ari</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="instalar">
+    <div class="wrap">
+      <h2>Cómo instalarla</h2>
+      <ol class="steps">
+        <li>Toca <strong>Descargar para Android</strong> desde tu teléfono.</li>
+        <li>Abre el archivo <strong>Ari.apk</strong> que se descargó.</li>
+        <li>Si Android te lo pide, permite <strong>"Instalar apps desconocidas"</strong> para tu navegador. Es normal mientras Ari no esté en Google Play.</li>
+        <li>Abre Ari: te pregunta tu nombre y te recomienda el modelo para tu teléfono (se descarga una vez, por Wi-Fi).</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Preguntas frecuentes</h2>
+      <details><summary>¿Es segura?</summary><p>Ari no tiene servidores ni cuentas: lo que platicas no sale de tu teléfono. Solo descarga su modelo de inteligencia artificial (de Hugging Face) la primera vez.</p></details>
+      <details><summary>¿Por qué no está en Google Play?</summary><p>Está en beta. Cuando esté lista se publicará en Google Play; mientras, esta página es la descarga oficial.</p></details>
+      <details><summary>¿Qué teléfono necesito?</summary><p>Android 8 o más reciente. Con 8 GB de RAM o más usa su modelo más listo; con menos, uno más ligero. Necesitas unos 4 GB libres.</p></details>
+      <details><summary>¿Cuánto cuesta?</summary><p>Es gratis. Más adelante habrá funciones Premium opcionales.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    Ari · Versión beta · <a href="privacidad.html">Política de privacidad</a><br>
+    Usa Gemma 4 de Google (licencia Apache 2.0). Todos los derechos reservados.
+  </div>
+</footer>
+</body>
+</html>
