@@ -38,6 +38,7 @@ object AriNews {
         48 to listOf(Item("Recados por voz", "En mi burbuja toca un contacto de recados y dime el recado en voz.")),
         49 to listOf(Item("Envío los recados sola", "Ajustes → Recados entre Ari → Enviar los recados sola. Te explico el permiso.", ceoOnly = true)),
         50 to listOf(Item("Lee con calma", "Mientras escribo, si subes a leer el chat se queda quieto; toca \"↓ Ir al final\" para volver abajo.")),
+        51 to listOf(Item("Respondo a mi nombre", "Ajustes → Responder a \"Ari\": me enseñas cómo dices mi nombre (3 veces) y, cuando salgas de la app, di \"Ari\" y te escucho.")),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

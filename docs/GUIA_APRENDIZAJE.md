@@ -331,6 +331,17 @@ Cuando sales de una app, Android la "duerme" para cuidar la batería y tu privac
 - El micrófono en segundo plano solo se puede encender **mientras Ari está en pantalla**. Por eso el modo live empieza en Ari, y si Android cierra la app, no vuelve a escuchar sola.
 - Un detalle práctico: si pones música, el micrófono oiría la canción y Ari la tomaría por órdenes. Por eso, si algo está sonando, Ari espera a que toques "Hablar".
 
+### Que Ari responda a su nombre: la palabra de activación
+
+"Oye Siri" u "Ok Google" son **palabras de activación**: el teléfono escucha todo el tiempo, pero solo busca esa palabra, sin entender lo demás.
+
+- Probé modelos ya hechos que buscan palabras, pero están entrenados en inglés o chino y casi no reconocían "Ari" en español. Por eso Ari usa una **palabra personal**: le dices "Ari" 3 veces y aprende cómo lo dices tú.
+- **MFCC**: Ari convierte cada pedacito de sonido (10 milésimas de segundo) en 12 números que describen su "forma" (qué tonos suenan fuerte), como una huella de cómo suena la "a" o la "i". No depende del volumen.
+- **DTW (alineación en el tiempo)**: si dices "Aaari" más lento o "Ari" rápido, la regla estira o encoge el tiempo para comparar cada parte con la parte que le toca. El resultado es una distancia: cerca de 0 es igual; lejos es otra palabra.
+- **Palabra suelta**: para gastar poca batería y equivocarse menos, Ari solo compara sonidos cortos con silencio antes y después, como cuando llamas a alguien. Si platicas, no hace cuentas.
+- **Sensibilidad**: el límite para aceptar sale de qué tan parecidas fueron tus 3 muestras. Si no despierta cuando la llamas, pon "más fácil"; si despierta sola, "más estricta".
+- Nada se graba: cada palabra se compara y se olvida. Solo se guardan los números de tus 3 muestras.
+
 ### Ver la pantalla: la "proyección de medios"
 
 Para que una app vea lo que hay en tu pantalla, Android usa la **proyección de medios** (MediaProjection), lo mismo que usan las apps para grabar la pantalla o transmitirla a la tele. Como es muy delicado (en la pantalla salen tus mensajes, tu banco, tus fotos), Android pone tres candados:
@@ -480,6 +491,9 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 ## 8. Glosario rápido
 
 - **APK**: el archivo instalador de una app de Android.
+- **Palabra de activación**: la palabra que despierta a un asistente (como "Ari").
+- **MFCC**: números que describen la forma de un sonido, cada 10 milésimas de segundo.
+- **DTW**: una forma de comparar dos sonidos aunque uno se diga más rápido que el otro.
 - **Agente**: un programa que hace una tarea concreta por encargo, como el agente de reloj.
 - **CEO**: en Ari, quien reparte el trabajo entre los agentes y los modelos del equipo.
 - **Commit**: un cambio guardado en el historial del código, con una descripción.

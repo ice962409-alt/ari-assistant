@@ -820,6 +820,7 @@ class MainActivity : Activity() {
             "Aprender a usar Ari",
             "Avisarme en voz al terminar: ${if (speakWhenDone()) "sí" else "no"}",
             "Interrumpirla hablando: ${if (bargeInEnabled()) "sí" else "no"}",
+            "Responder a \"Ari\": ${if (AriWakeWord.isEnabled(this) && AriWakeWord.hasModel(this)) "sí" else "no"}",
             "Recados entre Ari",
             "Reportar un problema",
             "Acerca de Ari y licencias"
@@ -847,8 +848,9 @@ class MainActivity : Activity() {
                             else "Ya no me interrumpo con tu voz; tócame para interrumpirme."
                         )
                     }
-                    10 -> setupAriMessages()
-                    11 -> askProblemReport()
+                    10 -> setupWakeWord()
+                    11 -> setupAriMessages()
+                    12 -> askProblemReport()
                     else -> showAbout()
                 }
             }
@@ -1040,6 +1042,166 @@ class MainActivity : Activity() {
         voicePrints = prints
         applyVoiceSettings()
         voiceWorker.execute { runCatching { voiceVault.save(prints) } }
+    }
+
+    /** "Responder a Ari": Ari espera su nombre en segundo plano y se abre cuando la llamas. */
+    private fun setupWakeWord() {
+        if (!AriWakeWord.hasModel(this)) {
+            AlertDialog.Builder(this)
+                .setTitle("Que responda a \"Ari\"")
+                .setMessage(
+                    "Me quedo atenta aunque uses otras apps o tengas la pantalla apagada, y cuando dices \"Ari\" " +
+                        "(sola, como cuando llamas a alguien) suena un tonito, me abro y te escucho.\n\n" +
+                        "• Primero me enseñas cómo dices mi nombre: lo dices 3 veces.\n" +
+                        "• No grabo nada ni uso internet: comparo cada palabra suelta con tus 3 muestras y la olvido.\n" +
+                        "• Verás una notificación fija mientras estoy atenta; ahí me apagas.\n" +
+                        "• Gasta algo de batería, como tener el micrófono abierto."
+                )
+                .setPositiveButton("Enseñarle") { _, _ -> enrollWakeWord() }
+                .setNegativeButton("Ahora no", null)
+                .show()
+            return
+        }
+        val on = AriWakeWord.isEnabled(this)
+        val sensitivity = AriWakeWord.sensitivity(this)
+        val level = when {
+            sensitivity > 1.05 -> "más fácil"
+            sensitivity < 0.95 -> "más estricta"
+            else -> "normal"
+        }
+        val options = arrayOf(
+            if (on) "Apagar" else "Encender",
+            "Volver a enseñarle mi forma de decir \"Ari\"",
+            "Qué tan fácil despierta: $level",
+            "Olvidar mis muestras"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Responder a \"Ari\"")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        AriWakeWord.setEnabled(this, !on)
+                        if (on) {
+                            AriWakeWord.stop(this)
+                            chat.addNote("Listo, ya no espero mi nombre. Me llamas con la burbuja o abriendo la app.")
+                        } else {
+                            AriWakeWord.start(this)
+                            chat.addNote("Listo, cuando salgas de la app di \"Ari\" y te escucho.")
+                        }
+                    }
+                    1 -> enrollWakeWord()
+                    2 -> chooseWakeSensitivity()
+                    else -> {
+                        AriWakeWord.forget(this)
+                        chat.addNote("Olvidé tus muestras de \"Ari\" y ya no espero mi nombre.")
+                    }
+                }
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun chooseWakeSensitivity() {
+        val values = doubleArrayOf(1.25, 1.0, 0.8)
+        AlertDialog.Builder(this)
+            .setTitle("¿Qué tan fácil despierto?")
+            .setItems(
+                arrayOf(
+                    "Más fácil (si no me despierto cuando me llamas)",
+                    "Normal",
+                    "Más estricta (si me despierto sin que me llames)"
+                )
+            ) { _, which ->
+                AriWakeWord.setSensitivity(this, values[which])
+                if (AriWakeWord.isEnabled(this)) {
+                    // Se vuelve a encender para usar el ajuste nuevo.
+                    AriWakeWord.stop(this)
+                    AriWakeWord.start(this)
+                }
+                chat.addNote("Listo, ajusté qué tan fácil despierto con mi nombre.")
+            }
+            .show()
+    }
+
+    /** Graba "Ari" 3 veces y guarda solo la forma del sonido (nunca la grabación). */
+    private fun enrollWakeWord() {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_AUDIO_WAKE)
+            return
+        }
+        if (voiceMode) closeLive()
+        val total = 3
+        val collected = mutableListOf<FloatArray>()
+        val text = TextView(this).apply {
+            textSize = 18f
+            setTextColor(AriTheme.text)
+            setPadding(dp(24f), dp(16f), dp(24f), dp(8f))
+        }
+        var current: VoiceCapture? = null
+        var cancelled = false
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Enséñame cómo me llamas")
+            .setView(text)
+            .setNegativeButton("Cancelar") { _, _ ->
+                cancelled = true
+                current?.stop()
+            }
+            .setCancelable(false)
+            .show()
+
+        fun learnWord() {
+            text.text = "Un momento…"
+            val recordings = collected.toList()
+            voiceWorker.execute {
+                val model = com.ari.assistant.voz.WakeWordModel.learn(recordings)
+                if (model != null) runCatching { AriWakeWord.save(this, model) }
+                runOnUiThread {
+                    if (isDestroyed) return@runOnUiThread
+                    dialog.dismiss()
+                    if (model == null) {
+                        chat.addNote(
+                            "No te oí igual las 3 veces. Intenta otra vez en un lugar sin ruido: di solo \"Ari\", " +
+                                "como cuando llamas a alguien, igual las 3 veces. (Ajustes → Responder a \"Ari\")"
+                        )
+                        return@runOnUiThread
+                    }
+                    AriWakeWord.setEnabled(this, true)
+                    AriWakeWord.start(this)
+                    chat.addNote(
+                        "¡Listo! Cuando salgas de la app, di \"Ari\" (sola) y te escucho. Verás la notificación " +
+                            "\"Di Ari para llamarme\" mientras estoy atenta; ahí me apagas."
+                    )
+                    if (!AriBubble.canShow(this)) {
+                        chat.addNote(
+                            "Para abrirme sola cuando me llamas, Android pide el permiso \"Mostrar sobre otras apps\" " +
+                                "(el mismo de la burbuja: Ajustes → Burbuja flotante). Sin él, te aviso con una notificación para que la toques."
+                        )
+                    }
+                }
+            }
+        }
+
+        fun step(index: Int) {
+            if (cancelled) return
+            if (index >= total) {
+                learnWord()
+                return
+            }
+            text.text = "${index + 1} de $total. Di \"Ari\" como cuando me llamas, y espera."
+            current = VoiceCapture(
+                pipe = null,
+                onLevel = {},
+                onFinished = { result ->
+                    runOnUiThread {
+                        if (cancelled || isDestroyed) return@runOnUiThread
+                        result.samples?.let { collected.add(it) }
+                        step(index + 1)
+                    }
+                },
+                detector = com.ari.assistant.voz.SpeechEndDetector(silenceMs = 500, noSpeechMs = 7_000, maxMs = 3_000, minSpeechMs = 150)
+            ).also { it.start() }
+        }
+        step(0)
     }
 
     /** Graba tres frases cortas y guarda la huella de voz (nunca la grabación). */
@@ -1782,6 +1944,9 @@ class MainActivity : Activity() {
         super.onResume()
         if (tampered) return
         inForeground = true
+        // Ari en pantalla ya te escucha: la que espera su nombre suelta el micrófono.
+        AriWakeWord.appVisible = true
+        AriWakeWord.start(this)
         // Ya estás aquí: el chat de notificaciones se limpia (todo está en la pantalla de Ari).
         AriChat.clear(this)
         // Dentro de Ari no hace falta la burbuja; vuelve al salir.
@@ -2932,6 +3097,11 @@ class MainActivity : Activity() {
             ceoTeam.onLocationResult()
             return
         }
+        if (requestCode == REQUEST_AUDIO_WAKE) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) enrollWakeWord()
+            else chat.addNote("Sin permiso de micrófono no puedo oír cuando me llamas.")
+            return
+        }
         if (requestCode == REQUEST_AUDIO_ENROLL) {
             val pending = pendingEnroll
             pendingEnroll = null
@@ -3234,6 +3404,7 @@ class MainActivity : Activity() {
         super.onPause()
         if (tampered) return
         inForeground = false
+        AriWakeWord.appVisible = false
         // En modo live, Ari se queda contigo aunque salgas (con su notificación).
         if (voiceMode && !LiveSessionService.running) stopVoiceMode("Modo voz detenido.")
         // Al salir de Ari aparece su burbuja (si la activaste).
@@ -3536,6 +3707,7 @@ class MainActivity : Activity() {
         /** Lo único que puede usar alguien que no es el dueño (además de platicar con Gemma). */
         private val GUEST_AGENTS = setOf("reloj")
         private const val REQUEST_AUDIO_ENROLL = 112
+        private const val REQUEST_AUDIO_WAKE = 116
         private val ENROLL_PHRASES = listOf(
             "Hola Ari, soy yo. Hoy quiero platicar contigo un rato.",
             "El perro de mi vecino corre rápido por el parque grande.",

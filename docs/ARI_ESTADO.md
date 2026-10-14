@@ -516,3 +516,12 @@ Decisión del usuario: "Accesibilidad, solo Ari CEO".
 Pedido del usuario: poder leer sin que el chat se vaya hacia abajo.
 - `ChatView`: `follow` (solo un desplazamiento hacia arriba hecho con el dedo deja de seguir; volver al fondo lo reactiva); `scrollToEnd` solo si `follow`; `addUser` usa `jumpToEnd`. `onFollowChanged` muestra el botón "↓ Ir al final" (FrameLayout sobre el chat en MainActivity).
 
+## Ari responde a su nombre (versión 0.37.0)
+
+Decisión del usuario en el tablero (palabra-ari): "A: siempre, con modelo de voz".
+- Se probaron en el contenedor los modelos de palabra clave de sherpa-onnx con voz sintética en español: el de inglés (gigaspeech 3.3M) casi no detecta "Ari" y el reconocedor en español (Kroko, 155 MB) tampoco lo transcribe bien. Por eso se eligió una palabra **personal**: el usuario dice "Ari" 3 veces y Ari compara por forma de sonido. Sin modelo extra (0 MB).
+- `voz/WakeWord.kt` (puro; pruebas en `WakeWordTest`): MFCC (12 coeficientes cada 10 ms), DTW con distancia coseno y final abierto (la palabra puede durar 0.6–1.6 veces la muestra), `WakeWordModel.learn` (límite = 1.7 × parecido medio entre muestras, entre 0.10 y 0.20; null si no se parecen) y `WakeSegmenter` (palabra suelta de 0.2–1.3 s con 0.35 s de silencio; las frases largas no cuentan).
+- `WakeWordService` (servicio en primer plano tipo micrófono, notificación fija "Di Ari para llamarme" con Apagar): suelta el micrófono mientras Ari está en pantalla (`AriWakeWord.appVisible`) o en modo live. Al oír "Ari": tonito y abre Ari en modo live por `LiveShortcutActivity` (si hay permiso de superposición; si no, notificación "¿Me llamaste?").
+- `AriWakeWord`: guarda solo los MFCC en `files/ari_nombre.bin`, sensibilidad (más fácil 1.25, normal 1.0, más estricta 0.8). Se enciende al abrir Ari (Android no deja encender el micrófono desde atrás); si Android cierra el proceso, vuelve al abrir Ari.
+- Ajustes → Responder a "Ari": enseñar (3 grabaciones con `VoiceCapture`), encender/apagar, sensibilidad, olvidar. Ambas versiones.
+- Pendiente de [prueba] en el teléfono: ajustar el límite con voz real (la prueba con voz sintética separó "Ari" de otras palabras, pero con poco margen en "Ahí" y "Oye").

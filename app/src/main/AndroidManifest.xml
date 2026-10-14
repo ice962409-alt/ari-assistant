@@ -94,6 +94,12 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <!-- Ari atenta a su nombre: escucha palabras sueltas y se abre si dices "Ari". -->
+        <service
+            android:name=".WakeWordService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
         <!-- Recado por voz desde la burbuja (pregunta "¿Qué le digo a…?"). -->
         <activity
             android:name=".DictateRecadoActivity"

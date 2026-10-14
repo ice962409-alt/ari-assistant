@@ -1,6 +1,6 @@
 # Ari — Documentación del proyecto
 
-Última actualización: 13 de octubre de 2026
+Última actualización: 14 de octubre de 2026
 
 Este documento lo mantiene Claude. Su fuente está en el repositorio, en docs/ARI_DOCUMENTACION.md, y se exporta a Google Drive, a la carpeta "Ari - Documentación de Claude", cada vez que se termina un cambio.
 
@@ -507,6 +507,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Ari responde a su nombre (0.37.0): Ajustes → Responder a "Ari". Le enseñas cómo dices su nombre (3 veces) y, cuando sales de la app, dices "Ari" y se abre escuchándote. No graba nada ni usa internet; se apaga desde su notificación.
 - Leer con calma (0.36.0): mientras Ari escribe, si subes a leer el chat ya no te baja solo; aparece "↓ Ir al final" para volver.
 - Ari CEO envía sola los recados (0.35.0): con el permiso de Accesibilidad (solo en tu Ari CEO), Ari toca "enviar" en tu app de mensajes, solo en los recados que le pides. Ajustes → Recados entre Ari → Enviar los recados sola.
 - Recados por voz desde la burbuja (0.34.0): tocas un contacto de recados, lo dices en voz y queda listo para enviar.

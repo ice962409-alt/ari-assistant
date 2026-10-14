@@ -74,4 +74,4 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Burbuja flotante sobre otras apps en lugar del widget (permiso "mostrar sobre otras apps", Ari enseña a darlo).
 - [autónomo] Interrumpir a Ari hablando: deja de hablar y escucha (cancelación de eco).
 - [autónomo] Conversación más fluida y humana (instrucciones de conversación natural).
-- [autónomo] Siempre en live en segundo plano y responde a "Ari" (palabra de activación sin internet). Es la más grande: necesita un modelo de voz que funcione en el teléfono y gasta batería.
+- [autónomo] Siempre atenta en segundo plano y responde a "Ari": hecho en 0.37.0 con palabra personal (dices "Ari" 3 veces). Falta [prueba] en el teléfono para ajustar qué tan fácil despierta.
