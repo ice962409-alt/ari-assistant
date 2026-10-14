@@ -24,6 +24,7 @@ import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.ari.assistant.agents.PeopleAgent
 import com.ari.assistant.agents.PhoneAgent
+import com.ari.assistant.agents.CalendarAgent
 import com.ari.assistant.agents.ReminderAgent
 import com.ari.assistant.ui.AriOrbView
 import com.ari.assistant.ui.AriTheme
@@ -105,6 +106,9 @@ class MainActivity : Activity() {
     private lateinit var modelDownload: ModelDownload
     private lateinit var phoneAgent: PhoneAgent
     private lateinit var messageAgent: AriMessageAgent
+    private lateinit var calendarAgent: CalendarAgent
+    // "¿Qué tengo hoy?" esperando el permiso de calendario.
+    private var pendingCalendarRequest: String? = null
     // "Dile a mi mamá que…" esperando los permisos de SMS y contactos.
     private var pendingMessageRequest: String? = null
 
@@ -199,6 +203,8 @@ class MainActivity : Activity() {
         ceo.hire(reminders)
         // Antes que el teléfono y la memoria: "mi mamá se llama Rosa" u "olvida a Luis" son de la libreta.
         ceo.hire(PeopleAgent(database, { memoriesPending = true }))
+        calendarAgent = CalendarAgent(AndroidCalendar(this))
+        ceo.hire(calendarAgent)
         phoneAgent = PhoneAgent(AndroidPhone(this))
         ceo.hire(phoneAgent)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
@@ -227,8 +233,11 @@ class MainActivity : Activity() {
         restoreHistory()
         loadSavedModel()
         ceoTeam.recruit()
-        if (firstRun) askUserName(firstTime = true) else if (!offerModelOnce()) {
-            remindBackup()
+        if (firstRun) {
+            markNewsSeen()
+            askUserName(firstTime = true)
+        } else if (!offerModelOnce()) {
+            if (!showNews()) remindBackup()
             dailyTip()
         }
         handleLaunch(intent)
@@ -504,6 +513,34 @@ class MainActivity : Activity() {
             )
             .setPositiveButton("Entendido", null)
             .show()
+    }
+
+    // --- Novedades: al actualizarse, Ari cuenta lo nuevo y cómo se usa ---
+
+    private fun currentVersionCode(): Int = runCatching {
+        val info = packageManager.getPackageInfo(packageName, 0)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) info.longVersionCode.toInt()
+        else @Suppress("DEPRECATION") info.versionCode
+    }.getOrDefault(0)
+
+    private fun markNewsSeen() {
+        getSharedPreferences(NEWS_PREFS, MODE_PRIVATE).edit().putInt(KEY_NEWS_SEEN, currentVersionCode()).apply()
+    }
+
+    /** true si había novedades que contar. */
+    private fun showNews(): Boolean {
+        val prefs = getSharedPreferences(NEWS_PREFS, MODE_PRIVATE)
+        val current = currentVersionCode()
+        // Quien ya usaba Ari antes de las novedades las ve desde la 0.25.0.
+        val seen = prefs.getInt(KEY_NEWS_SEEN, 36)
+        markNewsSeen()
+        val items = AriNews.since(seen, current, phoneAbilities().vision)
+        if (items.isEmpty()) return false
+        val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: ""
+        val text = AriNews.message(items, version)
+        saveMessage(ROLE_ARI, text)
+        chat.addAri(text)
+        return true
     }
 
     private fun phoneAbilities() = AriAbilities.Phone(
@@ -1805,6 +1842,17 @@ class MainActivity : Activity() {
 
         if (!guestMode && handleTutor(text)) return
 
+        if (AriNews.asksCommands(text)) {
+            input.text.clear()
+            saveMessage(ROLE_USER, text)
+            chat.addUser(text)
+            val list = AriNews.commandsMessage()
+            saveMessage(ROLE_ARI, list)
+            chat.addAri(list)
+            if (voiceMode) voice.speak(AriNews.commandsSpoken())
+            return
+        }
+
         if (AriLessons.asks(text)) {
             input.text.clear()
             saveMessage(ROLE_USER, text)
@@ -2344,6 +2392,11 @@ class MainActivity : Activity() {
             }
             ceoTeam.afterDelegation(agent)
             if (agent === reminders && result.success) prepareReminderPermissions()
+            if (agent === calendarAgent && calendarAgent.needsPermission) {
+                calendarAgent.needsPermission = false
+                pendingCalendarRequest = text
+                requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), REQUEST_CALENDAR)
+            }
             if (agent === messageAgent && messageAgent.needsPermission) {
                 messageAgent.needsPermission = false
                 pendingMessageRequest = text
@@ -2519,6 +2572,17 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CALENDAR) {
+            val request = pendingCalendarRequest
+            pendingCalendarRequest = null
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED && request != null && !busy) {
+                input.setText(request)
+                sendMessage()
+            } else if (grantResults.firstOrNull() != PackageManager.PERMISSION_GRANTED) {
+                chat.addNote("Sin permiso de calendario no puedo ver tu agenda. Puedes darlo en Ajustes del teléfono → Apps → Ari → Permisos.")
+            }
+            return
+        }
         if (requestCode == REQUEST_SMS) {
             val request = pendingMessageRequest
             pendingMessageRequest = null
@@ -3100,6 +3164,7 @@ class MainActivity : Activity() {
         private const val REQUEST_NOTIFICATIONS_QUIET = 107
         private const val REQUEST_CONTACTS = 108
         private const val REQUEST_SMS = 113
+        private const val REQUEST_CALENDAR = 115
         private const val PICK_IMAGE = 109
         private const val PICK_DOCUMENT = 110
         private const val TAKE_PHOTO = 111
@@ -3117,6 +3182,8 @@ class MainActivity : Activity() {
         private const val KEY_MODEL_OFFERED = "ofrecida"
         private const val KEY_INTRODUCED = "presentada"
         private const val COLOR_PREFS = "ari_color"
+        private const val NEWS_PREFS = "ari_novedades"
+        private const val KEY_NEWS_SEEN = "vista"
         private const val LESSON_PREFS = "ari_lecciones"
         private const val TUTOR_PREFS = "ari_tutora"
         private const val KEY_TUTOR_ACTIVE = "clase"

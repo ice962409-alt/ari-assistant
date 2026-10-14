@@ -30,6 +30,7 @@ object AriAbilities {
         append(hi).append(", tu asistente personal. Todo lo hago aquí en tu teléfono: tus pláticas y recuerdos no salen de él.\n\n")
         append("Esto es lo que puedo hacer por ti:\n\n")
         append("**Platicar y ayudarte a pensar**: preguntas, ideas, consejos, resúmenes o escribir un mensaje.\n\n")
+        append("**Tu agenda**: \"¿qué tengo hoy?\", \"¿qué tengo mañana?\".\n\n")
         append("**Recordatorios**: \"recuérdame mañana a las 9 llamar a mamá\" o \"recuérdame en 20 minutos sacar la ropa\".\n\n")
         append("**Usar tu teléfono**: \"llama a mamá\", \"manda un WhatsApp a Juan que diga que voy tarde\", ")
         append("\"pon una alarma a las 7\", \"pon música de Shakira\", \"cómo llego al centro\". Yo lo preparo y tú confirmas el último paso.\n\n")
@@ -47,7 +48,7 @@ object AriAbilities {
         if (phone.voices) append("**Reconocer tu voz**: en Ajustes → Reconocer voces, para saber cuándo eres tú.\n\n")
         append("**Cambiar de color**: \"ponte rosa\", \"cambia tu color a lila\" (o en Ajustes → Color de Ari).\n\n")
         append("**Avisarte**: si sales mientras trabajo, te escribo en las notificaciones y me puedes contestar ahí.\n\n")
-        append("Escribe \"enséñame\" y te enseño a usarme paso a paso. Pregúntame \"¿qué puedes hacer?\" cuando quieras volver a ver esto.")
+        append("Escribe \"enséñame\" y te enseño a usarme paso a paso, o \"¿qué te puedo decir?\" para ver mis comandos de voz. Pregúntame \"¿qué puedes hacer?\" cuando quieras volver a ver esto.")
     }
 
     /** Versión corta para decirla en voz. */

@@ -62,3 +62,16 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Programa de Ari para Linux (casa principal en la laptop).
 - [permiso] Google Play: cuenta de desarrollador y firma oficial. El usuario dijo "más adelante": primero probar todo. Licencia, política (borrador) y permisos ya preparados: docs/GOOGLE_PLAY.md.
 - [decisión] Nombre de la empresa, cuando Ari esté bien diseñada.
+
+## Mejoras pedidas el 14 de octubre de 2026 (en orden de trabajo)
+- [autónomo] Novedades en cada actualización: Ari cuenta y enseña las funciones nuevas al abrir una versión nueva (ambas Ari).
+- [autónomo] Comandos de voz establecidos y lección para aprenderlos (ambas Ari).
+- [autónomo] Calendario y hora: "¿qué tengo hoy?", "¿qué hora es?", agendar, alarmas (ambas Ari; leer el calendario pide permiso).
+- [autónomo] Cerebro portátil: Ari resume sus pláticas en "aprendizajes" sobre ti, los guarda (van en el respaldo) y los usa en cada conversación (ambas Ari).
+- [autónomo] Ari CEO franca al máximo: opiniones y críticas directas sobre la app, sin rodeos ni avisos innecesarios. Límite: las reglas de seguridad propias de Gemma no se quitan.
+- [autónomo] Ari CEO avisa en voz cuando termina una tarea (además del chat de notificaciones).
+- [autónomo] Ari CEO proactiva: revisa su propio desempeño y te propone mejoras; tareas programadas. Límite: lo que afecta a otros (mandar, comprar, borrar) sigue con tu confirmación.
+- [autónomo] Burbuja flotante sobre otras apps en lugar del widget (permiso "mostrar sobre otras apps", Ari enseña a darlo).
+- [autónomo] Interrumpir a Ari hablando: deja de hablar y escucha (cancelación de eco).
+- [autónomo] Conversación más fluida y humana (instrucciones de conversación natural).
+- [autónomo] Siempre en live en segundo plano y responde a "Ari" (palabra de activación sin internet). Es la más grande: necesita un modelo de voz que funcione en el teléfono y gasta batería.

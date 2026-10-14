@@ -12,6 +12,8 @@
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <!-- "Llama a mamá": buscar el número en tus contactos. Se pide la primera vez que lo usas. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- "¿Qué tengo hoy?": leer tu calendario. Se pide la primera vez que lo preguntas. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <!-- Modo live en segundo plano: Ari te sigue escuchando mientras usas otras apps,
          siempre con una notificación fija para terminar con un toque. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
