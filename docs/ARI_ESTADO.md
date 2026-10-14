@@ -565,3 +565,7 @@ Decisión del usuario: "Control total con pausa". Solo la Ari CEO.
 - MainActivity: `handleAppControl` tras las rutinas; si Ari está en pantalla se hace a un lado (`moveTaskToBack`) y actúa 0.8 s después; responde en el chat y en voz. Ajustes ahora es una lista de acciones; "Manejar mis apps" solo aparece en la CEO.
 - Sin el permiso, "lee mi pantalla" sigue usando la vista de pantalla (proyección).
 - Aviso "Ari se muestra sobre otras apps": es de Android (Sistema), no de Ari; se apaga en sus ajustes de notificación.
+
+## Prioridad actual
+
+- Pedido del usuario (14/10/2026): centrarse solo en la Ari CEO. La Ari para otros queda para más adelante; los cambios nuevos van pensados para la CEO (la versión otros solo debe seguir compilando).

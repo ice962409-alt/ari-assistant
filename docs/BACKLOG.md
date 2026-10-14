@@ -1,5 +1,7 @@
 # Lista de trabajo de Ari
 
+> Prioridad del usuario (14/10/2026): por ahora solo la Ari CEO. La Ari para otros queda en pausa para más adelante (no se le agregan funciones; solo debe seguir compilando).
+
 Etiquetas:
 - **[autónomo]**: Claude lo hace sin esperar al usuario.
 - **[permiso]**: necesita que el usuario apruebe algo (una solicitud de permiso, una acción en su cuenta).
