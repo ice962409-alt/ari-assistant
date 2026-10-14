@@ -103,4 +103,5 @@ Pendiente de verificar:
 - `ios/Ari/`: chat con respuesta en vivo, primer uso (nombre, tono, modelo recomendado), descarga en segundo plano solo por Wi-Fi, importar .litertlm desde Archivos, Memoria, Ajustes, informes con permiso (MetricKit + errores del modelo).
 - `.github/workflows/ios.yml`: en una Mac de GitHub corre `swift test` de AriCore y compila la app sin firmar (artefacto `ari-ios-sin-firmar`).
 - Para instalar en iPhones hace falta la cuenta de Apple Developer, el App ID con "Increased Memory Limit" y TestFlight (pasos en `ios/README.md`).
+- Verificado en GitHub Actions (run 38635332689, Xcode 16.4): 18 pruebas de AriCore pasan y la app compila para iPhone (BUILD SUCCEEDED, artefacto ari-ios-sin-firmar de unos 18 MB con LiteRT-LM). No probada en un iPhone real.
 - Pendiente: firmar y subir a TestFlight, recordatorios, modo voz, widget, Atajos de Siri.
