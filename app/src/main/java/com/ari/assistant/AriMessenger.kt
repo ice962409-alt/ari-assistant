@@ -24,7 +24,9 @@ class AriMessageAgent(
     /** Los contactos de recados guardados (acceso rápido). */
     private val quick: () -> List<QuickContact> = { emptyList() },
     /** Máximo de contactos de recados; null sin límite (Ari CEO). */
-    private val limit: Int? = null
+    private val limit: Int? = null,
+    /** true si Ari CEO toca "enviar" sola (Accesibilidad). */
+    private val autoSend: () -> Boolean = { false }
 ) : Agent {
 
     /** Recado que espera a que digas si guardas al contacto (la app pregunta y lo vuelve a intentar). */
@@ -81,8 +83,11 @@ class AriMessageAgent(
     /** Abre tu app de mensajes con el recado listo (tú tocas enviar). */
     fun send(name: String, number: String, text: String): AgentResult {
         val sms = AriMessages.encode(ownerName(), text)
+        val auto = autoSend()
+        if (auto) AutoSend.arm(sms, name)
         return if (phone.launch(PhoneAction.Sms(number, sms))) {
-            AgentResult("Abrí tu app de mensajes con el recado para $name: \"$text\". Toca enviar. Si tiene Ari, ella se lo dice.")
+            if (auto) AgentResult("Mandando el recado a $name: \"$text\".")
+            else AgentResult("Abrí tu app de mensajes con el recado para $name: \"$text\". Toca enviar. Si tiene Ari, ella se lo dice.")
         } else {
             AgentResult("No encontré una app de mensajes para mandar el recado.", success = false)
         }

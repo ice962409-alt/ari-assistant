@@ -504,3 +504,10 @@ Pedido del usuario: máximo 4 contactos de recados en la Ari para otros (Ari pid
 - Burbuja: fila "Recados" con los contactos; el campo manda el recado con `ACTION_SENDTO smsto:` + `sms_body` (el usuario toca enviar en su app de mensajes).
 - 0.34.0: pedido del usuario "no quiero escribir el recado, quiero decírselo por voz". `DictateRecadoActivity` (translúcida, no exportada): `ACTION_RECOGNIZE_SPEECH` con "¿Qué le digo a X?" y abre `smsto:` con el recado. En la burbuja: tocar el contacto = voz; mantener = escribir.
 
+## Ari CEO envía sola los recados (versión 0.35.0)
+
+Decisión del usuario: "Accesibilidad, solo Ari CEO".
+- `AutoSend` (main; pruebas en `AutoSendTest`): `arm(texto, nombre)` antes de abrir `smsto:` (agente, burbuja, dictado), válido 20 s; `matches` exige el texto exacto con "[Ari".
+- `AriSendService` (solo `src/completa`, AccessibilityService limitado a paquetes de mensajes por `xml/ari_send_service.xml`): busca la caja editable con el recado y el botón enviar (ids conocidos de Google Mensajes, Samsung, MIUI, o texto "Enviar/Send"); toca y avisa "Listo, le mandé el recado a X".
+- Ajustes → Recados entre Ari ahora es un menú: cómo funciona, leer solos, enviar solos (solo CEO), quitar contacto. Novedades con `ceoOnly`.
+

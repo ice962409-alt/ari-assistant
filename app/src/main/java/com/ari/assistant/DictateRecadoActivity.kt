@@ -46,8 +46,10 @@ class DictateRecadoActivity : Activity() {
             // "Que llego a las 8" → "llego a las 8".
             val text = said.replace(Regex("^(?i)(?:dile\\s+)?que\\s+"), "").replaceFirstChar { it.lowercase() }
             val owner = Profile.load(getSharedPreferences(Profile.PREFS, MODE_PRIVATE)).userName
+            val body = AriMessages.encode(owner, text)
+            if (AutoSend.enabled(this)) AutoSend.arm(body, intent.getStringExtra(EXTRA_NAME).orEmpty())
             val sms = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + Uri.encode(number)))
-                .putExtra("sms_body", AriMessages.encode(owner, text))
+                .putExtra("sms_body", body)
             runCatching { startActivity(sms) }.onFailure {
                 Toast.makeText(this, "No encontré una app de mensajes.", Toast.LENGTH_LONG).show()
             }

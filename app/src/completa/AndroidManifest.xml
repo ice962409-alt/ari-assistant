@@ -16,5 +16,20 @@
          y solo en el hotspot del teléfono o en redes Wi-Fi aprobadas por el usuario. -->
     <application
         android:usesCleartextTraffic="true"
-        tools:replace="android:usesCleartextTraffic" />
+        tools:replace="android:usesCleartextTraffic">
+
+        <!-- Envío automático de recados (solo la Ari CEO): toca "enviar" en la app de mensajes. -->
+        <service
+            android:name="com.ari.assistant.AriSendService"
+            android:exported="true"
+            android:label="Ari: enviar recados"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/ari_send_service" />
+        </service>
+    </application>
 </manifest>

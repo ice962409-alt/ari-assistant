@@ -8,7 +8,7 @@ import com.ari.assistant.agents.normalizeForAgents
  */
 object AriNews {
 
-    data class Item(val title: String, val tryThis: String)
+    data class Item(val title: String, val tryThis: String, val ceoOnly: Boolean = false)
 
     /** Lo nuevo de cada versión (código de versión → novedades). */
     private val NEWS: List<Pair<Int, List<Item>>> = listOf(
@@ -35,12 +35,15 @@ object AriNews {
         47 to listOf(
             Item("Contactos de recados", "La primera vez que le mandas un recado a alguien te pregunto si lo guardo; luego lo tienes en mi burbuja: tócalo y dime el recado en voz."),
         ),
+        48 to listOf(Item("Recados por voz", "En mi burbuja toca un contacto de recados y dime el recado en voz.")),
+        49 to listOf(Item("Envío los recados sola", "Ajustes → Recados entre Ari → Enviar los recados sola. Te explico el permiso.", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */
-    fun since(seen: Int, current: Int, vision: Boolean = true): List<Item> =
+    fun since(seen: Int, current: Int, vision: Boolean = true, ceo: Boolean = true): List<Item> =
         NEWS.filter { (code, _) -> code in (seen + 1)..current }.flatMap { it.second }
             .filter { vision || !it.tryThis.contains("pantalla") }
+            .filter { ceo || !it.ceoOnly }
 
     fun message(items: List<Item>, version: String): String = buildString {
         append("**Novedades de Ari $version.** Esto es lo nuevo que puedo hacer:\n\n")

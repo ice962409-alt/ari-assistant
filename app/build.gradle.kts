@@ -47,8 +47,8 @@ android {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 48
-        versionName = "0.34.0"
+        versionCode = 49
+        versionName = "0.35.0"
         // Solo teléfonos de 64 bits (como el POCO): las librerías de voz pesan menos en el APK.
         ndk {
             abiFilters += listOf("arm64-v8a")

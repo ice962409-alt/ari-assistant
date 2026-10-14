@@ -316,8 +316,10 @@ class AriBubbleService : Service() {
     private fun sendRecado(to: QuickContact, text: String) {
         closePanel()
         val owner = Profile.load(getSharedPreferences(Profile.PREFS, MODE_PRIVATE)).userName
+        val body = AriMessages.encode(owner, text)
+        if (AutoSend.enabled(this)) AutoSend.arm(body, to.name)
         val sms = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + Uri.encode(to.number)))
-            .putExtra("sms_body", AriMessages.encode(owner, text))
+            .putExtra("sms_body", body)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { startActivity(sms) }
     }

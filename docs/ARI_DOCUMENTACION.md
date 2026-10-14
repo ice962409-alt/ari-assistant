@@ -91,7 +91,8 @@ Dile a tu Ari **"dile a mi mamá que llego a las 8"** (o "avísale a Laura que y
 - Un recado es un mensaje para ti, nunca una orden para Ari. Solo tú puedes mandar recados (no un invitado).
 - **Contactos de recados**: la primera vez que le mandas un recado a alguien, Ari pregunta "¿Guardo a Mamá en tus contactos de recados?". La Ari para otros guarda **máximo 4** (y solo manda recados a ellos); la Ari CEO no tiene límite (y puede "Solo enviar" sin guardar). Se quitan en Ajustes → Recados entre Ari → Quitar contacto.
 - **Por voz**: en modo live dile "dile a mi mamá que llego a las 8". En la burbuja, **toca** un contacto de recados: Ari pregunta "¿Qué le digo a Mamá?", lo dices y se abre tu app de mensajes con el recado listo (funciona aunque Ari esté cerrada). Si prefieres escribirlo, **mantén presionado** el contacto y escribe abajo.
-- El único toque a mano es "enviar" en tu app de mensajes: Android no deja que una app de fuera de la tienda mande SMS sola.
+- En la Ari para otros, el único toque a mano es "enviar" en la app de mensajes (Android no deja que una app de fuera de la tienda mande SMS sola).
+- **Tu Ari CEO los envía sola**: Ajustes → Recados entre Ari → **Enviar los recados sola**. Ari explica cómo dar el permiso de Accesibilidad. Con eso, Ari toca "enviar" por ti, pero solo en tu app de mensajes, solo en los 20 segundos después de armar un recado y solo si el texto es exactamente ese recado. No lee ni toca nada más. Si tu app de mensajes cambia de diseño y deja de funcionar, avísale a Claude.
 - No usa internet: cuesta lo que un SMS normal.
 
 ### La burbuja flotante (en lugar del widget)
@@ -506,6 +507,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Probado en el teléfono (0.3.0): "está bien para un inicio"; se seguirá mejorando.
 - Una Ari para cada usuario (0.4.0): pregunta tu nombre en el primer uso, botón Ajustes con tu nombre y el tono de Ari, y el respaldo guarda ambos.
 - Informes por correo (0.21.0): "Mandar por correo" abre un correo ya escrito a tu Gmail; Claude los revisa al empezar cada sesión.
+- Ari CEO envía sola los recados (0.35.0): con el permiso de Accesibilidad (solo en tu Ari CEO), Ari toca "enviar" en tu app de mensajes, solo en los recados que le pides. Ajustes → Recados entre Ari → Enviar los recados sola.
 - Recados por voz desde la burbuja (0.34.0): tocas un contacto de recados, lo dices en voz y queda listo para enviar.
 - Contactos de recados (0.33.0): la primera vez que mandas un recado a alguien, Ari pregunta si lo guarda. La Ari para otros guarda máximo 4; la Ari CEO, sin límite. Aparecen en la tarjeta de la burbuja: tocas uno, escribes el recado y Enviar (se abre tu app de mensajes con el recado listo).
 - Ari lee sola los recados (0.32.0): con el acceso a notificaciones, Ari reconoce los SMS "[Ari de …]" de tu app de mensajes y te los dice sin que se los compartas.

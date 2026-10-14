@@ -385,6 +385,8 @@ Lo bueno de los intents: **la otra app sigue al mando**. Por eso, al final, tú 
 
 ### El permiso de Accesibilidad (y por qué es delicado)
 
+Desde 0.35.0 tu Ari CEO lo usa para una sola cosa: tocar "enviar" en tu app de mensajes cuando ella acaba de armar un recado que tú pediste. Para que no se pueda usar mal: solo puede ver las apps de mensajes (Android se lo limita), solo actúa en los 20 segundos después de armar el recado y solo si el texto en pantalla es exactamente ese recado. La Ari para otros ni siquiera trae ese código.
+
 Para que una app toque botones y escriba **dentro** de otras apps, Android tiene el permiso de **Accesibilidad**. Existe para ayudar a personas con discapacidad, por ejemplo leyendo la pantalla en voz alta. Pero es el permiso más poderoso del teléfono:
 
 - La app puede **ver todo** lo que aparece en pantalla, incluidas tus apps del banco y lo que escribes.

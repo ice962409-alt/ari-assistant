@@ -5,4 +5,5 @@
     <!-- Códigos de los teléfonos del dueño (Ajustes → Acerca de Ari). Solo ahí abre la Ari CEO. -->
     <string-array name="ari_ceo_telefonos">
     </string-array>
+    <string name="ari_send_service_description">Ari toca \"enviar\" por ti solo en tu app de mensajes y solo en los recados entre Ari que tú le pides (\"dile a mi mamá que…\"). No lee ni toca nada más.</string>
 </resources>

@@ -209,7 +209,8 @@ class MainActivity : Activity() {
         reminders = ReminderAgent(database, reminderAlarms)
         // Primero los recados ("dile a mi mamá que…"): su frase es muy precisa.
         messageAgent = AriMessageAgent(
-            AndroidPhone(this), { profile.userName }, { QuickContacts.all(this) }, QuickContacts.limit(this)
+            AndroidPhone(this), { profile.userName }, { QuickContacts.all(this) }, QuickContacts.limit(this),
+            { AutoSend.enabled(this) }
         )
         ceo.hire(messageAgent)
         // Primero los recordatorios: "recuérdame…" es un aviso, no un recuerdo.
@@ -623,39 +624,101 @@ class MainActivity : Activity() {
     }
 
     private fun setupAriMessages() {
-        val reading = AriRecados.enabled(this)
+        val ceo = resources.getBoolean(R.bool.ari_ceo)
+        val items = mutableListOf(
+            "Cómo funcionan los recados",
+            "Leer sola los recados que me lleguen: ${if (AriRecados.enabled(this)) "activado" else "desactivado"}",
+        )
+        if (ceo) items.add("Enviar los recados sola: ${if (AutoSend.enabled(this)) "activado" else "desactivado"}")
+        items.add("Quitar un contacto de recados")
+        AlertDialog.Builder(this)
+            .setTitle("Recados entre Ari")
+            .setItems(items.toTypedArray()) { _, which ->
+                when {
+                    which == 0 -> explainAriMessages()
+                    which == 1 -> setupReadRecados()
+                    ceo && which == 2 -> setupAutoSend()
+                    else -> removeQuickContact()
+                }
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun explainAriMessages() {
         AlertDialog.Builder(this)
             .setTitle("Recados entre Ari")
             .setMessage(
-                "Para mandar: dime \"dile a mi mamá que llego a las 8\". Abro tu app de mensajes con el recado listo " +
-                    "y tú tocas enviar. Si tu mamá no tiene Ari, le llega como un SMS normal.\n\n" +
-                    (if (reading) "Para recibir: ya leo sola los recados que te llegan (solo los que empiezan con \"[Ari de …]\").\n\n"
-                    else "Para recibir: puedo leer sola los recados que te lleguen. Para eso dame \"Acceso a notificaciones\":\n" +
-                        "1. Toca \"Activar\".\n" +
-                        "2. Activa \"Ari: recados de otras Ari\" y acepta.\n" +
-                        "3. Si dice \"Configuración restringida\": ve a Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
-                        "\"Permitir configuración restringida\", y repite los pasos 1 y 2.\n" +
-                        "4. Regresa a Ari.\n\n" +
-                        "Solo miro las notificaciones de tu app de mensajes y solo hago caso a las que empiezan con \"[Ari de …]\"; " +
-                        "las demás no las leo ni las guardo.\n\n") +
-                    "No uso internet: cada recado cuesta lo que un SMS normal.\n\n" +
-                    quickContactsLine()
+                "Para mandar: dime \"dile a mi mamá que llego a las 8\" (o toca su nombre en mi burbuja y dímelo). " +
+                    "Si tu mamá no tiene Ari, le llega como un SMS normal; si tiene Ari, su Ari se lo dice.\n\n" +
+                    "No uso internet: cada recado cuesta lo que un SMS normal.\n\n" + quickContactsLine()
             )
-            .setNeutralButton("Quitar contacto") { _, _ -> removeQuickContact() }
-            .apply {
-                if (!reading) setPositiveButton("Activar") { _, _ ->
-                    recadosPermissionAsked = true
-                    try {
-                        startActivity(AriRecados.settingsIntent(this@MainActivity))
-                    } catch (e: android.content.ActivityNotFoundException) {
-                        recadosPermissionAsked = false
-                        chat.addNote("No encontré esa pantalla. Búscala en Ajustes del teléfono → Notificaciones → Acceso a notificaciones.")
-                    }
-                }
-            }
-            .setNegativeButton(if (reading) "Entendido" else "Ahora no", null)
+            .setPositiveButton("Entendido", null)
             .show()
     }
+
+    private fun setupReadRecados() {
+        if (AriRecados.enabled(this)) {
+            chat.addNote("Ya leo sola los recados de otras Ari. Para quitarlo: Ajustes del teléfono → Notificaciones → Acceso a notificaciones → Ari.")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Leer sola los recados")
+            .setMessage(
+                "Puedo leer sola los recados que te lleguen. Para eso dame \"Acceso a notificaciones\":\n" +
+                    "1. Toca \"Activar\".\n" +
+                    "2. Activa \"Ari: recados de otras Ari\" y acepta.\n" +
+                    "3. Si dice \"Configuración restringida\": ve a Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
+                    "\"Permitir configuración restringida\", y repite los pasos 1 y 2.\n" +
+                    "4. Regresa a Ari.\n\n" +
+                    "Solo miro las notificaciones de tu app de mensajes y solo hago caso a las que empiezan con \"[Ari de …]\"; " +
+                    "las demás no las leo ni las guardo."
+            )
+            .setPositiveButton("Activar") { _, _ ->
+                recadosPermissionAsked = true
+                try {
+                    startActivity(AriRecados.settingsIntent(this))
+                } catch (e: android.content.ActivityNotFoundException) {
+                    recadosPermissionAsked = false
+                    chat.addNote("No encontré esa pantalla. Búscala en Ajustes del teléfono → Notificaciones → Acceso a notificaciones.")
+                }
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    /** Solo Ari CEO: que toque "enviar" sola en los recados (Accesibilidad). */
+    private fun setupAutoSend() {
+        if (AutoSend.enabled(this)) {
+            chat.addNote("Ya envío sola los recados. Para quitarlo: Ajustes del teléfono → Accesibilidad → Ari: enviar recados.")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Enviar los recados sola")
+            .setMessage(
+                "Puedo tocar \"enviar\" por ti en tu app de mensajes. Solo lo hago con los recados que tú me pides, " +
+                    "en los 20 segundos después de armarlos y si el texto es exactamente el recado. No leo ni toco nada más.\n\n" +
+                    "Para eso Android pide el permiso de Accesibilidad:\n" +
+                    "1. Toca \"Activar\".\n" +
+                    "2. Busca \"Ari: enviar recados\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
+                    "3. Si dice \"Configuración restringida\": Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
+                    "\"Permitir configuración restringida\", y repite el paso 2.\n" +
+                    "4. Regresa a Ari."
+            )
+            .setPositiveButton("Activar") { _, _ ->
+                autoSendPermissionAsked = true
+                try {
+                    startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                } catch (e: android.content.ActivityNotFoundException) {
+                    autoSendPermissionAsked = false
+                    chat.addNote("No encontré esa pantalla. Búscala en Ajustes del teléfono → Accesibilidad.")
+                }
+            }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    private var autoSendPermissionAsked = false
 
     // --- Novedades: al actualizarse, Ari cuenta lo nuevo y cómo se usa ---
 
@@ -676,7 +739,7 @@ class MainActivity : Activity() {
         // Quien ya usaba Ari antes de las novedades las ve desde la 0.25.0.
         val seen = prefs.getInt(KEY_NEWS_SEEN, 36)
         markNewsSeen()
-        val items = AriNews.since(seen, current, phoneAbilities().vision)
+        val items = AriNews.since(seen, current, phoneAbilities().vision, resources.getBoolean(R.bool.ari_ceo))
         if (items.isEmpty()) return false
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: ""
         val text = AriNews.message(items, version)
@@ -1706,6 +1769,13 @@ class MainActivity : Activity() {
         AriChat.clear(this)
         // Dentro de Ari no hace falta la burbuja; vuelve al salir.
         AriBubble.stop(this)
+        if (autoSendPermissionAsked) {
+            autoSendPermissionAsked = false
+            chat.addNote(
+                if (AutoSend.enabled(this)) "¡Listo! Desde ahora envío sola los recados que me pidas."
+                else "Todavía no tengo el permiso de Accesibilidad. Cuando quieras, vuelve a Ajustes → Recados entre Ari."
+            )
+        }
         if (recadosPermissionAsked) {
             recadosPermissionAsked = false
             chat.addNote(
