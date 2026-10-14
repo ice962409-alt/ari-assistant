@@ -1543,7 +1543,10 @@ class MainActivity : Activity() {
             gravity = Gravity.END or Gravity.CENTER_VERTICAL
         }
         voiceButton = roundButton(VOICE_START_LABEL, filled = false) { if (voiceMode) closeLive() else openLive() }
-        sendButton = roundButton("↑", filled = true) { sendMessage() }
+        sendButton = roundButton("↑", filled = true) {
+            if (input.text.isNotBlank() || pendingAttachment != null) sendButton.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+            sendMessage()
+        }
         val attachButton = roundButton("+", filled = false) { chooseAttachment() }.apply {
             contentDescription = "Adjuntar imagen o documento"
         }
@@ -1554,6 +1557,18 @@ class MainActivity : Activity() {
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ))
 
+        // Detalles: el campo se ilumina con el color de Ari mientras escribes, y "enviar"
+        // se ve apagado si no hay nada que mandar.
+        input.setOnFocusChangeListener { _, focused ->
+            composer.background = AriTheme.rounded(this@MainActivity, AriTheme.surface, 26f, if (focused) AriTheme.ice else AriTheme.border)
+        }
+        input.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: android.text.Editable?) = refreshSendButton()
+        })
+        refreshSendButton()
+
         root.addView(composer, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { setMargins(dp(12f), dp(4f), dp(12f), dp(12f)) })
@@ -1563,6 +1578,13 @@ class MainActivity : Activity() {
         liveOverlay = buildLive()
         frame.addView(liveOverlay)
         setContentView(frame)
+    }
+
+    /** "Enviar" se ve encendido solo si hay algo que mandar. */
+    private fun refreshSendButton() {
+        if (!::sendButton.isInitialized || !::input.isInitialized) return
+        val ready = input.text.isNotBlank() || pendingAttachment != null
+        sendButton.animate().alpha(if (ready) 1f else 0.45f).setDuration(150).start()
     }
 
     /** Pantalla del modo live: Ari grande, lo que oye o dice, y los botones para salir. */
@@ -1637,7 +1659,11 @@ class MainActivity : Activity() {
         get() = ::liveOverlay.isInitialized && liveOverlay.visibility == android.view.View.VISIBLE
 
     private fun openLive() {
+        // Aparece suavecito, como si Ari se acercara.
+        liveOverlay.animate().cancel()
+        liveOverlay.alpha = 0f
         liveOverlay.visibility = android.view.View.VISIBLE
+        liveOverlay.animate().alpha(1f).setDuration(220).start()
         chat.pauseWelcome(true)
         headerOrb.paused = true
         // Mientras platican, la pantalla no se apaga (si se apagara, Ari dejaría de escucharte).
@@ -1653,7 +1679,10 @@ class MainActivity : Activity() {
 
     private fun closeLive() {
         if (voiceMode) stopVoiceMode("Modo live terminado.")
-        liveOverlay.visibility = android.view.View.GONE
+        liveOverlay.animate().alpha(0f).setDuration(180).withEndAction {
+            liveOverlay.visibility = android.view.View.GONE
+            liveOverlay.alpha = 1f
+        }.start()
         chat.pauseWelcome(false)
         headerOrb.paused = false
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -2469,6 +2498,7 @@ class MainActivity : Activity() {
         if (liveVisible) closeLive()
         pendingAttachment?.delete()
         pendingAttachment = attachment
+        refreshSendButton()
         val extra = if (attachment.skippedPages > 0) " (primeras ${AttachmentReader.MAX_PDF_PAGES} páginas)" else ""
         attachmentChip.text = "${attachment.label}$extra   ✕"
         attachmentChip.visibility = android.view.View.VISIBLE
@@ -2480,6 +2510,7 @@ class MainActivity : Activity() {
         pendingAttachment?.delete()
         pendingAttachment = null
         attachmentChip.visibility = android.view.View.GONE
+        refreshSendButton()
     }
 
     /**
@@ -2596,6 +2627,7 @@ class MainActivity : Activity() {
         input.text.clear()
         pendingAttachment = null
         attachmentChip.visibility = android.view.View.GONE
+        refreshSendButton()
         saveMessage(ROLE_USER, shown)
         chat.addUser(shown, attachment.images.firstOrNull())
         chat.startAri()

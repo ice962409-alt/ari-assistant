@@ -550,3 +550,9 @@ Pedido del usuario: que mueva la boca al hablar y al pensar, con amor en el dise
 - Barra superior: la carita (52dp) en lugar del puntito; piensa mientras Gemma prepara la respuesta y mueve la boca con cada pedazo de texto. Tocarla abre el modo live.
 - Chat: cada mensaje de Ari lleva su carita; la del mensaje en curso piensa y habla, y se queda quieta 3 s después (sin animarse). Los mensajes aparecen con una animación suave.
 - Vista previa del diseño: `docs/ari_carita_preview.png` y `docs/ari_carita_hablando.gif` (dibujadas en Python con la misma geometría).
+
+## Detalles de la interfaz (versión 0.41.0)
+
+- El modo live aparece y se va con un fundido suave (`openLive`/`closeLive`, cancelando la animación si se abre mientras se cierra).
+- Bienvenida: la carita se pone feliz y luego "dice" el saludo.
+- "Enviar" se ve apagado (alfa 0.45) sin texto ni adjunto (`refreshSendButton`) y vibra suave al mandar; el campo de texto se enmarca con el color de Ari al escribir.

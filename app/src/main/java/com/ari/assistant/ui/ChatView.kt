@@ -100,6 +100,14 @@ class ChatView(context: Context) : ScrollView(context) {
             })
         }
         welcome = box
+        // Al verte, Ari se pone contenta y te "dice" su saludo.
+        welcomeOrb?.let { orb ->
+            orb.mood = AriOrbView.Mood.HAPPY
+            orb.postDelayed({
+                orb.mood = AriOrbView.Mood.IDLE
+                orb.talk(40)
+            }, 1_400)
+        }
         column.addView(box, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
     }
 
