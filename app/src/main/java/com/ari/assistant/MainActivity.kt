@@ -128,6 +128,8 @@ class MainActivity : Activity() {
 
     // "llama a mamá" esperando el permiso de contactos: se repite al aceptarlo.
     private var pendingContactRequest: String? = null
+    /** true mientras Gemma hace una revisión de diseño (ver AriDesign). */
+    private var designReview = false
 
     // Revisa el avance de la descarga del modelo mientras Ari está a la vista.
     private val downloadWatcher = android.os.Handler(android.os.Looper.getMainLooper())
@@ -2938,6 +2940,7 @@ class MainActivity : Activity() {
         if (!guestMode && handleUpdateRequest(text)) return
         if (!guestMode && handleWeb(text)) return
         if (!guestMode && handleAppControl(text)) return
+        if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleDesignReview(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 
         if (!guestMode && handleTutor(text)) return
@@ -3316,6 +3319,10 @@ class MainActivity : Activity() {
                         busy = false
                         if (!forGuest) learnFrom(response.toString())
                         if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) noteImprovements(response.toString())
+                        if (designReview) {
+                            designReview = false
+                            chat.addNote("Esas son mis ideas. Si te gustan, di \"propón mejoras\" y se las paso a Claude.")
+                        }
                         if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) runTools(response.toString())
                         if (!forGuest) tutorTopic?.let { topic ->
                             AriTutor.summaryIn(response.toString())?.let { saveTutorSummary(topic, it) }
@@ -3583,6 +3590,19 @@ class MainActivity : Activity() {
     }
 
     /** "anota una mejora: …", "propón mejoras" y "borra las mejoras". */
+    /** Solo ARI: "mejora tu interfaz" → Gemma revisa su diseño y propone mejoras (van a las fichas). */
+    private fun handleDesignReview(text: String): Boolean {
+        if (!AriDesign.asks(text)) return false
+        input.text.clear()
+        saveMessage(ROLE_USER, text)
+        chat.addUser(text)
+        chat.addNote("Voy a revisar cómo me veo y a proponerte mejoras de diseño. Al terminar, di \"propón mejoras\" y las mando a Claude.")
+        designReview = true
+        chat.startAri()
+        askGemma(text)
+        return true
+    }
+
     private fun handleImprovement(text: String): Boolean {
         val request = AriImprovements.parse(com.ari.assistant.agents.normalizeForAgents(text)) ?: return false
         input.text.clear()
@@ -3868,6 +3888,8 @@ class MainActivity : Activity() {
         if (resources.getBoolean(R.bool.ari_ceo)) instruction.append("\n\n").append(AriImprovements.instruction())
         // Tus apps son sus herramientas: Gemma escribe los pasos "HACER: …" y ARI los ejecuta (ver AriTools).
         if (resources.getBoolean(R.bool.ari_ceo)) instruction.append("\n\n").append(AriTools.instruction())
+        // Revisión de diseño: se le describe a Gemma cómo se ve ARI para que proponga mejoras.
+        if (designReview) instruction.append("\n\n").append(AriDesign.instruction()).append("\n").append(AriDesign.CONTEXT)
         // Modo tutora: Gemma enseña el tema paso a paso y deja un resumen para la próxima clase.
         tutorTopic?.let { topic ->
             instruction.append("\n\n").append(AriTutor.instruction(topic, tutorSummary(topic), tutorSessions(topic)))

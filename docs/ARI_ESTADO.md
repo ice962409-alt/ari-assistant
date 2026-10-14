@@ -751,3 +751,10 @@ Pedido del usuario (las dos de tres opciones: "la 2 y la 3").
 - Burbuja en el lateral: al soltarla, `AriBubbleService` la pega al borde más cercano, medio escondida (solo asoma una pestaña) y translúcida. Un toque la trae y abre la tarjeta; al cerrarla se vuelve a esconder. Arrastrarla la cambia de lado. Lógica pura en `AriBubble.edgePeek/collapsedX/expandedX` (pruebas en `AriBubbleEdgeTest`).
 - Guardar un wifi (contexto del usuario: a veces necesita internet fuera de casa; NO se tocó nada de forzar contraseñas): nuevo `PhoneAction.SaveWifi`. "guarda el wifi (nombre) con la clave (clave)" abre el diálogo de Android `ACTION_WIFI_ADD_NETWORKS` (API 30+) con una `WifiNetworkSuggestion` WPA2; la persona confirma y guarda. "abre el wifi" abre los ajustes de wifi. No pide permiso de ubicación. Pruebas en `WifiCommandTest`.
 - Herramienta nueva disponible también desde "HACER:" de Gemma (es segura: solo abre un diálogo que tú confirmas).
+
+### ARI revisa su propio diseño (en 0.60.0)
+
+Pedido del usuario: asignarle a ARI la tarea de recomendar mejoras de la interfaz y del icono.
+- `AriDesign.kt` (sin Android): `CONTEXT` describe cómo se ve ARI hoy (chat, carita, colores, ajustes, burbuja, icono, widget); `instruction()` le pide a Gemma actuar como diseñador y proponer 2-3 mejoras concretas, cada una en una línea "MEJORA: [Diseño] …"; `asks()` reconoce "mejora tu interfaz", "propón mejoras de diseño", "qué le cambiarías a tu icono", etc.
+- `MainActivity.handleDesignReview`: con la orden, pone `designReview = true`, Gemma recibe el contexto de diseño en sus instrucciones y propone; las líneas MEJORA quedan anotadas (pasan por `noteImprovements`) con la etiqueta [Diseño]. Con "propón mejoras" se vuelven ficha de GitHub.
+- Como Gemma no ve la pantalla, se le describe la interfaz en texto; no inventa funciones, solo mejoras de diseño.

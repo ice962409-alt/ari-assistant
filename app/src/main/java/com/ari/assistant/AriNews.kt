@@ -73,6 +73,7 @@ object AriNews {
         74 to listOf(
             Item("Me escondo en el borde", "Mi burbuja se pega al lado de la pantalla y se asoma apenas. Tócala y vuelvo; arrástrame para cambiarme de lado.", ceoOnly = true),
             Item("Guarda un wifi nuevo", "Cuando te den la clave, dime: \"guarda el wifi (nombre) con la clave (clave)\". Android te pide confirmar y la red queda lista.", ceoOnly = true),
+            Item("Reviso mi propio diseño", "Dime \"mejora tu interfaz\" o \"qué le cambiarías a tu icono\" y te propongo mejoras; con \"propón mejoras\" se las paso a Claude.", ceoOnly = true),
         ),
     )
 
