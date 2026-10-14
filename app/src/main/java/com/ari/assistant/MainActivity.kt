@@ -1636,7 +1636,7 @@ class MainActivity : Activity() {
                             chat.addNote("Listo, ya no espero mi nombre. Me llamas con la burbuja o abriendo la app.")
                         } else {
                             AriWakeWord.start(this)
-                            chat.addNote("Listo, cuando salgas de la app di \"Ari\" y te escucho.")
+                            chat.addNote("Listo, cuando salgas de la app di \"Ari\" y te escucho. " + NOTIF_TIP)
                         }
                     }
                     1 -> enrollWakeWord()
@@ -2571,7 +2571,7 @@ class MainActivity : Activity() {
             bubblePermissionAsked = false
             if (AriBubble.canShow(this)) {
                 AriBubble.setEnabled(this, true)
-                chat.addNote("¡Listo! Cuando salgas de Ari verás mi burbuja. Tócala para hablarme; mantenla presionada para esconderla.")
+                chat.addNote("¡Listo! Cuando salgas de Ari verás mi burbuja. Tócala para hablarme; mantenla presionada para esconderla. " + NOTIF_TIP)
             } else {
                 chat.addNote("Todavía no tengo el permiso \"Mostrar sobre otras apps\". Cuando quieras, vuelve a Ajustes → Burbuja flotante.")
             }
@@ -4761,6 +4761,8 @@ class MainActivity : Activity() {
         private const val KEY_TIP_DAY = "consejo_dia"
         private const val KEY_COLOR = "color"
         private const val LARGE_CONTEXT_TOKENS = 8192
+        /** Android obliga a mostrar un aviso fijo mientras la burbuja o el micrófono siguen activos. */
+        private const val NOTIF_TIP = "Android deja un aviso fijo (sin sonido) mientras tanto; si te molesta, mantenlo presionado y apágalo en sus ajustes."
         private const val VOICE_PREFS = "ari_voces"
         private const val KEY_VOICES_ON = "activo"
         private const val KEY_OWN_AUDIO_NO = "sin_audio_propio"

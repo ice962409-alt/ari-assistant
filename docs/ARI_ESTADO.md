@@ -738,3 +738,9 @@ Idea pendiente del backlog ("elegir la voz y la velocidad de lectura"), [autóno
 - `VoiceStyle.kt` (lógica pura): velocidad (Lenta, Normal, Rápida, Muy rápida) y tono (Grave, Normal, Agudo), guardados en las prefs de voz (`ari_voces`). `clampRate`/`clampPitch` limitan a 0.5–2.0; `label` elige la opción más cercana al valor guardado. Pruebas en `VoiceStyleTest`.
 - `VoiceController.applyStyle()` aplica `setSpeechRate`/`setPitch` al motor; se llama al iniciar el motor y cada vez que se cambia en Ajustes.
 - `MainActivity`: Ajustes → "Voz de Ari" (dos diálogos de opción única). Al elegir, Ari lo prueba en voz al momento.
+
+## Consejo para ocultar los avisos fijos (en 0.59.0)
+
+Pregunta del usuario (captura con las notificaciones "Burbuja de Ari" y 'Di "Ari" para llamarme'). Son avisos que obliga Android mientras corren esos servicios en primer plano; ya estaban en IMPORTANCE_MIN (sin sonido).
+- Al encender la burbuja o el "responder a Ari", la nota del chat ahora explica que Android deja un aviso fijo y cómo apagarlo (mantener presionado → ajustes).
+- `AriNews` 73 incluye el consejo "Oculta mis avisos fijos" para quien ya los tenía encendidos.
