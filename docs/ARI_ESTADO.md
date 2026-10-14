@@ -644,3 +644,10 @@ Decisión del usuario: la Ari para otros se vuelve app comercial (gratis + Premi
 - `AriPremium.kt` (pruebas en `AriPremiumTest`): lista de gratis y Premium; `has()` = dueño o compra (todavía no hay compras: Play Billing pendiente). Contactos de recados sin límite ya depende de Premium. Ajustes → "Ari Premium" (solo en la comercial).
 - `AriImprovements`: "anota una mejora para Ari: …" guarda la nota con la etiqueta "[Ari comercial]".
 - `docs/GOOGLE_PLAY.md`: decisiones del dueño. Pendiente: firma oficial (clave de subida en secretos de GitHub), cuenta de Play Console, política de privacidad pública, Play Billing.
+
+## ARI deja fichas en GitHub (versión 0.53.0)
+
+Pedido del usuario: que ARI trabaje a través de GitHub. ARI no programa; crea issues con sus propuestas en `javierhedzd-ops/ari-assistant` y Claude los programa.
+- `AriGitHub.kt` (partes puras probadas en `AriGitHubTest`): llave fine-grained (solo ari-assistant, Issues: lectura y escritura) pegada en ARI, cifrada con el Android Keystore; `check` (GET del repo) y `createIssue` (POST /issues) con mensajes claros para 401/403/404/410/422.
+- Ajustes → "GitHub de ARI" (solo CEO): instrucciones, Abrir GitHub, Guardar y probar (una llave nueva reemplaza a la anterior), Borrar llave. "propón mejoras" → "Crear ficha en GitHub"; si sale bien, borra las notas enviadas.
+- Para Claude: al empezar cada sesión, revisar los issues abiertos que empiezan con "[ARI]".

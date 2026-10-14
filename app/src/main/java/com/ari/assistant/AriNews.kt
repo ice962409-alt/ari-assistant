@@ -51,6 +51,7 @@ object AriNews {
         62 to listOf(Item("Me adapto a tu modelo", "Toca Modelo → Elegir un archivo y carga un Qwen u otro modelo .litertlm: me adapto a él (sin vista si no la tiene).", ceoOnly = true)),
         63 to listOf(Item("Descargo Qwen yo misma", "Toca Modelo → Descargar Qwen2.5 1.5B (o Qwen3 0.6B). Lo bajo por Wi-Fi y lo integro sola.", ceoOnly = true)),
         65 to listOf(Item("Busco en internet", "Pregunta: \"¿quién fue Benito Juárez?\", \"busca en internet qué es la fotosíntesis\" o \"¿cómo está el clima en Monterrey?\". Solo sale lo que buscas.", ceoOnly = true)),
+        67 to listOf(Item("Le dejo fichas a Claude en GitHub", "Ajustes → GitHub de ARI: pega tu llave. Luego \"propón mejoras\" → Crear ficha en GitHub, y Claude la programa.", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

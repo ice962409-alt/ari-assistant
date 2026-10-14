@@ -1186,6 +1186,7 @@ class MainActivity : Activity() {
         if (ceo) items += item("Manejar mis apps: ${if (AutoSend.enabled(this)) "sí" else "no"}") { setupAppControl() }
         if (ceo) items += item("Leer mis notificaciones: ${if (AriRecados.enabled(this)) "sí" else "no"}") { setupInbox() }
         if (ceo) items += item("Agenda y fotos") { setupAgendaAndPhotos() }
+        if (ceo) items += item("GitHub de ARI: ${if (AriGitHub.hasToken(this)) "conectado" else "sin conectar"}") { setupGitHub() }
         if (ceo) items += item("Uso del teléfono y pasos") { setupUsage() }
         if (!ceo) items += item("Ari Premium") {
             AlertDialog.Builder(this)
@@ -3350,9 +3351,91 @@ class MainActivity : Activity() {
         return true
     }
 
+    /** Pega aquí (en ARI, nunca en un chat) la llave de GitHub para crear fichas de trabajo. */
+    private fun setupGitHub() {
+        val field = EditText(this).apply {
+            hint = "Pega aquí la llave (github_pat_…)"
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20f), dp(8f), dp(20f), 0)
+            addView(TextView(this@MainActivity).apply {
+                setTextColor(AriTheme.text)
+                text = (if (AriGitHub.hasToken(this@MainActivity)) "Ya tengo una llave guardada. Si pegas otra, reemplaza a la anterior.\n\n" else "") +
+                    "Con esta llave dejo mis propuestas de mejora como fichas (issues) en tu repositorio ari-assistant, y Claude las programa.\n\n" +
+                    "Cómo crearla:\n1. Toca \"Abrir GitHub\".\n2. Nombre: ARI fichas. Caducidad: 90 días.\n" +
+                    "3. Acceso a repositorios: solo ari-assistant.\n4. Permisos → Issues: lectura y escritura.\n" +
+                    "5. Genera, copia la llave y pégala aquí. No la mandes por chat."
+            })
+            addView(field)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("GitHub de ARI")
+            .setView(box)
+            .setPositiveButton("Guardar y probar") { _, _ ->
+                val token = AriGitHub.cleanToken(field.text.toString())
+                if (token.isEmpty()) {
+                    if (AriGitHub.hasToken(this)) testGitHub() else chat.addNote("No pegaste ninguna llave.")
+                    return@setPositiveButton
+                }
+                if (!AriGitHub.looksLikeToken(token)) {
+                    chat.addNote("Eso no parece una llave de GitHub: debe empezar con github_pat_.")
+                    return@setPositiveButton
+                }
+                AriGitHub.saveToken(this, token)
+                testGitHub()
+            }
+            .setNeutralButton("Abrir GitHub") { _, _ ->
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(AriGitHub.TOKEN_URL))) }
+            }
+            .setNegativeButton("Borrar llave") { _, _ ->
+                AriGitHub.clearToken(this)
+                chat.addNote("Borré la llave de GitHub.")
+            }
+            .show()
+    }
+
+    private fun testGitHub() {
+        Thread {
+            val code = runCatching { AriGitHub.check(this) }.getOrDefault(-1)
+            runOnUiThread {
+                chat.addNote(
+                    if (code in 200..299) "¡Listo! Ya puedo dejar fichas en GitHub. Di \"propón mejoras\" y toca \"Crear ficha en GitHub\"."
+                    else if (code < 0) "No pude conectarme a GitHub. Revisa tu internet."
+                    else AriGitHub.explain(code)
+                )
+            }
+        }.start()
+    }
+
+    /** Crea la ficha en GitHub con la propuesta; si sale bien, limpia las notas ya enviadas. */
+    private fun sendProposalToGitHub(proposal: String) {
+        val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
+        val date = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+        chat.addNote("Creando la ficha en GitHub…")
+        Thread {
+            val (code, link) = runCatching { AriGitHub.createIssue(this, AriGitHub.title(version, date), proposal) }.getOrDefault(-1 to null)
+            runOnUiThread {
+                if (code in 200..299) {
+                    AriImprovements.save(routinePrefs(), emptyList())
+                    chat.addNote("¡Listo! Dejé la ficha para Claude" + (link?.let { ": $it" } ?: ".") + " Ya borré esas notas para no repetirlas.")
+                } else {
+                    chat.addNote(if (code < 0) "No pude conectarme a GitHub. Revisa tu internet." else AriGitHub.explain(code))
+                }
+            }
+        }.start()
+    }
+
     /** Copia la propuesta y abre Claude para que la pegues en la sesión de Claude Code. */
     private fun offerProposalToClaude(proposal: String) {
         AlertDialog.Builder(this)
+            .apply {
+                if (AriGitHub.hasToken(this@MainActivity)) {
+                    setNeutralButton("Crear ficha en GitHub") { _, _ -> sendProposalToGitHub(proposal) }
+                }
+            }
             .setTitle("¿Se la paso a Claude?")
             .setMessage("Copio la propuesta y abro Claude. Pégala en la sesión de Claude Code de Ari: Claude la programa, la prueba y te manda el APK.")
             .setPositiveButton("Copiar y abrir Claude") { _, _ ->
