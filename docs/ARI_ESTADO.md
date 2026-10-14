@@ -617,3 +617,7 @@ Pedido del usuario: integrar Qwen y que ARI se adapte al modelo.
 ## ARI descarga Qwen desde la app (versión 0.49.0)
 
 Pedido del usuario. `ModelChoice.Model` suma `QWEN15` (Qwen2.5 1.5B, 1.6 GB) y `QWEN06` (Qwen3 0.6B, 614 MB) con `family = QWEN`; el botón Modelo los ofrece después de las dos Gemma. La recomendación automática sigue siendo Gemma. `currentFamily()` usa la familia del modelo descargado. Mensajes de descarga con el nombre del modelo.
+
+## Ari Estado 0.2.0: barra de avance en una notificación
+
+Pedido del usuario. `RefreshJob.showProgress`: notificación fija (canal "Avance del proyecto", importancia baja, sin sonido) con la tarea, "Paso X de Y", lo que sigue, pendientes y `setProgress(100, progreso)`. Se actualiza en cada revisión (cada 15 min, lo mínimo de Android, o con "Actualizar"); fija mientras Claude trabaja, se puede quitar cuando está en pausa. Tocarla abre la sesión de Claude Code.

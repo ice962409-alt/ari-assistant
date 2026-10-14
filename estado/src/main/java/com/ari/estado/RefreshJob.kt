@@ -102,7 +102,63 @@ class RefreshJob : JobService() {
                 }
             }
             StatusWidget.renderAll(context)
-            StatusStore.status(context)?.let { alertIfNeeded(context, it) }
+            StatusStore.status(context)?.let {
+                alertIfNeeded(context, it)
+                showProgress(context, it)
+            }
+        }
+
+        private const val PROGRESS_CHANNEL = "avance"
+        private const val PROGRESS_ID = 2
+
+        /**
+         * Notificación fija con la barra de avance del proyecto: qué hace Claude, en qué paso
+         * va y el porcentaje. Se actualiza en cada revisión; si Claude se detuvo, queda en
+         * pausa y se puede quitar deslizándola.
+         */
+        private fun showProgress(context: Context, status: ClaudeStatus) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) return
+            val manager = context.getSystemService(NotificationManager::class.java) ?: return
+            manager.createNotificationChannel(
+                NotificationChannel(PROGRESS_CHANNEL, "Avance del proyecto", NotificationManager.IMPORTANCE_LOW).apply {
+                    description = "Barra con lo que Claude está haciendo en Ari."
+                    setShowBadge(false)
+                }
+            )
+            val target = status.session.takeIf { it.isNotBlank() } ?: BOARD_URL
+            val open = PendingIntent.getActivity(
+                context, 1,
+                Intent(Intent.ACTION_VIEW, Uri.parse(target)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val percent = status.progress.coerceIn(0, 100)
+            val title = when {
+                status.isStale() -> "Claude no da noticias · $percent%"
+                status.active -> "Claude trabajando · $percent%"
+                else -> "Claude en pausa · $percent%"
+            }
+            val step = if (status.steps > 0) "Paso ${status.step} de ${status.steps}. " else ""
+            val text = status.task.ifBlank { "Sin tarea" }
+            val detail = buildString {
+                append(text)
+                append("\n").append(step)
+                if (status.next.isNotBlank()) append("Sigue: ").append(status.next)
+                if (status.pending > 0) append("\nPendientes para ti: ").append(status.pending)
+            }
+            val notification = Notification.Builder(context, PROGRESS_CHANNEL)
+                .setSmallIcon(android.R.drawable.stat_sys_download)
+                .setContentTitle(title)
+                .setContentText(step + text)
+                .setStyle(Notification.BigTextStyle().bigText(detail))
+                .setProgress(100, percent, false)
+                .setOnlyAlertOnce(true)
+                .setOngoing(status.active && !status.isStale())
+                .setContentIntent(open)
+                .build()
+            manager.notify(PROGRESS_ID, notification)
         }
 
         /** Avisa una sola vez por cada pausa o silencio de Claude. */
