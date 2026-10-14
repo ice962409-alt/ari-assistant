@@ -682,3 +682,11 @@ Decisión del usuario: el repositorio `Ari-estado` es público (comprobado: la A
   - Con la Accesibilidad de ARI encendida (Manejar mis apps), `AriBubbleService` dibuja la burbuja y su tarjeta como `TYPE_ACCESSIBILITY_OVERLAY` a través de `OverlayHost.accessibility` (lo pone `AriSendService`). Ese tipo de ventana no genera el aviso.
   - Sin Accesibilidad, sigue como antes (`TYPE_APPLICATION_OVERLAY`). Al encender o apagar la Accesibilidad, la burbuja se vuelve a dibujar.
   - Falta [prueba]: que se pueda escribir en la tarjeta de la burbuja con el teclado.
+
+## Libreta de personas en una pantalla (versión 0.56.0)
+
+Backlog [autónomo] de la libreta: verla y editarla desde el botón Memoria.
+- Memoria → primera fila "Mi gente: N personas →" → lista con el resumen de cada persona.
+- Al tocar a alguien se abre su ficha: nombre, quién es, cumpleaños y lo que Ari sabe (uno por línea). Botones Guardar, Olvidar (con confirmación) y Cancelar. "Agregar persona" crea una ficha nueva.
+- `PeopleEditor.kt`, sin Android: lee el cumpleaños escrito como "5 de mayo", "5 mayo", "5/5" o "05-05" (día y mes) y rechaza fechas imposibles. También quita datos vacíos o repetidos y explica lo que falta. Pruebas en `PeopleEditorTest`.
+- Guardar u olvidar marca `memoriesPending`, así Gemma recibe la libreta nueva.

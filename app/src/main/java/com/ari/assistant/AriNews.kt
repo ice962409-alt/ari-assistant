@@ -57,6 +57,7 @@ object AriNews {
             Item("Te aviso los cumpleaños un día antes", "Dime: \"Luis cumple el 5 de mayo\". El día anterior, a las 9 de la mañana, te llega un aviso."),
             Item("Burbuja sin el aviso de Android", "Con Ajustes → Manejar mis apps encendido, mi burbuja ya no hace salir el aviso \"ARI se muestra sobre otras apps\".", ceoOnly = true),
         ),
+        70 to listOf(Item("Tu gente en una pantalla", "Toca Memoria → Mi gente: ve a todas las personas que conozco, corrige su cumpleaños o lo que sé de ellas, o agrega a alguien.")),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

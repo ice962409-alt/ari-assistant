@@ -45,7 +45,7 @@ Todo lo que no es [autónomo] se publica en el tablero "Pendientes de Ari" (http
 - [autónomo] Ari ve tu pantalla (0.15.0), pedido por el usuario. Falta [prueba].
 - [autónomo] Chat de Ari en las notificaciones (0.15.0), pedido por el usuario ("Mejor sin internet"). Falta [prueba].
 - [autónomo] Siguiente para voces: recuerdos propios de cada persona registrada.
-- [autónomo] Aviso un día antes de cada cumpleaños (0.55.0). Falta [prueba]. Siguiente para la libreta: verla y editarla en una pantalla (botón Memoria).
+- [autónomo] Aviso un día antes de cada cumpleaños (0.55.0). Falta [prueba]. Libreta en una pantalla (Memoria → Mi gente, 0.56.0). Falta [prueba].
 - [autónomo] Siguiente para adjuntos: audios (Gemma 4 también entiende audio) y varias imágenes a la vez.
 - [decisión] Burbuja flotante con la carita de Ari sobre otras apps (necesita el permiso "mostrar sobre otras apps"). Proponer después de la prueba de 0.11.0.
 - [autónomo] Investigación de control total (docs/CONTROL_APPS.md) y acciones de música, YouTube, SMS, correo y calendario (0.9.0).

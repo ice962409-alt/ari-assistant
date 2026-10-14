@@ -4178,15 +4178,90 @@ class MainActivity : Activity() {
             .setNegativeButton("Cerrar", null)
             .setNeutralButton("Respaldo") { _, _ -> showBackupDialog() }
 
-        if (memories.isEmpty()) {
-            builder.setMessage("Aún no hay recuerdos. Agrega uno o usa /recuerda <texto>.")
-        } else {
-            val items = memories.map { it.content }.toTypedArray()
-            builder.setItems(items) { _, which ->
-                confirmDeleteMemory(memories[which])
+        // Primero la libreta de personas; después los recuerdos (tocar uno lo borra).
+        val people = database.people().size
+        val peopleRow = "Mi gente: " + (if (people == 1) "1 persona" else "$people personas") + " →"
+        val rows = listOf(peopleRow) + memories.map { it.content }.ifEmpty {
+            listOf("Aún no hay recuerdos. Toca Agregar o usa /recuerda <texto>.")
+        }
+        builder.setItems(rows.toTypedArray()) { _, which ->
+            when {
+                which == 0 -> showPeopleDialog()
+                memories.isNotEmpty() -> confirmDeleteMemory(memories[which - 1])
+                else -> showMemoriesDialog()
             }
         }
 
+        builder.show()
+    }
+
+    /** La libreta de personas: verla, agregar, corregir y olvidar. */
+    private fun showPeopleDialog() {
+        val people = database.people()
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Mi gente")
+            .setPositiveButton("Agregar persona") { _, _ -> showPersonEditor(com.ari.assistant.agents.Person(0, "")) }
+            .setNegativeButton("Volver") { _, _ -> showMemoriesDialog() }
+        if (people.isEmpty()) {
+            builder.setMessage("Todavía no me has presentado a nadie. Agrega a alguien o dime, por ejemplo: \"mi primo Luis es dentista\".")
+        } else {
+            builder.setItems(people.map { com.ari.assistant.agents.PeopleAgent.summary(it) }.toTypedArray()) { _, which ->
+                showPersonEditor(people[which])
+            }
+        }
+        builder.show()
+    }
+
+    private fun showPersonEditor(person: com.ari.assistant.agents.Person) {
+        fun field(hint: String, value: String, multiLine: Boolean = false) = EditText(this).apply {
+            this.hint = hint
+            setText(value)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or
+                (if (multiLine) InputType.TYPE_TEXT_FLAG_MULTI_LINE else 0)
+        }
+        val name = field("Nombre (Luis)", person.name)
+        val relation = field("Quién es (primo, mamá, amiga…)", person.relation)
+        val birthday = field("Cumpleaños (5 de mayo)", PeopleEditor.birthdayText(person))
+        val facts = field("Lo que sé, uno por línea (es dentista)", person.facts.joinToString("\n"), multiLine = true)
+        val fields = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = AriTheme.dp(this@MainActivity, 20f)
+            setPadding(pad, 0, pad, 0)
+            listOf(name, relation, birthday, facts).forEach { addView(it) }
+        }
+        val builder = AlertDialog.Builder(this)
+            .setTitle(if (person.id == 0L) "Nueva persona" else person.name.ifEmpty { person.relation })
+            .setView(ScrollView(this).apply { addView(fields) })
+            .setPositiveButton("Guardar") { _, _ ->
+                when (val result = PeopleEditor.build(person, name.text.toString(), relation.text.toString(), birthday.text.toString(), facts.text.toString())) {
+                    is PeopleEditor.Result.Error -> {
+                        android.widget.Toast.makeText(this, result.message, android.widget.Toast.LENGTH_LONG).show()
+                        showPersonEditor(person.copy(name = name.text.toString(), relation = relation.text.toString(), facts = PeopleEditor.parseFacts(facts.text.toString())))
+                    }
+                    is PeopleEditor.Result.Ok -> {
+                        database.savePerson(result.person)
+                        memoriesPending = true
+                        status.text = "Guardé a ${result.person.name}."
+                        showPeopleDialog()
+                    }
+                }
+            }
+            .setNegativeButton("Cancelar") { _, _ -> showPeopleDialog() }
+        if (person.id != 0L) {
+            builder.setNeutralButton("Olvidar") { _, _ ->
+                AlertDialog.Builder(this)
+                    .setTitle("¿Olvidar a ${person.name.ifEmpty { person.relation }}?")
+                    .setMessage("Borro todo lo que sé de esta persona.")
+                    .setPositiveButton("Olvidar") { _, _ ->
+                        database.deletePerson(person.id)
+                        memoriesPending = true
+                        status.text = "Olvidé a ${person.name.ifEmpty { person.relation }}."
+                        showPeopleDialog()
+                    }
+                    .setNegativeButton("Cancelar") { _, _ -> showPersonEditor(person) }
+                    .show()
+            }
+        }
         builder.show()
     }
 
