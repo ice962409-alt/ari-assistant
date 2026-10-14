@@ -69,6 +69,7 @@ Respuestas según cómo funciona Ari hoy:
 ## Página oficial de descarga (14/10/2026)
 
 - Decisión del dueño: GitHub Pages, dirección gratis por ahora (javierhedzd-ops.github.io/ari-web).
-- Archivos listos en `web/` (index.html y privacidad.html). Van al repositorio público `javierhedzd-ops/ari-web` (lo crea el dueño; Claude no tiene permiso para crear repositorios).
+- Archivos en `web/` (index.html y privacidad.html), publicados en el repositorio público `javierhedzd-ops/ari-web` (creado por el dueño el 14/10). Falta encender GitHub Pages (Settings → Pages → rama main, carpeta raíz).
+- Publicar una versión: lanzar `android.yml` con `publicar_web: true`. Crea el release `v<versión>` con `Ari.apk` (la comercial) en ari-web. Necesita el secreto `ARI_WEB_TOKEN` en ari-assistant (llave fine-grained solo para ari-web, permiso Contents: lectura y escritura).
 - La descarga apunta a `releases/latest/download/Ari.apk` de ari-web: solo la Ari comercial (ari-otros-apk), nunca la ARI del dueño.
 - Pendiente: correo de contacto público para la política de privacidad (hoy dice ari.contacto@ejemplo.com).

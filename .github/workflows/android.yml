@@ -2,6 +2,11 @@ name: Build Ari APK
 
 on:
   workflow_dispatch:
+    inputs:
+      publicar_web:
+        description: "Publicar la Ari comercial en la página oficial (ari-web)"
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -11,6 +16,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_WEB_TOKEN: ${{ secrets.ARI_WEB_TOKEN != '' }}
 
     steps:
       - name: Descargar codigo
@@ -97,6 +104,20 @@ jobs:
         with:
           name: ari-otros-apk
           path: app/build/outputs/apk/otros/release/app-otros-release.apk
+
+      # Página oficial: solo cuando se pide (publicar_web) y solo la Ari comercial, nunca la del dueño.
+      # Necesita el secreto ARI_WEB_TOKEN (llave con permiso Contents de escritura solo en ari-web).
+      - name: Publicar en la página oficial
+        if: ${{ inputs.publicar_web && env.HAS_WEB_TOKEN == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.ARI_WEB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          cp app/build/outputs/apk/otros/release/app-otros-release.apk Ari.apk
+          gh release create "v$version" Ari.apk --repo javierhedzd-ops/ari-web \
+            --title "Ari $version (beta)" --notes "Descarga oficial de Ari $version. Instálala desde https://javierhedzd-ops.github.io/ari-web/" --latest \
+            || gh release upload "v$version" Ari.apk --repo javierhedzd-ops/ari-web --clobber
 
       # Por si la versión de entrega fallara en el teléfono: la de depuración del dueño.
       - name: Guardar APK de depuración
