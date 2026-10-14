@@ -1319,6 +1319,7 @@ class MainActivity : Activity() {
             item("Color de Ari: ${currentColor.name}") { chooseColor() },
             item("Burbuja flotante: ${if (AriBubble.isEnabled(this) && AriBubble.canShow(this)) "activada" else "desactivada"}") { setupBubble() },
             item("Aprender a usar Ari") { startLessons() },
+            item("Voz de Ari: ${VoiceStyle.rateLabel(voicePrefs())}, ${VoiceStyle.pitchLabel(voicePrefs())}") { chooseVoiceStyle() },
             item("Avisarme en voz al terminar: ${if (speakWhenDone()) "sí" else "no"}") {
                 getSharedPreferences(VOICE_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_SPEAK_DONE, !speakWhenDone()).apply()
                 chat.addNote(if (speakWhenDone()) "Te diré en voz cuando termine algo y no estés en la app." else "Ya no te aviso en voz; solo en las notificaciones.")
@@ -4201,6 +4202,39 @@ class MainActivity : Activity() {
         if (!voiceMode) return
         input.setText(text)
         sendMessage()
+    }
+
+    /** Elegir qué tan rápido y con qué tono habla Ari; se prueba al momento. */
+    private fun chooseVoiceStyle() {
+        val speeds = VoiceStyle.SPEEDS.map { it.first }.toTypedArray()
+        val current = VoiceStyle.SPEEDS.indexOfFirst { it.first == VoiceStyle.rateLabel(voicePrefs()) }.coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("¿Qué tan rápido hablo?")
+            .setSingleChoiceItems(speeds, current) { dialog, which ->
+                VoiceStyle.setRate(voicePrefs(), VoiceStyle.SPEEDS[which].second)
+                voice.applyStyle()
+                voice.speak("Así hablo yo.")
+                dialog.dismiss()
+                chooseVoicePitch()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun chooseVoicePitch() {
+        val pitches = VoiceStyle.PITCHES.map { it.first }.toTypedArray()
+        val current = VoiceStyle.PITCHES.indexOfFirst { it.first == VoiceStyle.pitchLabel(voicePrefs()) }.coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("¿Con qué tono?")
+            .setSingleChoiceItems(pitches, current) { dialog, which ->
+                VoiceStyle.setPitch(voicePrefs(), VoiceStyle.PITCHES[which].second)
+                voice.applyStyle()
+                voice.speak("Me escucho así.")
+                dialog.dismiss()
+                chat.addNote("Listo, ajusté mi voz. Puedes cambiarla en Ajustes → Voz de Ari.")
+            }
+            .setNegativeButton("Listo", null)
+            .show()
     }
 
     private fun voicePrefs() = getSharedPreferences(VOICE_PREFS, MODE_PRIVATE)

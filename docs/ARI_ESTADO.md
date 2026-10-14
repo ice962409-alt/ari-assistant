@@ -731,3 +731,10 @@ Pedido del usuario: "diseñar a ARI para que mis apps sean sus herramientas". De
   - `Note`: "anota en Keep …"; abre Keep con el texto.
 - Pruebas en `AriToolsTest` y `PhoneCommandsTest`.
 - Siguiente: que el catálogo se arme con las apps instaladas, AppFunctions cuando Android las abra, y pasos con Accesibilidad para apps sin accesos directos.
+
+## Elegir la voz de Ari: velocidad y tono (versión 0.59.0)
+
+Idea pendiente del backlog ("elegir la voz y la velocidad de lectura"), [autónomo].
+- `VoiceStyle.kt` (lógica pura): velocidad (Lenta, Normal, Rápida, Muy rápida) y tono (Grave, Normal, Agudo), guardados en las prefs de voz (`ari_voces`). `clampRate`/`clampPitch` limitan a 0.5–2.0; `label` elige la opción más cercana al valor guardado. Pruebas en `VoiceStyleTest`.
+- `VoiceController.applyStyle()` aplica `setSpeechRate`/`setPitch` al motor; se llama al iniciar el motor y cada vez que se cambia en Ajustes.
+- `MainActivity`: Ajustes → "Voz de Ari" (dos diálogos de opción única). Al elegir, Ari lo prueba en voz al momento.

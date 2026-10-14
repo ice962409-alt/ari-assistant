@@ -107,8 +107,10 @@ class VoiceController(
         ) {
             engine.setLanguage(Locale.forLanguageTag("es"))
         }
+        applyStyle()
 
         engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+
             override fun onStart(utteranceId: String?) {
                 activity.runOnUiThread { listener.onSpeakingStarted() }
             }
@@ -216,6 +218,14 @@ class VoiceController(
     }
 
     /** Lee [text] en voz alta; al terminar llama a [Listener.onSpeakingFinished]. */
+    /** Aplica la velocidad y el tono que eligió el usuario (Ajustes → Voz de Ari). */
+    fun applyStyle() {
+        val engine = tts ?: return
+        val prefs = activity.getSharedPreferences("ari_voces", android.content.Context.MODE_PRIVATE)
+        engine.setSpeechRate(VoiceStyle.rate(prefs))
+        engine.setPitch(VoiceStyle.pitch(prefs))
+    }
+
     fun speak(text: String) {
         val clean = cleanForSpeech(text)
         if (clean.isEmpty()) {
