@@ -605,6 +605,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Avisos de Ari por WhatsApp o Telegram: en pausa porque necesitan internet (elegiste "Mejor sin internet").
 - Reconocer voces, siguiente paso: que cada persona registrada tenga sus propios recuerdos.
 
+- **Versión para iPhone (en preparación, otra sesión de Claude)**: existe una app nativa para iOS en la rama `ccr-3d48bcea-ddppo3`, carpeta `ios/`, sin tocar la app de Android. Hecha en Swift/SwiftUI (iOS 17+) con LiteRT-LM. Incluye chat con Gemma (respuesta en vivo, GPU con respaldo en CPU), primer uso, descarga del modelo por Wi-Fi, importar .litertlm, Memoria, Ajustes, informes de fallos con permiso (como en Android) y la misma personalidad. Compila en GitHub Actions (ios.yml) y pasa 18 pruebas. Falta probarla en un iPhone de verdad: necesita una cuenta de Apple Developer, el permiso de memoria extra y TestFlight (pasos en ios/README.md).
+
 ## 7. Archivos principales del código
 
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.
