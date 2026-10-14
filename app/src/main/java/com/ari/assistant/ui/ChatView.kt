@@ -69,7 +69,7 @@ class ChatView(context: Context) : ScrollView(context) {
         }
         box.addView(AriOrbView(context).also { welcomeOrb = it }, LinearLayout.LayoutParams(dp(120f), dp(120f)).apply { bottomMargin = dp(12f) })
         box.addView(TextView(context).apply {
-            text = if (userName.isBlank()) "Hola, soy Ari" else "Hola, $userName"
+            text = if (userName.isBlank()) "Hola, soy ${context.getString(com.ari.assistant.R.string.ari_name)}" else "Hola, $userName"
             textSize = 28f
             setTypeface(Typeface.SERIF, Typeface.NORMAL)
             setTextColor(AriTheme.text)
@@ -210,7 +210,7 @@ class ChatView(context: Context) : ScrollView(context) {
             leftMargin = -dp(6f)
         })
         label.addView(TextView(context).apply {
-            text = if (who == null) "Ari" else "Ari · $who"
+            text = context.getString(com.ari.assistant.R.string.ari_name).let { name -> if (who == null) name else "$name · $who" }
             textSize = 13f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(AriTheme.ice)

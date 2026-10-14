@@ -597,3 +597,10 @@ Decisión del usuario: darle más accesos a la Ari CEO (notificaciones, teléfon
 - `AriUsage.kt` (frases y textos puros; pruebas en `AriUsageTest`): "¿cuánto tiempo usé el teléfono hoy?", "tiempo en pantalla", "¿en qué apps paso más tiempo?" → `UsageStatsManager.queryAndAggregateUsageStats` desde las 0:00 (sin el lanzador, apps con más de 1 min; top 5; aviso de descanso desde 5 h). Permiso especial "Acceso al uso" (`PACKAGE_USAGE_STATS`).
 - "¿cuántos pasos llevo?" → `TYPE_STEP_COUNTER` (permiso `ACTIVITY_RECOGNITION`); el día empieza en la primera lectura del día (`AriUsage.sample` al abrir Ari) y se reinicia si el teléfono se reinició. Limitación: no cuenta los pasos antes de abrir Ari ese día (Health Connect quedaría para después).
 - Ajustes → "Uso del teléfono y pasos" (solo CEO).
+
+## La Ari del dueño se llama ARI (versión 0.47.0)
+
+Pedido del usuario: "Ari CEO" pasa a llamarse ARI.
+- Strings por sabor: `ari_name` ("Ari" en main, "ARI" en completa), `ari_send_label` ("ARI: manejar tus apps"), `ari_listener_label` ("ARI: tus notificaciones"). Nombre de la app, barra superior, modo live, etiqueta de los mensajes, bienvenida y "Hola, soy …" usan `ari_name`.
+- Lo que Ari dice en voz y su personalidad siguen escribiendo "Ari" (la voz del teléfono podría deletrear "A-R-I"); la palabra de activación sigue siendo "Ari".
+- En el código y en estos documentos, "Ari CEO" y el sabor `completa` siguen significando lo mismo.

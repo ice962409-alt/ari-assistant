@@ -331,7 +331,7 @@ class MainActivity : Activity() {
             addView(field, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
         AlertDialog.Builder(this)
-            .setTitle(if (firstTime) "Hola, soy Ari. ¿Cómo te llamas?" else "Tu nombre")
+            .setTitle(if (firstTime) "Hola, soy ${getString(R.string.ari_name)}. ¿Cómo te llamas?" else "Tu nombre")
             .setMessage("Así te llamaré. Puedes cambiarlo cuando quieras en Ajustes.")
             .setView(box)
             .setPositiveButton("Listo") { _, _ ->
@@ -695,7 +695,7 @@ class MainActivity : Activity() {
     /** Solo Ari CEO: que toque "enviar" sola en los recados (Accesibilidad). */
     private fun setupAutoSend() {
         if (AutoSend.enabled(this)) {
-            chat.addNote("Ya envío sola los recados. Para quitarlo: Ajustes del teléfono → Accesibilidad → Ari CEO: manejar tus apps.")
+            chat.addNote("Ya envío sola los recados. Para quitarlo: Ajustes del teléfono → Accesibilidad → ${getString(R.string.ari_send_label)}.")
             return
         }
         AlertDialog.Builder(this)
@@ -705,7 +705,7 @@ class MainActivity : Activity() {
                     "en los 20 segundos después de armarlos y si el texto es exactamente el recado. No leo ni toco nada más.\n\n" +
                     "Para eso Android pide el permiso de Accesibilidad:\n" +
                     "1. Toca \"Activar\".\n" +
-                    "2. Busca \"Ari CEO: manejar tus apps\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
+                    "2. Busca \"${getString(R.string.ari_send_label)}\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
                     "3. Si dice \"Configuración restringida\": Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
                     "\"Permitir configuración restringida\", y repite el paso 2.\n" +
                     "4. Regresa a Ari."
@@ -739,7 +739,7 @@ class MainActivity : Activity() {
                         "• \"desliza hacia abajo\", \"atrás\", \"ve al inicio\"\n" +
                         "• \"lee mi pantalla\"\n\n" +
                         "Antes de enviar, pagar, comprar o borrar algo te pregunto.\n\n" +
-                        "Para quitarlo: Ajustes del teléfono → Accesibilidad → Ari CEO: manejar tus apps."
+                        "Para quitarlo: Ajustes del teléfono → Accesibilidad → ${getString(R.string.ari_send_label)}."
                 )
                 .setPositiveButton("Entendido", null)
                 .show()
@@ -752,7 +752,7 @@ class MainActivity : Activity() {
                     "solo cuando tú me lo pides. Antes de enviar, pagar, comprar o borrar algo te pregunto. No guardo lo que veo.\n\n" +
                     "Para eso Android pide el permiso de Accesibilidad:\n" +
                     "1. Toca \"Activar\".\n" +
-                    "2. Busca \"Ari CEO: manejar tus apps\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
+                    "2. Busca \"${getString(R.string.ari_send_label)}\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo.\n" +
                     "3. Si dice \"Configuración restringida\": Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
                     "\"Permitir configuración restringida\", y repite el paso 2.\n" +
                     "4. Regresa a Ari."
@@ -1750,7 +1750,7 @@ class MainActivity : Activity() {
             setPadding(dp(8f), dp(6f), dp(8f), dp(6f))
         }
         headerOrb = AriOrbView(this).apply {
-            contentDescription = "Ari"
+            contentDescription = getString(R.string.ari_name)
             // Tocarla abre el modo live, como en el centro de la pantalla.
             setOnClickListener { if (!voiceMode) openLive() }
         }
@@ -1758,7 +1758,7 @@ class MainActivity : Activity() {
 
         val titles = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         titles.addView(TextView(this).apply {
-            text = "Ari"
+            text = getString(R.string.ari_name)
             textSize = 20f
             setTypeface(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL)
             setTextColor(AriTheme.text)
@@ -1920,7 +1920,7 @@ class MainActivity : Activity() {
             insets
         }
         overlay.addView(TextView(this).apply {
-            text = "Ari"
+            text = getString(R.string.ari_name)
             textSize = 22f
             setTypeface(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL)
             setTextColor(AriTheme.text)

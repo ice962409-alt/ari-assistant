@@ -5,6 +5,8 @@
     <!-- Códigos de los teléfonos del dueño (Ajustes → Acerca de Ari). Solo ahí abre la Ari CEO. -->
     <string-array name="ari_ceo_telefonos">
     </string-array>
-    <string name="ari_send_service_description">Ari CEO maneja tus apps solo cuando tú se lo pides: toca botones, escribe, desliza, va atrás o al inicio y te lee la pantalla. Antes de enviar, pagar, comprar o borrar algo, te pregunta. También envía los recados entre Ari que le pides. No guarda lo que ve.</string>
-    <string name="ari_listener_label">Ari CEO: tus notificaciones</string>
+    <string name="ari_send_service_description">ARI maneja tus apps solo cuando tú se lo pides: toca botones, escribe, desliza, va atrás o al inicio y te lee la pantalla. Antes de enviar, pagar, comprar o borrar algo, te pregunta. También envía los recados entre Ari que le pides. No guarda lo que ve.</string>
+    <string name="ari_listener_label">ARI: tus notificaciones</string>
+    <string name="ari_name">ARI</string>
+    <string name="ari_send_label">ARI: manejar tus apps</string>
 </resources>

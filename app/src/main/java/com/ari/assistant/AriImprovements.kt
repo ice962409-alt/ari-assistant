@@ -59,7 +59,7 @@ object AriImprovements {
 
     /** El pedido para Claude, listo para copiar y pegar en la sesión de Claude Code. */
     fun proposal(notes: List<String>, version: String, phone: String, date: String): String = buildString {
-        append("Propuesta de mejora de Ari CEO\n")
+        append("Propuesta de mejora de ARI\n")
         append("Versión: ").append(version).append(" · Teléfono: ").append(phone).append(" · Fecha: ").append(date).append("\n\n")
         append("Lo que no supe hacer o salió mal:\n")
         notes.forEach { append("- ").append(it).append("\n") }

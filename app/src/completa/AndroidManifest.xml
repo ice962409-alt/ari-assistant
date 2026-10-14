@@ -39,7 +39,7 @@
         <service
             android:name="com.ari.assistant.AriSendService"
             android:exported="true"
-            android:label="Ari CEO: manejar tus apps"
+            android:label="@string/ari_send_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

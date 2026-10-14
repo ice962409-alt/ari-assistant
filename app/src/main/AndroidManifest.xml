@@ -59,7 +59,7 @@
         android:name=".AriApp"
         android:allowBackup="false"
         android:usesCleartextTraffic="false"
-        android:label="Ari"
+        android:label="@string/ari_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@android:style/Theme.Material.NoActionBar">
@@ -135,7 +135,7 @@
         <activity
             android:name=".ShareActivity"
             android:exported="true"
-            android:label="Ari"
+            android:label="@string/ari_name"
             android:taskAffinity=""
             android:excludeFromRecents="true"
             android:noHistory="true"

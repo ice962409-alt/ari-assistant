@@ -11,4 +11,7 @@
     <!-- La Ari para otros no tiene candado de teléfono. -->
     <string-array name="ari_ceo_telefonos" />
     <string name="ari_listener_label">Ari: recados de otras Ari</string>
+    <!-- El nombre que se ve (la Ari del dueño se llama ARI, en src/completa). -->
+    <string name="ari_name">Ari</string>
+    <string name="ari_send_label">Ari: manejar tus apps</string>
 </resources>
