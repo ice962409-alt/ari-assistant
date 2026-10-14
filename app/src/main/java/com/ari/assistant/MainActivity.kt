@@ -1000,8 +1000,12 @@ class MainActivity : Activity() {
     }
 
     private fun setEngine(gpu: Boolean) {
-        getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE).edit()
-            .putString(KEY_GPU, if (gpu) "" else GPU_FAILED).apply()
+        val prefs = getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE)
+        val gpuHadFailed = prefs.getString(KEY_GPU, "") == GPU_FAILED
+        prefs.edit().putString(KEY_GPU, if (gpu) "" else GPU_FAILED).apply {
+            // Si la GPU ya había fallado, se vuelve a probar con la memoria normal (más segura).
+            if (gpu && gpuHadFailed) putString(KEY_GPU_LARGE, GPU_FAILED)
+        }.apply()
         val file = savedModelFile()
         if (file == null || busy) {
             status.text = "Listo. Se usará al volver a cargar a Gemma."
@@ -1759,8 +1763,15 @@ class MainActivity : Activity() {
      */
     private fun startFastestEngine(modelFile: File): Engine {
         val prefs = getSharedPreferences(ENGINE_PREFS, MODE_PRIVATE)
-        if (prefs.getString(KEY_GPU, "") == GPU_TRYING) prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
+        // Si la vez anterior Ari se cerró probando la memoria grande en la GPU, la culpa fue de la
+        // memoria grande, no de la GPU: se deja de pedir y la GPU se vuelve a probar con la normal.
+        if (prefs.getString(KEY_GPU_LARGE, "") == GPU_TRYING) {
+            prefs.edit().putString(KEY_GPU_LARGE, GPU_FAILED).putString(KEY_GPU, "").commit()
+        } else if (prefs.getString(KEY_GPU, "") == GPU_TRYING) {
+            prefs.edit().putString(KEY_GPU, GPU_FAILED).commit()
+        }
         val tryGpu = prefs.getString(KEY_GPU, "") != GPU_FAILED
+        val gpuLargeAllowed = prefs.getString(KEY_GPU_LARGE, "") != GPU_FAILED
         // Versión básica (menos de 7 GB de RAM): sin la "vista", que ocupa mucha memoria.
         val basic = ModelChoice.basic(totalRam())
 
@@ -1775,10 +1786,15 @@ class MainActivity : Activity() {
 
         // Memoria de la plática más grande en teléfonos que la aguantan (respuestas largas
         // y el historial no la llenan tan rápido); si el motor no la acepta, la normal.
-        fun start(backend: () -> Backend, vision: Boolean): Engine? {
-            if (!basic) runCatching { startEngine(config(backend(), vision, LARGE_CONTEXT_TOKENS)) }.getOrNull()?.let {
-                largeContext = true
-                return it
+        fun start(backend: () -> Backend, vision: Boolean, gpu: Boolean = false): Engine? {
+            if (!basic && (!gpu || gpuLargeAllowed)) {
+                if (gpu) prefs.edit().putString(KEY_GPU_LARGE, GPU_TRYING).commit()
+                val large = runCatching { startEngine(config(backend(), vision, LARGE_CONTEXT_TOKENS)) }.getOrNull()
+                if (gpu) prefs.edit().putString(KEY_GPU_LARGE, if (large != null) GPU_OK else GPU_FAILED).commit()
+                large?.let {
+                    largeContext = true
+                    return it
+                }
             }
             largeContext = false
             return runCatching { startEngine(config(backend(), vision, null)) }.getOrNull()
@@ -1787,13 +1803,13 @@ class MainActivity : Activity() {
         if (tryGpu) {
             // commit (no apply): la marca tiene que quedar escrita antes de tocar la GPU.
             prefs.edit().putString(KEY_GPU, GPU_TRYING).commit()
-            (if (basic) null else start({ Backend.GPU() }, vision = true))?.let {
+            (if (basic) null else start({ Backend.GPU() }, vision = true, gpu = true))?.let {
                 prefs.edit().putString(KEY_GPU, GPU_OK).commit()
                 visionReady = true
                 engineLabel = "GPU, con vista"
                 return it
             }
-            start({ Backend.GPU() }, vision = false)?.let {
+            start({ Backend.GPU() }, vision = false, gpu = true)?.let {
                 prefs.edit().putString(KEY_GPU, GPU_OK).commit()
                 visionReady = false
                 engineLabel = if (basic) "GPU, versión básica" else "GPU, solo texto"
@@ -3323,6 +3339,7 @@ class MainActivity : Activity() {
             "Uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve y diez."
         )
         private const val KEY_GPU = "gpu"
+        private const val KEY_GPU_LARGE = "gpu_memoria_grande"
         private const val GPU_TRYING = "probando"
         private const val GPU_OK = "ok"
         private const val GPU_FAILED = "falla"

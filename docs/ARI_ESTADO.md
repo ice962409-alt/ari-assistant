@@ -476,3 +476,9 @@ Lista del usuario en docs/BACKLOG.md ("Mejoras pedidas el 14 de octubre de 2026"
 - Límites explicados al usuario: no se quitan las reglas de seguridad propias de Gemma; la "autonomía total" se hace como proactividad, y lo que afecta a otros sigue con confirmación.
 - 0.29.0: `AriBubble.kt` (servicio en primer plano `specialUse` + ventana `TYPE_APPLICATION_OVERLAY` con `AriOrbView` de 56 dp; toque → `onTalkRequested` o `LiveShortcutActivity`; arrastrar; mantener = esconder; se enciende en `onPause` y se apaga en `onResume`; prefs `ari_burbuja`). Se quitó el receptor del widget del manifiesto. `voz/BargeIn.kt`: `BargeInDetector` (pruebas en `BargeInTest`) y `BargeInMonitor` (AudioRecord VOICE_COMMUNICATION + AcousticEchoCanceler mientras Ari habla; `stop()` espera 0.2 s para soltar el micrófono antes del reconocedor). Ajuste `interrumpir_hablando`.
 
+## Informe de fallo atendido (versión 0.29.1)
+
+Primer informe por correo (14/10, de contrerasasael33@gmail.com, tester): "Ari se cerró por un error del motor (GPU)", 0.23.0-otros, Samsung SM-S918B (S23 Ultra), Android 16, RAM 11.6 GB, Gemma 4 E4B, GPU: falla (la protección ya pasó a CPU).
+- Sospecha: pedir 8192 tokens en la GPU (desde 0.18.1). Ahora hay una marca aparte `gpu_memoria_grande`: si Ari se cierra probando la memoria grande en la GPU, la siguiente vez la GPU se prueba con la memoria normal en lugar de pasar directo a CPU.
+- Ajustes → Velocidad → Rápida (GPU) después de una falla vuelve a probar la GPU con la memoria normal.
+
