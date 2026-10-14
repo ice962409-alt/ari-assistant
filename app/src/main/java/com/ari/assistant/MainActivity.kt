@@ -667,12 +667,17 @@ class MainActivity : Activity() {
             .setMessage(
                 "Puedo leer sola los recados que te lleguen. Para eso dame \"Acceso a notificaciones\":\n" +
                     "1. Toca \"Activar\".\n" +
-                    "2. Activa \"Ari: recados de otras Ari\" y acepta.\n" +
+                    "2. Activa \"${getString(R.string.ari_listener_label)}\" y acepta.\n" +
                     "3. Si dice \"Configuración restringida\": ve a Ajustes del teléfono → Apps → Ari → menú ⋮ → " +
                     "\"Permitir configuración restringida\", y repite los pasos 1 y 2.\n" +
                     "4. Regresa a Ari.\n\n" +
-                    "Solo miro las notificaciones de tu app de mensajes y solo hago caso a las que empiezan con \"[Ari de …]\"; " +
-                    "las demás no las leo ni las guardo."
+                    if (resources.getBoolean(R.bool.ari_ceo)) {
+                        "De tu app de mensajes solo hago caso a los que empiezan con \"[Ari de …]\". Con este mismo permiso también " +
+                            "recuerdo tus otras notificaciones (solo en memoria, 12 horas) para resumírtelas y contestar cuando me lo pidas."
+                    } else {
+                        "Solo miro las notificaciones de tu app de mensajes y solo hago caso a las que empiezan con \"[Ari de …]\"; " +
+                            "las demás no las leo ni las guardo."
+                    }
             )
             .setPositiveButton("Activar") { _, _ ->
                 recadosPermissionAsked = true
@@ -763,6 +768,66 @@ class MainActivity : Activity() {
             }
             .setNegativeButton("Ahora no", null)
             .show()
+    }
+
+    // --- Solo Ari CEO: tus notificaciones (ver AriInbox) ---
+
+    private fun setupInbox() {
+        if (!AriRecados.enabled(this)) {
+            setupReadRecados()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Tus notificaciones")
+            .setMessage(
+                "Recuerdo tus notificaciones de las últimas 12 horas (solo en memoria; si cierro, las olvido). Dime:\n\n" +
+                    "• \"¿qué notificaciones tengo?\" o \"¿quién me escribió?\"\n" +
+                    "• \"respóndele a Juan que ya voy\": contesto desde la notificación, después de tu \"sí\".\n\n" +
+                    "Para quitarlo: Ajustes del teléfono → Notificaciones → Acceso a notificaciones → ${getString(R.string.ari_listener_label)}."
+            )
+            .setPositiveButton("Entendido", null)
+            .show()
+    }
+
+    /** Una respuesta a una notificación esperando tu "sí". */
+    private var pendingReply: Pair<AriInbox.Entry, String>? = null
+
+    private fun handleInbox(text: String): Boolean {
+        if (!resources.getBoolean(R.bool.ari_ceo)) return false
+        pendingReply?.let { (entry, reply) ->
+            pendingReply = null
+            if (AppControl.isYes(text)) {
+                input.text.clear()
+                val sent = AriInbox.replier?.reply(entry.key, reply) == true
+                answerLocally(text, if (sent) "Listo, le respondí a ${entry.title} por ${entry.app}." else "No pude responder: esa notificación ya no está. Ábrela y te ayudo desde la app.")
+                return true
+            }
+            if (AppControl.isNo(text)) {
+                input.text.clear()
+                answerLocally(text, "Va, no le respondo.")
+                return true
+            }
+        }
+        val request = AriInbox.parse(text) ?: return false
+        input.text.clear()
+        if (!AriRecados.enabled(this)) {
+            answerLocally(text, "Para leer tus notificaciones necesito el \"Acceso a notificaciones\". Ve a Ajustes → Leer mis notificaciones y te explico.")
+            return true
+        }
+        val entries = AriInbox.recent(System.currentTimeMillis())
+        when (request) {
+            AriInbox.Request.Summary -> answerLocally(text, AriInbox.summarize(entries))
+            is AriInbox.Request.Reply -> {
+                val target = AriInbox.findReplyTarget(entries, request.name)
+                if (target == null) {
+                    answerLocally(text, "No tengo una notificación de \"${request.name}\" que se pueda contestar. Si quieres, abre el chat y dime \"teclea…\".")
+                } else {
+                    pendingReply = target to request.text
+                    answerLocally(text, "¿Le respondo a ${target.title} por ${target.app}: \"${request.text}\"? Dime sí o no.")
+                }
+            }
+        }
+        return true
     }
 
     /** Un toque delicado esperando tu "sí". */
@@ -936,6 +1001,7 @@ class MainActivity : Activity() {
             item("Responder a \"Ari\": ${if (AriWakeWord.isEnabled(this) && AriWakeWord.hasModel(this)) "sí" else "no"}") { setupWakeWord() },
         )
         if (ceo) items += item("Manejar mis apps: ${if (AutoSend.enabled(this)) "sí" else "no"}") { setupAppControl() }
+        if (ceo) items += item("Leer mis notificaciones: ${if (AriRecados.enabled(this)) "sí" else "no"}") { setupInbox() }
         items += item("Recados entre Ari") { setupAriMessages() }
         items += item("Reportar un problema") { askProblemReport() }
         items += item("Acerca de Ari y licencias") { showAbout() }
@@ -2440,6 +2506,7 @@ class MainActivity : Activity() {
         }
 
         if (!guestMode && handleRoutine(text)) return
+        if (!guestMode && handleInbox(text)) return
         if (!guestMode && handleAppControl(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 

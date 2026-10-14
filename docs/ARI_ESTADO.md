@@ -569,3 +569,10 @@ Decisión del usuario: "Control total con pausa". Solo la Ari CEO.
 ## Prioridad actual
 
 - Pedido del usuario (14/10/2026): centrarse solo en la Ari CEO. La Ari para otros queda para más adelante; los cambios nuevos van pensados para la CEO (la versión otros solo debe seguir compilando).
+
+## Ari CEO: tus notificaciones (versión 0.43.0)
+
+Decisión del usuario: darle más accesos a la Ari CEO (notificaciones, teléfono y ajustes, agenda y fotos, uso del teléfono). Primero las notificaciones.
+- `AriInbox.kt` (puro; pruebas en `AriInboxTest`): notificaciones recientes solo en memoria (máximo 60, 12 h), `summarize` por app y persona, `parse` ("¿qué notificaciones tengo?", "¿quién me escribió?", "respóndele/contéstale a X que …"), `findReplyTarget`.
+- `AriRecadosListener`: en la CEO guarda cada notificación (no las fijas ni los resúmenes de grupo ni las de Ari) y su botón "Responder" (RemoteInput); `reply(key, text)` contesta como la cajita de la notificación. Etiqueta del permiso por sabor: `ari_listener_label` ("Ari CEO: tus notificaciones" en completa).
+- MainActivity: `handleInbox` antes de manejar apps; contestar siempre pide "sí" (`pendingReply`). Ajustes → "Leer mis notificaciones" (solo CEO).

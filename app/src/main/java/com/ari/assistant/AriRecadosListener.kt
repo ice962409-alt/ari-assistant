@@ -17,10 +17,24 @@ import android.service.notification.StatusBarNotification
  * ni se leen más allá de eso ni se guardan. Necesita el permiso "Acceso a notificaciones"
  * que tú das en los ajustes del teléfono. Un recado es un mensaje para ti, nunca una orden.
  */
-class AriRecadosListener : NotificationListenerService() {
+class AriRecadosListener : NotificationListenerService(), AriInbox.Replier {
+
+    /** Los botones "Responder" de las notificaciones recientes (solo en memoria). */
+    private val replies = LinkedHashMap<String, Notification.Action>()
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        if (resources.getBoolean(R.bool.ari_ceo)) AriInbox.replier = this
+    }
+
+    override fun onListenerDisconnected() {
+        if (AriInbox.replier === this) AriInbox.replier = null
+        super.onListenerDisconnected()
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val notification = sbn ?: return
+        if (resources.getBoolean(R.bool.ari_ceo)) remember(notification)
         if (notification.packageName !in AriRecados.messagingApps(this)) return
         val extras = notification.notification.extras ?: return
         val sender = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()?.ifEmpty { null }
@@ -32,6 +46,45 @@ class AriRecadosListener : NotificationListenerService() {
             AriMessenger.deliver(this, announcement)
         }
     }
+
+    private fun remember(sbn: StatusBarNotification) {
+        runCatching { rememberInto(replies, sbn) }
+    }
+
+    /** Contesta desde la notificación, como si escribieras en su cajita "Responder". */
+    override fun reply(key: String, text: String): Boolean {
+        val action = synchronized(replies) { replies[key] } ?: return false
+        val inputs = action.remoteInputs?.filter { it.allowFreeFormInput }.orEmpty()
+        if (inputs.isEmpty()) return false
+        val intent = Intent()
+        val results = android.os.Bundle().apply { inputs.forEach { putCharSequence(it.resultKey, text) } }
+        android.app.RemoteInput.addResultsToIntent(inputs.toTypedArray(), intent, results)
+        return runCatching { action.actionIntent.send(this, 0, intent) }.isSuccess
+    }
+}
+
+/** Solo Ari CEO: guarda en memoria lo que dice cada notificación de tus apps. */
+private fun AriRecadosListener.rememberInto(
+    replies: LinkedHashMap<String, Notification.Action>,
+    sbn: StatusBarNotification
+) {
+    val n = sbn.notification
+    if (sbn.packageName == packageName) return
+    // Las fijas (música, descargas, "Ari se muestra sobre otras apps") y los resúmenes de grupo no cuentan.
+    if (n.flags and Notification.FLAG_ONGOING_EVENT != 0 || n.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
+    val extras = n.extras ?: return
+    val title = (extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE) ?: extras.getCharSequence(Notification.EXTRA_TITLE))
+        ?.toString()?.trim().orEmpty()
+    val text = AriRecados.texts(n).lastOrNull()?.trim().orEmpty()
+    if (title.isEmpty() && text.isEmpty()) return
+    val app = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(sbn.packageName, 0)).toString() }
+        .getOrDefault(sbn.packageName)
+    val reply = n.actions?.firstOrNull { action -> action.remoteInputs?.any { it.allowFreeFormInput } == true }
+    synchronized(replies) {
+        if (reply != null) replies[sbn.key] = reply else replies.remove(sbn.key)
+        while (replies.size > AriInbox.MAX_ENTRIES) replies.remove(replies.keys.first())
+    }
+    AriInbox.add(AriInbox.Entry(sbn.key, app, title.ifEmpty { app }, text.take(300), System.currentTimeMillis(), reply != null))
 }
 
 object AriRecados {

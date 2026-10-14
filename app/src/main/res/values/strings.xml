@@ -10,4 +10,5 @@
     <bool name="ari_ceo">false</bool>
     <!-- La Ari para otros no tiene candado de teléfono. -->
     <string-array name="ari_ceo_telefonos" />
+    <string name="ari_listener_label">Ari: recados de otras Ari</string>
 </resources>
