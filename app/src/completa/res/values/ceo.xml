@@ -4,6 +4,7 @@
     <bool name="ari_ceo">true</bool>
     <!-- Códigos de los teléfonos del dueño (Ajustes → Acerca de Ari). Solo ahí abre la Ari CEO. -->
     <string-array name="ari_ceo_telefonos">
+        <item>D7A55140</item><!-- POCO X8 Pro Max del dueño (14/10/2026) -->
     </string-array>
     <string name="ari_send_service_description">ARI maneja tus apps solo cuando tú se lo pides: toca botones, escribe, desliza, va atrás o al inicio y te lee la pantalla. Antes de enviar, pagar, comprar o borrar algo, te pregunta. También envía los recados entre Ari que le pides. No guarda lo que ve.</string>
     <string name="ari_listener_label">ARI: tus notificaciones</string>

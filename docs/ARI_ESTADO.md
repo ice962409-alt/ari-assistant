@@ -651,3 +651,8 @@ Pedido del usuario: que ARI trabaje a través de GitHub. ARI no programa; crea i
 - `AriGitHub.kt` (partes puras probadas en `AriGitHubTest`): llave fine-grained (solo ari-assistant, Issues: lectura y escritura) pegada en ARI, cifrada con el Android Keystore; `check` (GET del repo) y `createIssue` (POST /issues) con mensajes claros para 401/403/404/410/422.
 - Ajustes → "GitHub de ARI" (solo CEO): instrucciones, Abrir GitHub, Guardar y probar (una llave nueva reemplaza a la anterior), Borrar llave. "propón mejoras" → "Crear ficha en GitHub"; si sale bien, borra las notas enviadas.
 - Para Claude: al empezar cada sesión, revisar los issues abiertos que empiezan con "[ARI]".
+
+## ARI solo abre en el teléfono del dueño (desde 0.53.0)
+
+- `ari_ceo_telefonos` en `src/completa/res/values/ceo.xml` = D7A55140 (POCO X8 Pro Max del dueño). En cualquier otro teléfono la ARI dice que es exclusiva y no abre.
+- Ojo: el código sale del ANDROID_ID, que cambia si el teléfono se restablece de fábrica o si cambia la llave con la que se firma ARI. Si pasa, el dueño manda el código nuevo y se agrega.
