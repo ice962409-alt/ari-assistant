@@ -770,6 +770,34 @@ class MainActivity : Activity() {
             .show()
     }
 
+    // --- Solo Ari CEO: consultas a internet (ver AriWeb) ---
+
+    private fun handleWeb(text: String): Boolean {
+        if (!resources.getBoolean(R.bool.ari_ceo)) return false
+        val request = AriWeb.parse(text) ?: return false
+        input.text.clear()
+        saveMessage(ROLE_USER, text)
+        chat.addUser(text)
+        chat.startAri()
+        Thread {
+            val reply = runCatching {
+                when (request) {
+                    is AriWeb.Request.Wiki -> AriWeb.wiki(request.topic)
+                    is AriWeb.Request.Weather -> AriWeb.weather(request.place)
+                }
+            }.getOrElse { "No pude conectarme a internet. Revisa tu Wi-Fi o datos y vuelve a intentarlo." }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                saveMessage(ROLE_ARI, reply)
+                chat.appendAri(reply)
+                chat.finishAri()
+                if (voiceMode) voice.speak(reply)
+                notifyIfAway(reply)
+            }
+        }.start()
+        return true
+    }
+
     // --- Solo Ari CEO: uso del teléfono y pasos (ver AriUsage) ---
 
     private fun setupUsage() {
@@ -2696,6 +2724,7 @@ class MainActivity : Activity() {
         if (!guestMode && handlePhoneSettings(text)) return
         if (!guestMode && handleMedia(text)) return
         if (!guestMode && handleUsage(text)) return
+        if (!guestMode && handleWeb(text)) return
         if (!guestMode && handleAppControl(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
 

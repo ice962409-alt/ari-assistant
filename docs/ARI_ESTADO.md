@@ -629,3 +629,10 @@ Reporte del usuario (captura vista por otra sesión): ARI respondió a "Accede a
 - `PhoneCommands.OPEN`: también "accede a", "entra a/en", "métete a/en", "ingresa a" + app (pruebas en `PhoneCommandsTest`).
 - Al cargar un modelo que no es Gemma (Qwen…), aviso en el chat de que se equivoca más y no ve fotos.
 - Pendiente de saber: qué modelo tenía cargado el usuario.
+
+## ARI consulta internet: Wikipedia y clima (versión 0.51.0)
+
+Pedido del usuario (cambia la regla "sin internet" para la ARI del dueño): primera parte, pequeña.
+- `AriWeb.kt` (frases puras; pruebas en `AriWebTest`): "busca en internet/Wikipedia …", "¿quién fue …?" → búsqueda y resumen de Wikipedia en español; "¿cómo está el clima en …?" → Open-Meteo (geocodificación + pronóstico del día). Sin cuentas ni llaves; solo sale el texto buscado.
+- MainActivity: `handleWeb` (solo CEO, no invitados) en otro hilo; si no hay red, lo dice.
+- Siguiente: más fuentes (noticias, búsqueda web) por partes.

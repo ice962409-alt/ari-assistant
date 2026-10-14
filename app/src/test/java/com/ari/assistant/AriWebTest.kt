@@ -1,0 +1,25 @@
+package com.ari.assistant
+
+import com.ari.assistant.AriWeb.Request
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class AriWebTest {
+
+    @Test
+    fun understandsWhatToLookUp() {
+        assertEquals(Request.Wiki("la fotosintesis"), AriWeb.parse("Busca en internet qué es la fotosíntesis"))
+        assertEquals(Request.Wiki("benito juarez"), AriWeb.parse("¿Quién fue Benito Juárez?"))
+        assertEquals(Request.Weather("monterrey"), AriWeb.parse("¿Cómo está el clima en Monterrey?"))
+        assertEquals(Request.Weather("guadalajara"), AriWeb.parse("el clima de Guadalajara hoy"))
+        assertNull(AriWeb.parse("¿qué tengo hoy?"))
+    }
+
+    @Test
+    fun weatherCodesInWords() {
+        assertEquals("despejado", AriWeb.sky(0))
+        assertEquals("con lluvia", AriWeb.sky(61))
+        assertEquals("con tormenta", AriWeb.sky(95))
+    }
+}

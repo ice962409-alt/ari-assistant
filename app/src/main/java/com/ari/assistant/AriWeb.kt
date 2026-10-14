@@ -1,0 +1,88 @@
+package com.ari.assistant
+
+import com.ari.assistant.agents.normalizeForAgents
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
+
+/**
+ * Solo en la ARI del dueño: consultas a internet cuando tú las pides.
+ * - Wikipedia en español: "busca en internet qué es …", "¿quién fue …?".
+ * - Clima con Open-Meteo: "¿cómo está el clima en …?".
+ * Lo único que sale del teléfono es lo que buscas. Las frases no usan Android.
+ */
+object AriWeb {
+
+    sealed class Request {
+        data class Wiki(val topic: String) : Request()
+        data class Weather(val place: String) : Request()
+    }
+
+    private val WIKI = Regex("^(?:busca|buscame|investiga)\\s+en\\s+(?:internet|wikipedia)\\s+(?:que\\s+es\\s+|quien\\s+es\\s+|quien\\s+fue\\s+|sobre\\s+)?(.+)$")
+    private val WHO = Regex("^(?:quien\\s+fue|quien\\s+era)\\s+(.+)$")
+    private val WEATHER = Regex("^(?:como\\s+esta\\s+|que\\s+tal\\s+(?:esta\\s+)?)?el\\s+clima\\s+(?:en|de)\\s+(.+?)(?:\\s+hoy)?$")
+
+    fun parse(text: String): Request? {
+        val t = normalizeForAgents(text)
+        WEATHER.matchEntire(t)?.let { return Request.Weather(it.groupValues[1].trim()) }
+        WIKI.matchEntire(t)?.let { return Request.Wiki(it.groupValues[1].trim()) }
+        WHO.matchEntire(t)?.let { return Request.Wiki(it.groupValues[1].trim()) }
+        return null
+    }
+
+    private fun get(url: String): String {
+        val c = URL(url).openConnection() as HttpURLConnection
+        try {
+            c.connectTimeout = 10_000
+            c.readTimeout = 15_000
+            c.setRequestProperty("User-Agent", "ARI/1.0 (asistente personal)")
+            if (c.responseCode !in 200..299) throw IllegalStateException("código ${c.responseCode}")
+            return c.inputStream.bufferedReader().use { it.readText().take(200_000) }
+        } finally {
+            c.disconnect()
+        }
+    }
+
+    private fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
+
+    /** Resumen de Wikipedia en español (busca el artículo más parecido). */
+    fun wiki(topic: String): String {
+        val search = JSONObject(get("https://es.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=1&srsearch=" + enc(topic)))
+        val hits = search.optJSONObject("query")?.optJSONArray("search")
+        val title = hits?.optJSONObject(0)?.optString("title").orEmpty()
+        if (title.isEmpty()) return "No encontré nada sobre \"$topic\" en Wikipedia."
+        val page = JSONObject(get("https://es.wikipedia.org/api/rest_v1/page/summary/" + enc(title.replace(' ', '_'))))
+        val extract = page.optString("extract").trim()
+        return if (extract.isEmpty()) "Encontré \"$title\" en Wikipedia, pero sin resumen." else "$title (Wikipedia): ${extract.take(900)}"
+    }
+
+    fun weather(place: String): String {
+        val geo = JSONObject(get("https://geocoding-api.open-meteo.com/v1/search?count=1&language=es&name=" + enc(place)))
+        val hit = geo.optJSONArray("results")?.optJSONObject(0) ?: return "No encontré la ciudad \"$place\"."
+        val name = hit.optString("name", place)
+        val url = "https://api.open-meteo.com/v1/forecast?latitude=${hit.getDouble("latitude")}&longitude=${hit.getDouble("longitude")}" +
+            "&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1"
+        val data = JSONObject(get(url))
+        val now = data.getJSONObject("current")
+        val day = data.getJSONObject("daily")
+        val temp = now.getDouble("temperature_2m").toInt()
+        val max = day.getJSONArray("temperature_2m_max").getDouble(0).toInt()
+        val min = day.getJSONArray("temperature_2m_min").getDouble(0).toInt()
+        val rain = day.optJSONArray("precipitation_probability_max")?.optInt(0) ?: 0
+        return "En $name hay $temp °C, ${sky(now.optInt("weather_code"))}. Hoy: máxima $max °C, mínima $min °C, $rain% de probabilidad de lluvia."
+    }
+
+    /** Códigos del clima de Open-Meteo en palabras. */
+    fun sky(code: Int): String = when (code) {
+        0 -> "despejado"
+        1, 2 -> "algo nublado"
+        3 -> "nublado"
+        45, 48 -> "con niebla"
+        in 51..67 -> "con lluvia"
+        in 71..77 -> "con nieve"
+        in 80..82 -> "con chubascos"
+        in 95..99 -> "con tormenta"
+        else -> "variable"
+    }
+}
