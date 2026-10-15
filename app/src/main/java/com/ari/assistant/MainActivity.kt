@@ -234,6 +234,7 @@ class MainActivity : Activity() {
         offerFailureReport()
         autoCheckForUpdate()
         if (trader) Thread { runCatching { TraderProposals.flush(this) } }.start()
+        if (trader) autoCheckTraderUpdate()
         voice = VoiceController(this, voiceListener)
         voiceVault = VoiceVault(this)
         voiceIdentity = VoiceIdentity(this)
@@ -1259,7 +1260,7 @@ class MainActivity : Activity() {
     /** Ari cuenta lo que puede hacer, con ejemplos. [question] es lo que le preguntaste (null: se presenta sola). */
     private fun introduce(question: String?) {
         val phone = phoneAbilities()
-        val intro = AriAbilities.intro(profile.userName, phone)
+        val intro = if (trader) AriTrader.intro(profile.userName) else AriAbilities.intro(profile.userName, phone)
         if (question != null) {
             saveMessage(ROLE_USER, question)
             chat.addUser(question)
@@ -1275,7 +1276,15 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences(MODEL_OFFER_PREFS, MODE_PRIVATE)
         if (prefs.getBoolean(KEY_INTRODUCED, false)) return
         prefs.edit().putBoolean(KEY_INTRODUCED, true).apply()
-        introduce(null)
+        if (trader) {
+            val intro = AriTrader.intro(profile.userName)
+            saveMessage(ROLE_ARI, intro)
+            chat.addAri(intro)
+            chat.addNote(AriTrader.MODEL_TIP)
+            if (voiceMode) voice.speak(AriTrader.spoken())
+        } else {
+            introduce(null)
+        }
     }
 
     /**
@@ -2943,6 +2952,8 @@ class MainActivity : Activity() {
         if (!guestMode && handleUpdateRequest(text)) return
         if (!guestMode && handleWeb(text)) return
         if (!guestMode && handleAppControl(text)) return
+        if (!guestMode && trader && AriTrader.asksModel(text)) { answerLocally(text, AriTrader.MODEL_TIP); return }
+        if (!guestMode && trader && handleTraderUpdate(text)) return
         if (!guestMode && trader && handleTraderFeedback(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleDesignReview(text)) return
         if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleImprovement(text)) return
@@ -3596,6 +3607,82 @@ class MainActivity : Activity() {
     }
 
     /** "anota una mejora: …", "propón mejoras" y "borra las mejoras". */
+    /** Solo ARI Trader: "busca actualizaciones" revisa el archivo público y, si hay, ofrece bajarla. */
+    private fun handleTraderUpdate(text: String): Boolean {
+        if (!AriUpdate.asks(text)) return false
+        input.text.clear()
+        saveMessage(ROLE_USER, text)
+        chat.addUser(text)
+        checkTraderUpdate(quiet = false)
+        return true
+    }
+
+    private fun autoCheckTraderUpdate() {
+        val prefs = getSharedPreferences("ari_trader_update", MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        if (now - prefs.getLong("ultima", 0L) < 12 * 60 * 60 * 1000L) return
+        prefs.edit().putLong("ultima", now).apply()
+        checkTraderUpdate(quiet = true)
+    }
+
+    private fun checkTraderUpdate(quiet: Boolean) {
+        if (!quiet) chat.addNote("Reviso si hay una versión nueva…")
+        Thread {
+            val result = runCatching { TraderUpdate.check(this) }.getOrElse { TraderUpdate.Check.Failed("No pude revisar. Revisa tu internet.") }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                when (result) {
+                    is TraderUpdate.Check.Available -> offerTraderUpdate(result.latest)
+                    TraderUpdate.Check.UpToDate -> if (!quiet) chat.addNote("Ya tienes la versión más nueva.")
+                    is TraderUpdate.Check.Failed -> if (!quiet) chat.addNote(result.message)
+                }
+            }
+        }.start()
+    }
+
+    private fun offerTraderUpdate(latest: TraderUpdate.Latest) {
+        AlertDialog.Builder(this)
+            .setTitle("Hay una versión nueva de Ari Trader")
+            .setMessage(
+                "Versión ${latest.name}" + (if (latest.notes.isNotBlank()) ":\n${latest.notes}" else ".") +
+                    "\n\nLa bajo y Android te pide confirmar la instalación. Tus datos se quedan."
+            )
+            .setPositiveButton("Bajar e instalar") { _, _ -> downloadTraderUpdate(latest) }
+            .setNegativeButton("Después", null)
+            .show()
+    }
+
+    private fun downloadTraderUpdate(latest: TraderUpdate.Latest) {
+        if (!AriUpdate.canInstall(this)) {
+            AlertDialog.Builder(this)
+                .setTitle("Un permiso, una sola vez")
+                .setMessage("Android pide que me dejes instalar actualizaciones. Activa \"Permitir de esta fuente\" y vuelve a decir \"busca actualizaciones\".")
+                .setPositiveButton("Abrir") { _, _ -> runCatching { startActivity(AriUpdate.permissionIntent(this)) } }
+                .setNegativeButton("Cancelar", null)
+                .show()
+            return
+        }
+        chat.addNote("Bajando la versión ${latest.name}…")
+        var lastShown = -10
+        Thread {
+            val (apk, error) = runCatching {
+                TraderUpdate.download(this, latest) { percent ->
+                    if (percent >= lastShown + 10) {
+                        lastShown = percent
+                        runOnUiThread { if (!isDestroyed) status.text = "Bajando la actualización: $percent%" }
+                    }
+                }
+            }.getOrElse { null to "No pude bajar la actualización. Revisa tu internet." }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                status.text = ""
+                if (apk == null) { chat.addNote(error ?: "No pude bajar la actualización."); return@runOnUiThread }
+                chat.addNote("Listo. Android te va a pedir confirmar: toca Instalar.")
+                runCatching { AriUpdate.install(this, apk) }.onFailure { chat.addNote("No pude abrir el instalador: ${it.message}") }
+            }
+        }.start()
+    }
+
     /** Solo ARI Trader: junta mejoras y, con "propón mejoras", las manda al dueño para validarlas. */
     private fun handleTraderFeedback(text: String): Boolean {
         val request = TraderProposals.parse(com.ari.assistant.agents.normalizeForAgents(text)) ?: return false

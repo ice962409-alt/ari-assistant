@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Actualizarse sola: Android siempre pide confirmar la instalación. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application>
+        <!-- El instalador de Android avisa aquí si necesita tu confirmación. -->
+        <receiver
+            android:name="com.ari.assistant.AriUpdateReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

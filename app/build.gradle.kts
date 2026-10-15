@@ -51,13 +51,15 @@ android {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 75
-        versionName = "0.61.0"
+        versionCode = 76
+        versionName = "0.62.0"
         // El intermediario de informes de fallos (contrato en el repositorio ari-informes). No es secreto.
         buildConfigField("String", "INFORMES_URL", "\"https://ari-informes.javierhedzd.workers.dev/v1/informe\"")
         // De qué compilación de GitHub Actions viene este APK: ARI lo usa para saber si hay una más nueva.
         buildConfigField("long", "BUILD_RUN", (System.getenv("GITHUB_RUN_ID") ?: "0") + "L")
         buildConfigField("String", "BUILD_BRANCH", "\"" + (System.getenv("GITHUB_REF_NAME") ?: "") + "\"")
+        // Dónde ARI Trader revisa si hay una versión nueva (archivo público, sin llave).
+        buildConfigField("String", "TRADER_UPDATE_URL", "\"https://raw.githubusercontent.com/javierhedzd-ops/ari-web/main/ari-trader-latest.json\"")
         // Solo teléfonos de 64 bits (como el POCO): las librerías de voz pesan menos en el APK.
         ndk {
             abiFilters += listOf("arm64-v8a")

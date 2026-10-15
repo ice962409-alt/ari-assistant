@@ -768,3 +768,13 @@ Pedido del usuario: una copia de ARI para su hermano, especializada en trading, 
 - CI: `android.yml` ahora corre `testTraderDebugUnitTest`, compila `assembleTraderRelease` y guarda el artifact `ari-trader-apk`.
 - Pruebas en `TraderProposalsTest` y `ProfileTest`.
 - Siguiente (Parte 2+): diario de operaciones, checklist/disciplina, leer capturas de gráficas con visión (con avisos de que no es consejo).
+
+## ARI Trader Parte 2: enseña, mejora el modelo y se actualiza sola (versión 0.62.0)
+
+Tres pedidos del usuario para ARI Trader.
+- Enseña cómo se usa: `AriTrader.intro()` (bienvenida de entrenadora con los avisos de riesgo y cómo empezar); se muestra en el primer uso (introduceOnce) y con "¿qué puedes hacer?" / "enséñame". Las lecciones generales (AriLessons) siguen enseñando paso a paso. `AriTrader.spoken()` para la voz.
+- Mejorar el modelo (el hermano tiene computadora): `AriTrader.MODEL_TIP` explica que puede bajar un modelo más listo por Wi-Fi (botón Modelo) o bajar el .litertlm en la computadora y pasarlo con "Importar modelo"; ARI se adapta. Se muestra en la bienvenida y al preguntar "cómo mejoro el modelo". El chooser de modelos ya existe en la app.
+- Se actualiza sola y avisa: `TraderUpdate.kt` consulta `BuildConfig.TRADER_UPDATE_URL` (archivo público `ari-trader-latest.json` en ari-web, sin llave). Si la versión publicada es mayor, avisa y ofrece bajar el APK (de un release público de ari-web) e instalar con la confirmación de Android (reusa `AriUpdate.verify/install/canInstall`, y el permiso REQUEST_INSTALL_PACKAGES en el manifiesto del sabor trader). Revisa al abrir (cada 12 h) y con "busca actualizaciones".
+- CI: nuevo paso "Publicar ARI Trader" (con publicar_web + ARI_WEB_TOKEN) sube `AriTrader.apk` a un release `trader-v<versión>` en ari-web y escribe `ari-trader-latest.json`.
+- Pruebas en `AriTraderTest` y `TraderUpdateTest`.
+- Pendiente del usuario: para que la actualización automática funcione, hay que compilar con `publicar_web` y tener el secreto `ARI_WEB_TOKEN` (el mismo de la página).

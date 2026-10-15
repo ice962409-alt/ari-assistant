@@ -126,6 +126,32 @@ jobs:
             --title "Ari $version (beta)" --notes "Descarga oficial de Ari $version. Instálala desde https://javierhedzd-ops.github.io/ari-web/" --latest \
             || gh release upload "v$version" Ari.apk --repo javierhedzd-ops/ari-web --clobber
 
+      # ARI Trader se actualiza sola: se publica su APK y un archivo de versión en ari-web (público).
+      - name: Publicar ARI Trader (actualización automática)
+        if: ${{ inputs.publicar_web && env.HAS_WEB_TOKEN == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.ARI_WEB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          code=$(grep -oP 'versionCode = \K[0-9]+' app/build.gradle.kts)
+          tag="trader-v$version"
+          cp app/build/outputs/apk/trader/release/app-trader-release.apk AriTrader.apk
+          gh release create "$tag" AriTrader.apk --repo javierhedzd-ops/ari-web \
+            --title "Ari Trader $version" --notes "Versión de Ari Trader $version." \
+            || gh release upload "$tag" AriTrader.apk --repo javierhedzd-ops/ari-web --clobber
+          url="https://github.com/javierhedzd-ops/ari-web/releases/download/$tag/AriTrader.apk"
+          printf '{"versionCode":%s,"versionName":"%s","apkUrl":"%s","notes":"Nueva versión de Ari Trader."}\n' "$code" "$version" "$url" > ari-trader-latest.json
+          content=$(base64 -w0 ari-trader-latest.json)
+          sha=$(gh api repos/javierhedzd-ops/ari-web/contents/ari-trader-latest.json --jq .sha 2>/dev/null || true)
+          if [ -n "$sha" ]; then
+            gh api --method PUT repos/javierhedzd-ops/ari-web/contents/ari-trader-latest.json \
+              -f message="Ari Trader $version" -f content="$content" -f sha="$sha"
+          else
+            gh api --method PUT repos/javierhedzd-ops/ari-web/contents/ari-trader-latest.json \
+              -f message="Ari Trader $version" -f content="$content"
+          fi
+
       # Por si la versión de entrega fallara en el teléfono: la de depuración del dueño.
       - name: Guardar APK de depuración
         uses: actions/upload-artifact@v4
