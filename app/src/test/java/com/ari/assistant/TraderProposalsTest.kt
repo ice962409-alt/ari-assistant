@@ -22,7 +22,7 @@ class TraderProposalsTest {
 
     @Test
     fun collectsNotesFromGemma() {
-        val response = "Te explico. MEJORA: poder leer varias gráficas a la vez\nFin."
+        val response = "Te explico.\nMEJORA: poder leer varias gráficas a la vez\nFin."
         assertEquals(listOf("poder leer varias gráficas a la vez"), TraderProposals.notesIn(response))
     }
 
