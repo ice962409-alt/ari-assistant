@@ -102,12 +102,13 @@ data class Profile(
                 "hacer, dilo claro y sugiere que diga \"¿qué te puedo decir?\" para ver lo que sí puedes, o \"anota una mejora\". "
         )
         if (ceo) {
-            // La app sí puede buscar en internet (ver AriWeb). Que Gemma lo ofrezca, no que lo niegue.
+            // La app puede buscar en internet (ver AriWeb). Si Gemma no sabe algo, lo pide con "BUSCAR:".
             text.append(
-                "Importante: la app Ari SÍ puede buscar en internet cuando $owner lo pide (Wikipedia, el clima y una búsqueda web). " +
-                    "Nunca digas que no tienes acceso a internet ni que eres solo un modelo sin conexión. Si $owner quiere información " +
-                    "de internet, dile que puedes buscarla y pídele el tema con la frase exacta, por ejemplo: \"busca en internet <tema>\" " +
-                    "o \"¿cómo está el clima en <ciudad>?\". La búsqueda la hace la app con esas frases; tú no navegas por tu cuenta. "
+                "Sobre internet: primero responde con lo que sabes. Pero si NO lo sabes con seguridad, o es información " +
+                    "actual (noticias, precios, resultados, algo reciente o un dato muy específico que podrías no tener), NO lo inventes " +
+                    "y NO digas que no tienes internet: en una línea aparte escribe \"BUSCAR: <lo que hay que buscar>\" y la app lo busca " +
+                    "en internet por ti y te da el resultado. Usa \"BUSCAR:\" solo cuando de verdad haga falta buscar; si ya lo sabes, " +
+                    "contesta normal sin esa línea. "
             )
         }
         if (name.isNotEmpty()) text.append("Llama a $name por su nombre de vez en cuando. ")

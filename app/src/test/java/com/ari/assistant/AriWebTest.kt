@@ -26,4 +26,12 @@ class AriWebTest {
         assertEquals("con lluvia", AriWeb.sky(61))
         assertEquals("con tormenta", AriWeb.sky(95))
     }
+
+    @Test
+    fun picksUpWhatGemmaAsksToSearch() {
+        assertEquals("precio del bitcoin hoy", AriWeb.autoQuery("No tengo ese dato actualizado.\nBUSCAR: precio del bitcoin hoy"))
+        assertEquals("quien gano el partido", AriWeb.autoQuery("**BUSCAR:** quien gano el partido."))
+        assertNull(AriWeb.autoQuery("El agua hierve a 100 grados."))
+        assertNull(AriWeb.autoQuery("BUSCAR: a"))
+    }
 }

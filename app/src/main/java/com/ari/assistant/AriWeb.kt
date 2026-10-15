@@ -14,6 +14,19 @@ import java.net.URLEncoder
  */
 object AriWeb {
 
+    /** Marca que Gemma escribe cuando no sabe algo y la app debe buscarlo en internet. */
+    const val SEARCH_TAG = "BUSCAR:"
+
+    /** Lo que Gemma pidió buscar (línea "BUSCAR: …"), o null si no pidió nada. */
+    fun autoQuery(response: String): String? =
+        response.lines().map { it.trim().trim('*', '_', '-', ' ') }
+            .firstOrNull { it.uppercase().startsWith(SEARCH_TAG) }
+            ?.substringAfter(':')
+            ?.trim { it.isWhitespace() || it in "*_\"'`" }
+            ?.trimEnd('.', '?', '!')
+            ?.trim()
+            ?.takeIf { it.length in 2..120 }
+
     sealed class Request {
         data class Wiki(val topic: String) : Request()
         data class Weather(val place: String) : Request()

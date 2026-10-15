@@ -803,3 +803,11 @@ Reporte del usuario (captura): preguntó "ya tienes acceso a internet, revisa" y
 - `AriWeb` reconoce más formas: revisa/averigua/consulta/checa en internet/la web/la red/google/línea, y "qué dice internet de/sobre …". Pruebas en `AriWebTest`.
 - Recordatorio para el usuario: hay que instalar la 0.64 o posterior para que exista la búsqueda; en versiones viejas ARI de verdad no tiene internet.
 - "Acerca de Ari" (showAbout) ahora dice la verdad según el sabor: la ARI del dueño usa internet para buscar (lo que pides) y descargar el modelo; la comercial solo para el modelo; ARI Trader para el modelo y las propuestas opcionales.
+
+## ARI busca sola lo que no sabe (versión 0.66.0)
+
+Pedido del usuario: "si tiene el conocimiento lo saca de su modelo local; si no, busca por toda la red".
+- `Profile.personality` (CEO): si Gemma no sabe algo o es información actual, en vez de inventar o negar internet escribe una línea "BUSCAR: <consulta>".
+- `AriWeb.autoQuery` saca esa consulta; `AriBrain.withoutNotes` ya no la dice en voz.
+- `MainActivity.handleAutoSearch` (solo CEO): al terminar la respuesta de Gemma, si hay "BUSCAR:", hace la búsqueda web (AriWeb.search: DuckDuckGo con respaldo en Wikipedia) y da el resultado. Así, lo que sabe lo responde su modelo y lo que no, lo busca solo.
+- Pruebas en `AriWebTest` (autoQuery).

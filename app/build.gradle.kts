@@ -51,8 +51,8 @@ android {
         applicationId = "com.ari.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 79
-        versionName = "0.65.0"
+        versionCode = 80
+        versionName = "0.66.0"
         // El intermediario de informes de fallos (contrato en el repositorio ari-informes). No es secreto.
         buildConfigField("String", "INFORMES_URL", "\"https://ari-informes.javierhedzd.workers.dev/v1/informe\"")
         // De qué compilación de GitHub Actions viene este APK: ARI lo usa para saber si hay una más nueva.

@@ -978,6 +978,23 @@ class MainActivity : Activity() {
         checkForUpdate(quiet = true)
     }
 
+    /** Si Gemma pidió buscar algo ("BUSCAR: …") porque no lo sabía, la app lo busca y lo contesta. */
+    private fun handleAutoSearch(response: String) {
+        val query = AriWeb.autoQuery(response) ?: return
+        chat.addNote("Eso no lo tengo yo; déjame buscarlo en internet…")
+        Thread {
+            val reply = runCatching { AriWeb.search(query) }
+                .getOrElse { "No pude conectarme a internet para buscar \"$query\". Revisa tu Wi-Fi o datos." }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                saveMessage(ROLE_ARI, reply)
+                chat.addAri(reply)
+                if (voiceMode) voice.speak(reply)
+                notifyIfAway(reply)
+            }
+        }.start()
+    }
+
     // --- Solo Ari CEO: uso del teléfono y pasos (ver AriUsage) ---
 
     private fun setupUsage() {
@@ -3377,6 +3394,7 @@ class MainActivity : Activity() {
                             chat.addNote("Esas son mis ideas. Si te gustan, di \"propón mejoras\" y se las paso a Claude.")
                         }
                         if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) runTools(response.toString())
+                        if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) handleAutoSearch(response.toString())
                         if (!forGuest) tutorTopic?.let { topic ->
                             AriTutor.summaryIn(response.toString())?.let { saveTutorSummary(topic, it) }
                         }

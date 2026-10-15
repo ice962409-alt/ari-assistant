@@ -34,7 +34,7 @@ object AriBrain {
 
     /** La respuesta sin las líneas "APRENDÍ:", "MEJORA:" ni "HACER:" (para decirla en voz). */
     fun withoutNotes(text: String): String =
-        text.lines().filterNot { val t = it.trim().trim('*', '_', ' ').uppercase(); t.startsWith("APRENDÍ:") || t.startsWith("APRENDI:") || t.startsWith("MEJORA:") || t.startsWith("HACER:") }
+        text.lines().filterNot { val t = it.trim().trim('*', '_', ' ').uppercase(); t.startsWith("APRENDÍ:") || t.startsWith("APRENDI:") || t.startsWith("MEJORA:") || t.startsWith("HACER:") || t.startsWith("BUSCAR:") }
             .joinToString("\n")
 
     private fun simplify(text: String) = text.lowercase().replace(Regex("[^\\p{L}\\p{N} ]"), "").replace(Regex("\\s+"), " ").trim()
