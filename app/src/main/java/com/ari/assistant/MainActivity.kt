@@ -852,6 +852,7 @@ class MainActivity : Activity() {
                 when (request) {
                     is AriWeb.Request.Wiki -> AriWeb.wiki(request.topic)
                     is AriWeb.Request.Weather -> AriWeb.weather(request.place)
+                    is AriWeb.Request.Search -> AriWeb.search(request.query)
                 }
             }.getOrElse { "No pude conectarme a internet. Revisa tu Wi-Fi o datos y vuelve a intentarlo." }
             runOnUiThread {

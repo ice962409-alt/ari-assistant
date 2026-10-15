@@ -786,3 +786,11 @@ Dos pedidos del usuario (de tres; el de internet va aparte).
 - Responder a "Ari" mejor (#1): ahora se graba 5 veces (antes 3) y `WakeWordModel.learn` descarta la muestra más distinta cuando hay 4 o más (ruido o un "Ari" raro), para no empeorar el reconocimiento ni inflar el límite. Pruebas en `WakeWordTest`. Falta [prueba] en el teléfono; si funciona bien, la burbuja pasa a ser solo un respaldo.
 - Aviso de reactivación de tokens (#2, solo ARI): `TokenRelay` reconoce "los tokens se reactivan a las 3", "avísame cuando se reactiven tus tokens a las 9", etc., y programa un recordatorio con el texto "¡Ya puedes seguir con Claude! Abre la sesión y escribe sigue". Reusa `ReminderParser` y el AlarmManager. Pruebas en `TokenRelayTest`.
 - Pendiente (#3): que la ARI del dueño tenga internet más amplio (búsqueda web), con fuentes seguras y solo a petición. Va en la siguiente versión.
+
+## Internet más amplio para la ARI del dueño (versión 0.64.0)
+
+Pedido del usuario (#3 de tres): que su ARI tenga internet más amplio.
+- `AriWeb.Request.Search` + `AriWeb.search()`: "busca en internet …" / "busca en la web …" / "busca en google …" usan la API de respuestas de DuckDuckGo (JSON, no copia páginas enteras) y, si no hay respuesta directa, caen en Wikipedia. "busca en wikipedia …" y "¿quién fue …?" siguen yendo a Wikipedia; el clima sigue en Open-Meteo.
+- Solo en la ARI del dueño (handleWeb es CEO), solo a petición y solo sale el texto que se busca; nada personal. La comercial y ARI Trader no tienen esto.
+- Pruebas en `AriWebTest`.
+- Nota: Gemma es un modelo local; "internet como Claude" aquí es búsqueda de datos con fuentes seguras, no navegar páginas arbitrarias.

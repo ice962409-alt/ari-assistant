@@ -611,6 +611,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 - **ARI Trader (0.61.0, para el hermano del dueño)**: copia de ARI especializada en trading, app aparte (com.ari.trader), sin los poderes de CEO. Es entrenadora, no asesora: no da consejos financieros ni señales, no tiene precios en vivo y avisa que el trading puede hacer perder dinero. Junta mejoras y, con "propón mejoras", las manda al dueño (por el mismo intermediario de los informes) para validar qué se puede agregar. El hermano no toca GitHub ni se actualiza solo. Se hace por partes: Parte 1 base + tutora + propuestas; faltan diario, checklist y leer gráficas.
 
+- Internet más amplio (0.64.0, solo ARI): "busca en internet …" trae un resumen de la web (DuckDuckGo, con respaldo en Wikipedia). "busca en wikipedia …" y "¿quién fue …?" van a Wikipedia; el clima a Open-Meteo. Solo a petición y sin datos personales.
+
 ## 7. Archivos principales del código
 
 - **MainActivity.kt**: pantalla principal, comandos y conexión con Gemma.

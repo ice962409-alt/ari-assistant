@@ -79,6 +79,7 @@ object AriNews {
             Item("Te oigo mejor cuando me llamas", "Vuelve a enseñarme tu \"Ari\" (ahora son 5 veces) en Ajustes → Responder a \"Ari\": te reconozco mejor.", ceoOnly = true),
             Item("Te aviso cuando vuelvan los tokens", "Dime \"los tokens se reactivan a las 3\" y te aviso a esa hora para que sigas con Claude.", ceoOnly = true),
         ),
+        78 to listOf(Item("Busco más en internet", "Dime \"busca en internet …\" o \"busca en la web …\" y te traigo un resumen. Para Wikipedia: \"busca en wikipedia …\".", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

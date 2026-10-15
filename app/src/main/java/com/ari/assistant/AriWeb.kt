@@ -17,9 +17,12 @@ object AriWeb {
     sealed class Request {
         data class Wiki(val topic: String) : Request()
         data class Weather(val place: String) : Request()
+        /** Búsqueda general en internet (más amplia que Wikipedia). */
+        data class Search(val query: String) : Request()
     }
 
-    private val WIKI = Regex("^(?:busca|buscame|investiga)\\s+en\\s+(?:internet|wikipedia)\\s+(?:que\\s+es\\s+|quien\\s+es\\s+|quien\\s+fue\\s+|sobre\\s+)?(.+)$")
+    private val WIKI = Regex("^(?:busca|buscame|investiga)\\s+en\\s+wikipedia\\s+(?:que\\s+es\\s+|quien\\s+es\\s+|quien\\s+fue\\s+|sobre\\s+)?(.+)$")
+    private val SEARCH = Regex("^(?:busca|buscame|investiga|buscar)\\s+en\\s+(?:internet|la\\s+web|google)\\s+(?:sobre\\s+|informacion\\s+de\\s+|informacion\\s+sobre\\s+)?(.+)$")
     private val WHO = Regex("^(?:quien\\s+fue|quien\\s+era)\\s+(.+)$")
     private val WEATHER = Regex("^(?:como\\s+esta\\s+|que\\s+tal\\s+(?:esta\\s+)?)?el\\s+clima\\s+(?:en|de)\\s+(.+?)(?:\\s+hoy)?$")
 
@@ -28,6 +31,7 @@ object AriWeb {
         WEATHER.matchEntire(t)?.let { return Request.Weather(it.groupValues[1].trim()) }
         WIKI.matchEntire(t)?.let { return Request.Wiki(it.groupValues[1].trim()) }
         WHO.matchEntire(t)?.let { return Request.Wiki(it.groupValues[1].trim()) }
+        SEARCH.matchEntire(t)?.let { return Request.Search(it.groupValues[1].trim()) }
         return null
     }
 
@@ -71,6 +75,22 @@ object AriWeb {
         val min = day.getJSONArray("temperature_2m_min").getDouble(0).toInt()
         val rain = day.optJSONArray("precipitation_probability_max")?.optInt(0) ?: 0
         return "En $name hay $temp °C, ${sky(now.optInt("weather_code"))}. Hoy: máxima $max °C, mínima $min °C, $rain% de probabilidad de lluvia."
+    }
+
+    /**
+     * Búsqueda general en internet. Usa la API de respuestas de DuckDuckGo (datos en JSON, no
+     * copia páginas enteras) y, si no trae nada, cae en Wikipedia. Solo sale lo que buscas.
+     */
+    fun search(query: String): String {
+        val answer = runCatching {
+            val o = JSONObject(get("https://api.duckduckgo.com/?no_html=1&skip_disambig=1&t=ari&format=json&q=" + enc(query)))
+            o.optString("AbstractText").trim().ifEmpty {
+                o.optJSONArray("RelatedTopics")?.optJSONObject(0)?.optString("Text")?.trim().orEmpty()
+            }
+        }.getOrNull().orEmpty()
+        if (answer.isNotEmpty()) return "Esto encontré sobre \"$query\": ${answer.take(900)}"
+        // Sin respuesta directa: lo busco en Wikipedia.
+        return wiki(query)
     }
 
     /** Códigos del clima de Open-Meteo en palabras. */
