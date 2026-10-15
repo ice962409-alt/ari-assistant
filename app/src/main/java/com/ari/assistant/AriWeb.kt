@@ -22,7 +22,8 @@ object AriWeb {
     }
 
     private val WIKI = Regex("^(?:busca|buscame|investiga)\\s+en\\s+wikipedia\\s+(?:que\\s+es\\s+|quien\\s+es\\s+|quien\\s+fue\\s+|sobre\\s+)?(.+)$")
-    private val SEARCH = Regex("^(?:busca|buscame|investiga|buscar)\\s+en\\s+(?:internet|la\\s+web|google)\\s+(?:sobre\\s+|informacion\\s+de\\s+|informacion\\s+sobre\\s+)?(.+)$")
+    private val SEARCH = Regex("^(?:busca|buscame|buscar|investiga|investigame|averigua|averiguame|consulta|revisa|revisame|checa)\\s+en\\s+(?:internet|la\\s+web|la\\s+red|google|linea|la\\s+linea)\\s+(?:sobre\\s+|acerca\\s+de\\s+|informacion\\s+(?:de|sobre)\\s+|que\\s+es\\s+|quien\\s+(?:es|fue)\\s+)?(.+)$"
+        + "|^(?:que\\s+dice|que\\s+hay\\s+en)\\s+(?:el\\s+)?internet\\s+(?:de|sobre|acerca\\s+de)\\s+(.+)$")
     private val WHO = Regex("^(?:quien\\s+fue|quien\\s+era)\\s+(.+)$")
     private val WEATHER = Regex("^(?:como\\s+esta\\s+|que\\s+tal\\s+(?:esta\\s+)?)?el\\s+clima\\s+(?:en|de)\\s+(.+?)(?:\\s+hoy)?$")
 
@@ -31,7 +32,7 @@ object AriWeb {
         WEATHER.matchEntire(t)?.let { return Request.Weather(it.groupValues[1].trim()) }
         WIKI.matchEntire(t)?.let { return Request.Wiki(it.groupValues[1].trim()) }
         WHO.matchEntire(t)?.let { return Request.Wiki(it.groupValues[1].trim()) }
-        SEARCH.matchEntire(t)?.let { return Request.Search(it.groupValues[1].trim()) }
+        SEARCH.matchEntire(t)?.let { m -> return Request.Search(m.groupValues.drop(1).firstOrNull { it.isNotBlank() }.orEmpty().trim()) }
         return null
     }
 

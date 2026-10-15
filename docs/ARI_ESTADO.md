@@ -794,3 +794,11 @@ Pedido del usuario (#3 de tres): que su ARI tenga internet más amplio.
 - Solo en la ARI del dueño (handleWeb es CEO), solo a petición y solo sale el texto que se busca; nada personal. La comercial y ARI Trader no tienen esto.
 - Pruebas en `AriWebTest`.
 - Nota: Gemma es un modelo local; "internet como Claude" aquí es búsqueda de datos con fuentes seguras, no navegar páginas arbitrarias.
+
+## ARI deja de negar que tiene internet (versión 0.65.0)
+
+Reporte del usuario (captura): preguntó "ya tienes acceso a internet, revisa" y Gemma contestó que no tiene internet y que es solo un modelo. Dos causas y arreglos:
+- La búsqueda web (0.64) acababa de compilarse; el usuario aún no la tenía instalada.
+- A Gemma no se le había dicho que la app puede buscar. `Profile.personality` (solo CEO) ahora incluye: "la app Ari SÍ puede buscar en internet cuando lo pides; nunca digas que no tienes internet; ofrécelo y pide el tema con la frase exacta". Prueba en `ProfileTest` (si aplica).
+- `AriWeb` reconoce más formas: revisa/averigua/consulta/checa en internet/la web/la red/google/línea, y "qué dice internet de/sobre …". Pruebas en `AriWebTest`.
+- Recordatorio para el usuario: hay que instalar la 0.64 o posterior para que exista la búsqueda; en versiones viejas ARI de verdad no tiene internet.

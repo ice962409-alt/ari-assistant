@@ -101,6 +101,15 @@ data class Profile(
                 "hiciste, y nunca inventes menús, opciones, permisos, invitaciones, modos ni funciones. Si te piden algo que no sabes " +
                 "hacer, dilo claro y sugiere que diga \"¿qué te puedo decir?\" para ver lo que sí puedes, o \"anota una mejora\". "
         )
+        if (ceo) {
+            // La app sí puede buscar en internet (ver AriWeb). Que Gemma lo ofrezca, no que lo niegue.
+            text.append(
+                "Importante: la app Ari SÍ puede buscar en internet cuando $owner lo pide (Wikipedia, el clima y una búsqueda web). " +
+                    "Nunca digas que no tienes acceso a internet ni que eres solo un modelo sin conexión. Si $owner quiere información " +
+                    "de internet, dile que puedes buscarla y pídele el tema con la frase exacta, por ejemplo: \"busca en internet <tema>\" " +
+                    "o \"¿cómo está el clima en <ciudad>?\". La búsqueda la hace la app con esas frases; tú no navegas por tu cuenta. "
+            )
+        }
         if (name.isNotEmpty()) text.append("Llama a $name por su nombre de vez en cuando. ")
         text.append("Respondes siempre en español.")
         return text.toString()

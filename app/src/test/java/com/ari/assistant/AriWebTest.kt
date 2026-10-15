@@ -9,9 +9,11 @@ class AriWebTest {
 
     @Test
     fun understandsWhatToLookUp() {
-        assertEquals(Request.Search("que es la fotosintesis"), AriWeb.parse("Busca en internet qué es la fotosíntesis"))
+        assertEquals(Request.Search("la fotosintesis"), AriWeb.parse("Busca en internet qué es la fotosíntesis"))
         assertEquals(Request.Wiki("la fotosintesis"), AriWeb.parse("Busca en wikipedia la fotosíntesis"))
         assertEquals(Request.Search("las noticias de hoy"), AriWeb.parse("busca en la web las noticias de hoy"))
+        assertEquals(Request.Search("bitcoin"), AriWeb.parse("revisa en internet bitcoin"))
+        assertEquals(Request.Search("el dolar"), AriWeb.parse("qué dice internet sobre el dólar"))
         assertEquals(Request.Wiki("benito juarez"), AriWeb.parse("¿Quién fue Benito Juárez?"))
         assertEquals(Request.Weather("monterrey"), AriWeb.parse("¿Cómo está el clima en Monterrey?"))
         assertEquals(Request.Weather("guadalajara"), AriWeb.parse("el clima de Guadalajara hoy"))
