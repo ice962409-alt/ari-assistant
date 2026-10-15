@@ -4,9 +4,14 @@
 - Lee `docs/ARI_ESTADO.md` antes de cambiar código y actualízalo cuando cambie el estado del proyecto.
 - No se puede compilar Android en el contenedor (Google Maven está bloqueado). Para verificar, lanza el workflow `android.yml` con `workflow_dispatch` en la rama de trabajo y espera a que termine en verde antes de decir que compila.
 
-## Documento en Google Drive (actualizarlo siempre)
+## Para ahorrar tokens (pedido del usuario, 15/10/2026)
 
-El usuario pidió que, cada vez que se termine un cambio, se actualice su documento en Google Drive.
+- **No vigilar las compilaciones:** no revises el estado del build una y otra vez mientras compila. Lanza el workflow, sigue con otra cosa o espera lo suficiente (una compilación tarda ~8 min) y revisa una sola vez cerca del final. Antes de subir, revisa bien las pruebas para que no salga en rojo (cada build fallido gasta tokens en leer logs y corregir).
+- **Agrupar tareas:** cuando el usuario pida varias cosas, hazlas seguidas sin preguntar entre cada una si ya hay decisión. Deja lo que dependa de él en el tablero y avanza con lo demás.
+
+## Documento en Google Drive (cada 2-3 versiones)
+
+El usuario pidió exportar el documento a Google Drive **cada 2 o 3 versiones**, no en cada cambio, para ahorrar tokens (15/10/2026). Sigue editando `docs/ARI_DOCUMENTACION.md` en cada versión (eso es local y no gasta), pero exporta a Drive solo cada 2-3 versiones o cuando el usuario lo pida. Lo mismo para la guía de aprendizaje.
 
 1. Edita `docs/ARI_DOCUMENTACION.md`: fecha, uso, historial de cambios, estado de los PR, ideas pendientes.
 2. El conector de Drive no puede editar el contenido de un archivo existente. Crea un documento nuevo con `create_file`: título "Ari - Documentación del proyecto", `contentMimeType: text/markdown`, `parentId: 1REKTNNKcgTP9DnetLUgbHCsbLrvQZFI7` (carpeta "Ari - Documentación de Claude").
@@ -33,7 +38,7 @@ El usuario pidió que, cada vez que se termine un cambio, se actualice su docume
 El usuario quiere aprender y pidió guardar todo lo que Claude le enseña en una guía.
 
 - Fuente: `docs/GUIA_APRENDIZAJE.md`. Cada vez que expliques un concepto nuevo (redes, seguridad, Android, IA, herramientas), agrégalo en la sección que corresponda, en lenguaje sencillo, con ejemplos del propio proyecto, y suma los términos nuevos al glosario.
-- Exporta la guía a Drive igual que la documentación: título "Ari - Guía de aprendizaje", misma carpeta (`parentId: 1REKTNNKcgTP9DnetLUgbHCsbLrvQZFI7`), y manda a la papelera la versión anterior de la guía (no la de la documentación).
+- Exporta la guía a Drive igual que la documentación y con la misma frecuencia (cada 2-3 versiones, no en cada cambio): título "Ari - Guía de aprendizaje", misma carpeta (`parentId: 1REKTNNKcgTP9DnetLUgbHCsbLrvQZFI7`), y manda a la papelera la versión anterior de la guía (no la de la documentación).
 
 ## Estado para el widget "Ari Estado" (actualizarlo siempre)
 
