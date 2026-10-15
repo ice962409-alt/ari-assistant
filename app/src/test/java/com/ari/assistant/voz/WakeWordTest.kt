@@ -87,6 +87,16 @@ class WakeWordTest {
     }
 
     @Test
+    fun learnsFromFiveSamplesAndDropsTheOddOne() {
+        // Cuatro "Ari" parecidas y una rara (rising=false): con 5, la rara se descarta.
+        val good = listOf(word(0.45, seed = 1), word(0.5, seed = 2), word(0.55, seed = 3), word(0.48, seed = 4))
+        val odd = word(0.5, rising = false, seed = 9)
+        val model = WakeWordModel.learn(good + odd)!!
+        assertEquals(4, model.templates.size)
+        assertTrue(model.matches(word(0.5, seed = 7)))
+    }
+
+    @Test
     fun needsAtLeastTwoGoodRecordings() {
         assertNull(WakeWordModel.learn(listOf(word(0.5))))
         assertNull(WakeWordModel.learn(listOf(word(0.5), FloatArray(8_000))))

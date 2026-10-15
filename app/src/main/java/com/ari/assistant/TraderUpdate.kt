@@ -1,7 +1,6 @@
 package com.ari.assistant
 
 import android.content.Context
-import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -17,18 +16,27 @@ object TraderUpdate {
 
     data class Latest(val code: Long, val name: String, val url: String, val notes: String)
 
-    /** Lee el archivo de versión. Sin él (o mal escrito) no hay actualización. */
-    fun parse(json: String): Latest? = runCatching {
-        val o = JSONObject(json)
-        val url = o.optString("apkUrl")
+    /**
+     * Lee el archivo de versión. Se extraen los campos con expresiones sencillas (sin depender de
+     * JSONObject, que no existe en las pruebas). Sin él, mal escrito o sin enlace seguro, no hay
+     * actualización.
+     */
+    fun parse(json: String): Latest? {
+        val url = string(json, "apkUrl") ?: return null
         if (!url.startsWith("https://")) return null
-        Latest(
-            code = o.optLong("versionCode"),
-            name = o.optString("versionName"),
+        val code = Regex("\"versionCode\"\\s*:\\s*(\\d+)").find(json)?.groupValues?.get(1)?.toLongOrNull() ?: return null
+        return Latest(
+            code = code,
+            name = string(json, "versionName").orEmpty(),
             url = url,
-            notes = o.optString("notes").take(300)
+            notes = string(json, "notes").orEmpty().take(300)
         )
-    }.getOrNull()
+    }
+
+    private fun string(json: String, key: String): String? =
+        Regex("\"" + Regex.escape(key) + "\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"").find(json)
+            ?.groupValues?.get(1)
+            ?.replace("\\\"", "\"")?.replace("\\n", "\n")?.replace("\\\\", "\\")
 
     /** Hay actualización si la versión publicada tiene un número mayor que la instalada. */
     fun isNewer(latestCode: Long, installedCode: Long) = latestCode > installedCode

@@ -229,11 +229,14 @@ class WakeWordModel(val templates: List<Array<FloatArray>>, val threshold: Doubl
          * parecen entre sí (por ejemplo, si hubo ruido o dijiste otra cosa).
          */
         fun learn(recordings: List<FloatArray>, sensitivity: Double = 1.0): WakeWordModel? {
-            val templates = recordings
+            val all = recordings
                 .map { WakeWord.features(WakeWord.trim(it)) }
                 .filter { it.size >= 15 } // al menos 0.15 s de voz
                 .map { WakeWord.normalized(it) }
-            if (templates.size < 2) return null
+            if (all.size < 2) return null
+            // Con 4 o más muestras, descarta la más distinta (ruido o un "Ari" raro): así una
+            // grabación mala no empeora el reconocimiento ni infla el límite.
+            val templates = if (all.size >= 4) dropOutlier(all) else all
             val pairs = mutableListOf<Double>()
             for (i in templates.indices) for (j in templates.indices) {
                 if (i != j) pairs += WakeWord.distance(templates[i], templates[j])
@@ -242,6 +245,18 @@ class WakeWordModel(val templates: List<Array<FloatArray>>, val threshold: Doubl
             if (mean.isNaN() || mean > MAX_THRESHOLD) return null
             val threshold = (mean * 1.7 * sensitivity).coerceIn(MIN_THRESHOLD, MAX_THRESHOLD)
             return WakeWordModel(templates, threshold)
+        }
+
+        /** Quita la muestra cuya distancia promedio a las demás es la mayor. */
+        internal fun dropOutlier(templates: List<Array<FloatArray>>): List<Array<FloatArray>> {
+            val avg = DoubleArray(templates.size)
+            for (i in templates.indices) {
+                var sum = 0.0
+                for (j in templates.indices) if (i != j) sum += WakeWord.distance(templates[i], templates[j])
+                avg[i] = sum / (templates.size - 1)
+            }
+            val worst = avg.indices.maxByOrNull { avg[it] } ?: return templates
+            return templates.filterIndexed { index, _ -> index != worst }
         }
     }
 }

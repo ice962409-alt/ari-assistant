@@ -866,6 +866,31 @@ class MainActivity : Activity() {
         return true
     }
 
+    // --- Solo ARI: avisar cuando se reactiven los tokens de Claude (ver TokenRelay) ---
+
+    private fun handleTokenRelay(text: String): Boolean {
+        if (!TokenRelay.matches(text)) return false
+        input.text.clear()
+        val reminderMsg = TokenRelay.toReminder(text)
+        if (reminderMsg == null) {
+            answerLocally(text, "¿A qué hora se reactivan? Dime, por ejemplo: \"los tokens se reactivan a las 3\" o \"avísame mañana a las 9 que ya puedo seguir con Claude\".")
+            return true
+        }
+        when (val parsed = com.ari.assistant.agents.ReminderParser.parse(reminderMsg, java.time.LocalDateTime.now())) {
+            is com.ari.assistant.agents.ReminderParser.Result.Problem ->
+                answerLocally(text, "Entendí que es sobre los tokens, pero no la hora. Dime, por ejemplo: \"los tokens se reactivan a las 3 de la tarde\".")
+            is com.ari.assistant.agents.ReminderParser.Result.Ok -> {
+                val id = database.addReminder(parsed.text, parsed.dueAt)
+                reminderAlarms.schedule(com.ari.assistant.agents.Reminder(id, parsed.text, parsed.dueAt))
+                val whenText = java.text.SimpleDateFormat("EEEE d 'a las' HH:mm", java.util.Locale("es", "MX")).format(
+                    java.util.Date(parsed.dueAt.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())
+                )
+                answerLocally(text, "Listo, te aviso el $whenText para que sigas con Claude. Mientras, descansa.")
+            }
+        }
+        return true
+    }
+
     // --- Solo ARI: actualizarse desde GitHub (ver AriUpdate) ---
 
     private fun handleUpdateRequest(text: String): Boolean {
@@ -1616,7 +1641,7 @@ class MainActivity : Activity() {
                 .setMessage(
                     "Me quedo atenta aunque uses otras apps o tengas la pantalla apagada, y cuando dices \"Ari\" " +
                         "(sola, como cuando llamas a alguien) suena un tonito, me abro y te escucho.\n\n" +
-                        "• Primero me enseñas cómo dices mi nombre: lo dices 3 veces.\n" +
+                        "• Primero me enseñas cómo dices mi nombre: lo dices 5 veces.\n" +
                         "• No grabo nada ni uso internet: comparo cada palabra suelta con tus 3 muestras y la olvido.\n" +
                         "• Verás una notificación fija mientras estoy atenta; ahí me apagas.\n" +
                         "• Gasta algo de batería, como tener el micrófono abierto."
@@ -1687,14 +1712,14 @@ class MainActivity : Activity() {
             .show()
     }
 
-    /** Graba "Ari" 3 veces y guarda solo la forma del sonido (nunca la grabación). */
+    /** Graba "Ari" 5 veces y guarda solo la forma del sonido (nunca la grabación). */
     private fun enrollWakeWord() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_AUDIO_WAKE)
             return
         }
         if (voiceMode) closeLive()
-        val total = 3
+        val total = 5
         val collected = mutableListOf<FloatArray>()
         val text = TextView(this).apply {
             textSize = 18f
@@ -1724,8 +1749,8 @@ class MainActivity : Activity() {
                     dialog.dismiss()
                     if (model == null) {
                         chat.addNote(
-                            "No te oí igual las 3 veces. Intenta otra vez en un lugar sin ruido: di solo \"Ari\", " +
-                                "como cuando llamas a alguien, igual las 3 veces. (Ajustes → Responder a \"Ari\")"
+                            "No te oí parecido las veces que lo dijiste. Intenta otra vez en un lugar sin ruido: di solo \"Ari\", " +
+                                "como cuando llamas a alguien, igual cada vez. (Ajustes → Responder a \"Ari\")"
                         )
                         return@runOnUiThread
                     }
@@ -2949,6 +2974,7 @@ class MainActivity : Activity() {
         if (!guestMode && handlePhoneSettings(text)) return
         if (!guestMode && handleMedia(text)) return
         if (!guestMode && handleUsage(text)) return
+        if (!guestMode && resources.getBoolean(R.bool.ari_ceo) && handleTokenRelay(text)) return
         if (!guestMode && handleUpdateRequest(text)) return
         if (!guestMode && handleWeb(text)) return
         if (!guestMode && handleAppControl(text)) return

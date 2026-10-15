@@ -75,6 +75,10 @@ object AriNews {
             Item("Guarda un wifi nuevo", "Cuando te den la clave, dime: \"guarda el wifi (nombre) con la clave (clave)\". Android te pide confirmar y la red queda lista.", ceoOnly = true),
             Item("Reviso mi propio diseño", "Dime \"mejora tu interfaz\" o \"qué le cambiarías a tu icono\" y te propongo mejoras; con \"propón mejoras\" se las paso a Claude.", ceoOnly = true),
         ),
+        77 to listOf(
+            Item("Te oigo mejor cuando me llamas", "Vuelve a enseñarme tu \"Ari\" (ahora son 5 veces) en Ajustes → Responder a \"Ari\": te reconozco mejor.", ceoOnly = true),
+            Item("Te aviso cuando vuelvan los tokens", "Dime \"los tokens se reactivan a las 3\" y te aviso a esa hora para que sigas con Claude.", ceoOnly = true),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

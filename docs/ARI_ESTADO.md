@@ -778,3 +778,11 @@ Tres pedidos del usuario para ARI Trader.
 - CI: nuevo paso "Publicar ARI Trader" (con publicar_web + ARI_WEB_TOKEN) sube `AriTrader.apk` a un release `trader-v<versión>` en ari-web y escribe `ari-trader-latest.json`.
 - Pruebas en `AriTraderTest` y `TraderUpdateTest`.
 - Pendiente del usuario: para que la actualización automática funcione, hay que compilar con `publicar_web` y tener el secreto `ARI_WEB_TOKEN` (el mismo de la página).
+
+## Responder a Ari mejorado y aviso de tokens (versión 0.63.0)
+
+Dos pedidos del usuario (de tres; el de internet va aparte).
+- Corrección: `TraderUpdate.parse` ya no usa `JSONObject` (no existe en las pruebas de JVM); lee los campos con expresiones. Así la Parte 2 de ARI Trader compila.
+- Responder a "Ari" mejor (#1): ahora se graba 5 veces (antes 3) y `WakeWordModel.learn` descarta la muestra más distinta cuando hay 4 o más (ruido o un "Ari" raro), para no empeorar el reconocimiento ni inflar el límite. Pruebas en `WakeWordTest`. Falta [prueba] en el teléfono; si funciona bien, la burbuja pasa a ser solo un respaldo.
+- Aviso de reactivación de tokens (#2, solo ARI): `TokenRelay` reconoce "los tokens se reactivan a las 3", "avísame cuando se reactiven tus tokens a las 9", etc., y programa un recordatorio con el texto "¡Ya puedes seguir con Claude! Abre la sesión y escribe sigue". Reusa `ReminderParser` y el AlarmManager. Pruebas en `TokenRelayTest`.
+- Pendiente (#3): que la ARI del dueño tenga internet más amplio (búsqueda web), con fuentes seguras y solo a petición. Va en la siguiente versión.
