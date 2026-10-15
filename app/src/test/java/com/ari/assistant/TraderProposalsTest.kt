@@ -13,7 +13,7 @@ class TraderProposalsTest {
             TraderProposals.Request.Note("quiero alertas de precio"),
             TraderProposals.parse("anota una mejora: quiero alertas de precio")
         )
-        assertEquals(TraderProposals.Request.Propose, TraderProposals.parse("propón mejoras".let { n -> norm(it) }))
+        assertEquals(TraderProposals.Request.Propose, TraderProposals.parse(norm("propón mejoras")))
         assertEquals(TraderProposals.Request.Clear, TraderProposals.parse("borra las mejoras"))
         assertNull(TraderProposals.parse("hola cómo estás"))
     }
