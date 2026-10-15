@@ -1921,11 +1921,20 @@ class MainActivity : Activity() {
     /** Versión, privacidad y licencias (Google Play pide mostrar las de terceros). */
     private fun showAbout() {
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
+        val internet = when {
+            resources.getBoolean(R.bool.ari_ceo) ->
+                "Ari no tiene cuentas ni publicidad, y nunca envía tus pláticas ni recuerdos a internet. " +
+                    "Usa internet solo cuando tú lo pides: para buscar algo (Wikipedia, el clima o la web) y para descargar su modelo. " +
+                    "Solo sale lo que buscas. También habla con los equipos de tu red local que tú apruebas, y a ellos no les pasa tus recuerdos."
+            resources.getBoolean(R.bool.ari_trader) ->
+                "Ari no tiene cuentas ni publicidad, y nunca envía tus pláticas ni recuerdos a internet. " +
+                    "Usa internet solo para descargar su modelo y, si lo aceptas, para mandar propuestas de mejora (solo ese texto, nada personal)."
+            else ->
+                "Ari no tiene cuentas, no usa publicidad ni envía tus datos a internet, salvo para descargar su modelo cuando tú lo pides."
+        }
         val text = "Ari $version\n" +
             "Código de este teléfono: ${DeviceLock.code(this)}\n\n" +
-            "Privacidad: tus conversaciones, recuerdos y respaldos se quedan en tu teléfono. " +
-            "Ari no tiene cuentas, no usa publicidad ni envía tus datos a internet. Solo habla con " +
-            "los equipos de tu red local que tú apruebas, y a ellos no les pasa tus recuerdos.\n\n" +
+            "Privacidad: tus conversaciones, recuerdos y respaldos se quedan en tu teléfono. $internet\n\n" +
             "Componentes de terceros:\n" +
             "• Gemma 4, de Google: Apache License 2.0.\n" +
             "• LiteRT-LM, de Google: Apache License 2.0.\n" +

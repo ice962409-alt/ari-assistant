@@ -802,3 +802,4 @@ Reporte del usuario (captura): preguntó "ya tienes acceso a internet, revisa" y
 - A Gemma no se le había dicho que la app puede buscar. `Profile.personality` (solo CEO) ahora incluye: "la app Ari SÍ puede buscar en internet cuando lo pides; nunca digas que no tienes internet; ofrécelo y pide el tema con la frase exacta". Prueba en `ProfileTest` (si aplica).
 - `AriWeb` reconoce más formas: revisa/averigua/consulta/checa en internet/la web/la red/google/línea, y "qué dice internet de/sobre …". Pruebas en `AriWebTest`.
 - Recordatorio para el usuario: hay que instalar la 0.64 o posterior para que exista la búsqueda; en versiones viejas ARI de verdad no tiene internet.
+- "Acerca de Ari" (showAbout) ahora dice la verdad según el sabor: la ARI del dueño usa internet para buscar (lo que pides) y descargar el modelo; la comercial solo para el modelo; ARI Trader para el modelo y las propuestas opcionales.
