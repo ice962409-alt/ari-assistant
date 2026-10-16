@@ -252,6 +252,15 @@ Dos ideas que salieron de ahí:
 
 Cada compilación guarda sus APK en GitHub como **artefactos** (los archivos que deja un trabajo de GitHub Actions). Cada una ocupa unos 200 MB, y por defecto se guardaban 90 días. En octubre se llenó el espacio del repositorio: la compilación salía bien, pero fallaba al guardar el APK. Se borraron 323 artefactos viejos, se dejó la 0.66.0 y ahora cada uno dura poco (**retención**): 14 días el APK principal, 7 los demás. GitHub tarda entre 6 y 12 horas en recalcular el espacio libre después de borrar.
 
+Pero borrar no basta. En una cuenta gratuita con repositorio privado, GitHub da 500 MB y no mide cuánto ocupas **ahora**, sino cuánto ocupaste **durante el mes**, en **GB-hora**. Es como pagar un estacionamiento por horas: aunque saques el coche, las horas que ya estuvo ahí cuentan. Con 9 GB guardados unos días, el mes ya se gastó, y lo normal es que no se libere hasta el siguiente ciclo de facturación.
+
+Por eso, desde la 0.66.1, tu APK sale además en **Releases**: las "versiones" de un repositorio, una página con archivos para descargar (como la de la Ari comercial en ari-web). Los archivos de Releases no gastan ese espacio. Como el repositorio de Ari es privado, solo tú (con tu sesión de GitHub abierta) ves esa versión. Y el APK baja directo, sin zip.
+
+Dos detalles de cómo quedó armado:
+
+- **Permisos mínimos**: el trabajo que sube a Releases necesita permiso de escritura. Se separó en un trabajo aparte ("publicar") que no usa herramientas de terceros. Así, las herramientas que compilan siguen con permiso de solo lectura. Es la regla del menor privilegio: a cada pieza, solo la llave que necesita.
+- **Rojo a propósito**: el actualizador de dentro de ARI busca la última compilación en verde y baja de ahí el artefacto ari-apk. Si una compilación sin artefacto saliera en verde, ARI te ofrecería "Hay una ARI nueva" y fallaría al bajarla. Por eso, mientras falte espacio, la compilación termina en rojo con el aviso "GitHub no guardó uno o más artefactos", aunque el APK esté bien en Releases.
+
 ### Probar la base de datos real sin teléfono: Robolectric
 
 Las pruebas automáticas corren en la computadora de GitHub, que no es un Android. La base de datos de Ari usa **SQLite de Android**, así que antes solo se podía probar con una "memoria de mentira". **Robolectric** es una herramienta que hace creer al código que está dentro de un Android: le da un SQLite de verdad en la computadora. Con ella, desde la 0.66.1, las pruebas guardan mensajes, recuerdos y personas, cierran la base, la vuelven a abrir y comprueban que todo siga ahí. También fabrican una base vieja (versión 1, como la de la 0.1.0) y comprueban que al migrarla a la versión 4 no se pierda nada.
@@ -650,3 +659,5 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Retención**: cuántos días guarda GitHub un artefacto antes de borrarlo solo.
 - **Robolectric**: herramienta que simula Android en la computadora para probar código como la base de datos sin teléfono.
 - **AndroidX**: la colección moderna de librerías oficiales de Android.
+- **GB-hora**: forma de medir el almacenamiento por tiempo: 1 GB guardado durante 1 hora. GitHub suma las del mes.
+- **Releases (versiones)**: la página de un repositorio con archivos listos para descargar, como un APK. No gasta el espacio de artefactos.
