@@ -8,6 +8,23 @@
 
 Convención: cada dato lleva su fuente (ruta:línea@rama, SHA, id de run de GitHub Actions o documento). "Confirmado por el usuario" significa que hay un registro escrito de que el dueño lo probó en el teléfono; si no, se dice "solo código" o "sin verificar".
 
+## 0. Trabajo en curso (leer primero)
+
+Tarea autorizada por el usuario el 16/10/2026: **trabajar el criterio A de la Fase 1 en `ccr-e45f2eee-wkjpdl`** (cambios, commit, push y compilación con `android.yml`). Si una sesión se corta, la siguiente sigue desde el primer paso sin marcar. Una tarea programada ("ARI: continuar criterio A") despierta a la sesión cada hora hasta terminar.
+
+- [x] Decisiones del usuario registradas (sección 4, 16/10/2026).
+- [x] Commit a61b589 (0.66.1): R8 9.1.29 en `build.gradle.kts`, 5 advertencias de Kotlin corregidas y CI que revisa la ABI de las 4 APK de la app (incluida Trader) y anota la versión de LiteRT-LM y de R8.
+- [ ] Revisión adversarial del diff (3 revisores) y corrección de lo que encuentren.
+- [ ] Lanzar `android.yml` (workflow_dispatch) sobre la rama y esperar unos 15 minutos. Revisar una sola vez, sin vigilar.
+- [ ] En el log: 0 avisos "parsing kotlin metadata", 0 líneas `w:` de código (el aviso "Deprecated Gradle Version" queda fuera del alcance), `native-code: 'arm64-v8a'` en las 4 APK, versión de LiteRT-LM resuelta y R8 9.1.29 en el classpath.
+- [ ] Fijar `litertlm-android` a la versión resuelta (sin `latest.release`), compilar otra vez y confirmar que sigue en verde y limpio.
+- [ ] Actualizar `docs/ARI_ESTADO.md`, `docs/ARI_DOCUMENTACION.md` y este documento (A = APROBADO, con el número de run).
+- [ ] Avisar al usuario con el enlace del run y del APK (`ari-apk`, 0.66.1), y desactivar la tarea programada.
+
+Si la compilación falla: leer el log, corregir solo lo necesario y relanzar. Si R8 9.1.29 no existe o no es compatible con AGP 8.13.2, no improvisar un cambio grande (por ejemplo, subir AGP a 9.x): parar y preguntar al usuario.
+
+Fuera de esta tarea, sin autorización: `docs/ARI_GAME_BOOST_DISENO.md` (sin commit), cambios para B y C (dependen de las pruebas del usuario en el POCO), el tablero, `estado.json` y Drive.
+
 ## 1. Resumen
 
 - El desarrollo real está en la rama `ccr-e45f2eee-wkjpdl` @ `9cbcaa3` (versión 0.66.0, versionCode 80). Tiene 154 commits por delante de `main` y no tiene PR. `main` sigue en la 0.1.0 (00527d1).
@@ -142,7 +159,16 @@ Fuente principal: `docs/ARI_ESTADO.md`@rama activa (número de línea) y el tabl
 - Que ARI responda a su nombre con un modelo de voz local (tablero "palabra-ari") y que reconozca voces (tablero "reconocer-voces").
 - Trabajo con el usuario: el tablero para decisiones y pruebas, ahorrar tokens, exportar a Drive cada 2-3 versiones (`CLAUDE.md`@rama activa, 15/10).
 
+Decisiones de la Fase 1 (respuestas del usuario, 16/10/2026):
+- Rama evaluada: la rama activa `ccr-e45f2eee-wkjpdl` (0.66 en adelante), no `main`.
+- Motor: LiteRT-LM (.litertlm). GGUF/llama.cpp queda fuera de la Fase 1.
+- A, "compilación limpia": sin errores y sin avisos de R8 ni advertencias de Kotlin.
+- B, "sin cargar el modelo": la interfaz se puede usar al instante aunque el modelo cargue en segundo plano. No hace falta código nuevo; falta la prueba en el teléfono.
+- C, memoria: episódica = historial (`messages`); semántica = recuerdos y personas (`memories`, `people`). No hace falta código nuevo; falta la prueba en el teléfono.
+
 ## 5. Cuestiones pendientes (decisiones que solo puede tomar el usuario)
+
+Las preguntas 1 a 5 ya están respondidas (sección 4). Siguen abiertas las 6 a 10.
 
 1. Rama de referencia para Fase 1: ¿se evalúa la rama activa (0.66.0) o `main` (0.1.0)? ¿Se fusiona la rama activa en `main`?
 2. Motor: ¿se acepta LiteRT-LM (.litertlm) como motor válido de Fase 1, o GGUF/llama.cpp es obligatorio? Hoy la app rechaza los `.gguf` a propósito.
