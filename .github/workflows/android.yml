@@ -72,11 +72,29 @@ jobs:
           done
 
       - name: Pruebas automaticas
-        run: ./gradlew :app:testCompletaDebugUnitTest :app:testOtrosDebugUnitTest :app:testTraderDebugUnitTest
+        run: |
+          set -o pipefail
+          ./gradlew :app:testCompletaDebugUnitTest :app:testOtrosDebugUnitTest :app:testTraderDebugUnitTest 2>&1 | tee pruebas.log
 
       # Las versiones de entrega (release): código revuelto, sin modo de depuración.
       - name: Compilar APK
-        run: ./gradlew :app:assembleCompletaRelease :app:assembleOtrosRelease :app:assembleTraderRelease :app:assembleCompletaDebug :estado:assembleDebug
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleCompletaRelease :app:assembleOtrosRelease :app:assembleTraderRelease :app:assembleCompletaDebug :estado:assembleDebug 2>&1 | tee compilar.log
+
+      # Criterio A de Fase 1 (compilación limpia): sin avisos de R8 sobre metadatos de Kotlin
+      # y sin advertencias del compilador de Kotlin ("w: ..."). Si aparece alguna, falla.
+      - name: Revisar avisos de R8 y Kotlin
+        run: |
+          r8="$(cat pruebas.log compilar.log | grep -c "An error occurred when parsing kotlin metadata" || true)"
+          kt="$(cat pruebas.log compilar.log | grep -cE "^w: " || true)"
+          echo "Avisos de R8 (metadatos de Kotlin): $r8"
+          echo "Advertencias de Kotlin (w:): $kt"
+          cat pruebas.log compilar.log | grep -E "^w: " || true
+          if [ "$r8" != "0" ] || [ "$kt" != "0" ]; then
+            echo "::error::La compilación no está limpia: $r8 avisos de R8 y $kt advertencias de Kotlin"
+            exit 1
+          fi
 
       # Anota qué versión de LiteRT-LM (el motor de Gemma) y de R8 se usaron en esta compilación.
       - name: Versiones de dependencias
