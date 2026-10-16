@@ -179,6 +179,14 @@ Decisiones de la Fase 1 (respuestas del usuario, 16/10/2026):
 - B, "sin cargar el modelo": la interfaz se puede usar al instante aunque el modelo cargue en segundo plano. No hace falta código nuevo; falta la prueba en el teléfono.
 - C, memoria: episódica = historial (`messages`); semántica = recuerdos y personas (`memories`, `people`). No hace falta código nuevo; falta la prueba en el teléfono.
 
+Decisiones para la Fase 2 (respuestas del usuario en el tablero, 16/10/2026, 19:57-20:01 UTC):
+- GE (pregunta 6): **dentro de ARI, como un agente más** (ficha "fase2-ge"), solo en la ARI del dueño y sin depender de Gemma. AriCore, ModelManager y ResourceCoordinator quedan como nombres de diseño de piezas existentes; no se renombra código.
+- Búsqueda automática "BUSCAR:" (pregunta 7): **se deja así** ("buscar-sin-preguntar"). Como solo existe en la ARI del dueño, la política pública sigue siendo correcta; se aclaró en `docs/POLITICA_PRIVACIDAD.md` y se documentó qué se envía en `docs/ARI_DOCUMENTACION.md`.
+- Clave de firma propia (pregunta 8): **todavía no** ("clave-propia"). Nota del usuario: "Aún no trabajemos en Ari para otros y trader".
+- Ramas viejas (pregunta 9): **cerrar el PR #1 y dejar las ramas** ("ramas-viejas"). PR #1 cerrado sin mezclar el 16/10/2026.
+- Game Boost: **acepta las 7 recomendaciones** ("game-boost-decisiones"): solo en la ARI del dueño; tras "preparar juego", ARI no recarga Gemma mientras haya una sesión de juego abierta; temperatura solo antes y después (sin servicio en primer plano); sin "Acceso a uso"; perfiles e historial en el respaldo cifrado; nombre "Game Boost". Eden instalado: **versión 1.0.0** (el paquete se detecta en el teléfono y el usuario lo confirma).
+- Prueba de la 0.67.0 ("probar-067"): "Todo bien" (16/10/2026 19:57 UTC).
+
 ## 5. Cuestiones pendientes (decisiones que solo puede tomar el usuario)
 
 Las preguntas 1 a 5 ya están respondidas (sección 4). Las 6 a 9 están en el tablero desde el 16/10/2026 (fichas "fase2-ge", "buscar-sin-preguntar", "clave-propia" y "ramas-viejas"), igual que las de Game Boost ("game-boost-decisiones"; la 8 de ese documento ya se hizo: los criterios están en `docs/ARI_ESTADO.md`). La 10 quedó cubierta: cada versión publicada deja su etiqueta `ari-v<versión>` (la primera, `ari-v0.66.1` sobre 62426d1), que conserva todo el historial de la rama.

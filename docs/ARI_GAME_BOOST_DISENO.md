@@ -1,6 +1,7 @@
 # ARI Game Boost — Propuesta de diseño
 
 - Estado: **propuesta de diseño, sin código**. Nada de esto está implementado ni probado.
+- Actualización 16/10/2026: la Fase 1 está cerrada y el usuario respondió las decisiones de la sección 8 (ver abajo). Se empieza por GB-1 y GB-2 juntas (versión 0.68.0), porque GB-1 sola no tiene nada visible que probar en el teléfono.
 - Fecha: 16 de octubre de 2026.
 - Bloqueo: **no se programa nada de Game Boost hasta superar la Fase 1** (criterios A, B y C; ver `docs/ARI_HANDOFF.md`, sección 6). Varias piezas dependen directamente de B y C.
 - Base: rama `ccr-e45f2eee-wkjpdl` @ 9cbcaa3 (0.66.0). Las rutas `archivo:línea` se refieren a esa rama.
@@ -218,6 +219,16 @@ Prohibido en el diseño y en cualquier implementación futura:
 6. ¿Las tablas de Game Boost entran en el respaldo cifrado?
 7. ¿Se mantiene el nombre "Game Boost" de cara al usuario o se usa "Preparar juego"?
 8. ¿Se escribe el texto oficial de los criterios A, B y C de la Fase 1 en `docs/ARI_ESTADO.md`? Hoy solo está en el documento de traspaso.
+
+Respuestas del usuario (tablero, ficha "game-boost-decisiones", 16/10/2026 20:00 UTC): acepta las recomendaciones.
+1. Solo en la ARI del dueño (sabor `completa`).
+2. Sí: tras "preparar juego", ARI no recarga Gemma mientras haya una sesión de juego abierta (se programa en GB-3).
+3. Eden 1.0.0. El paquete no se confirmó: ARI buscará los conocidos (`dev.eden.eden_emulator`, `.nightly`, `dev.legacy.eden_emulator`) y mostrará cuál encontró. Se excluye `com.miHoYo.Yuanshen` para no confundir Eden con el juego real.
+4. Solo mediciones antes y después; sin servicio en primer plano.
+5. Sin "Acceso a uso".
+6. Sí, las tablas de Game Boost entran en el respaldo cifrado.
+7. Nombre: "Game Boost" (lo eligió el usuario; ARI no se publica en Google Play, y la interfaz no promete cifras de rendimiento).
+8. Hecho: los criterios están en `docs/ARI_ESTADO.md`.
 
 ## 9. Fuentes principales
 

@@ -848,3 +848,13 @@ Decisión del usuario en el tablero (ficha "actualizador-releases", 16/10): "Que
 - Pruebas: `AriUpdateReleasesTest` (Robolectric: elige la más nueva de su rama, ignora borradores, otras ramas, otras etiquetas y archivos sin subir) y `AriUpdateTest` (el mensaje del permiso Contents).
 - Falta [prueba] del usuario: instalar la 0.67.0 a mano desde Releases (el actualizador de la 0.66.1 no ve Releases), darle a la llave de GitHub de ARI el permiso Contents: lectura y, con la siguiente versión, probar "busca actualizaciones".
 - Resultado: run 38953664021 (643758c), build en verde y versión privada `ari-v0.67.0` con `ari.apk` (verificado por fuera: versión 0.67.0, código nuevo, solo arm64-v8a, descarga por la API de assets). El run queda en rojo a propósito por la cuota de artefactos.
+
+## Decisiones de la Fase 2 (16/10/2026)
+
+Respuestas del usuario en el tablero (detalle en `docs/ARI_HANDOFF.md`, sección 4):
+- GE vive dentro de ARI, como agente, solo en la ARI del dueño. Game Boost: se aceptan las 7 recomendaciones (ver `docs/ARI_GAME_BOOST_DISENO.md`, sección 8); Eden 1.0.0.
+- La búsqueda automática se queda. Solo existe en la ARI del dueño; se aclaró en el borrador de la política de privacidad y se documentó qué se envía.
+- Clave de firma propia: todavía no. Nota: "Aún no trabajemos en Ari para otros y trader".
+- PR #1 (Termux) cerrado sin mezclar; las ramas viejas se quedan como historia.
+- Siguiente: Game Boost GB-1 y GB-2 en la versión 0.68.0 (lógica pura con pruebas, tablas nuevas v5 y una pantalla de solo lectura del estado del teléfono).
+
