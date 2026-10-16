@@ -23,7 +23,7 @@ Tarea autorizada por el usuario el 16/10/2026: **trabajar el criterio A de la Fa
 
 Si la compilación falla: leer el log, corregir solo lo necesario y relanzar. Si R8 9.1.29 no existe o no es compatible con AGP 8.13.2, no improvisar un cambio grande (por ejemplo, subir AGP a 9.x): parar y preguntar al usuario.
 
-Fuera de esta tarea, sin autorización: `docs/ARI_GAME_BOOST_DISENO.md` (sin commit), cambios para B y C (dependen de las pruebas del usuario en el POCO), el tablero, `estado.json` y Drive.
+El usuario dio autorización general el 16/10/2026. Aun así, B y C dependen de sus pruebas en el POCO, y Game Boost no se programa hasta cerrar la Fase 1.
 
 ## 1. Resumen
 
@@ -46,7 +46,7 @@ Fuera de esta tarea, sin autorización: `docs/ARI_GAME_BOOST_DISENO.md` (sin com
 ### 2.1 bis. Propuesta de diseño "ARI Game Boost" (añadida por el usuario el 16/10/2026)
 
 - Es un módulo de optimización asistida para juegos y emuladores externos (por ejemplo, Eden). ARI recomienda, GE coordina la preparación y el lanzamiento, y Eden sigue siendo una app externa.
-- Estado: **solo propuesta de diseño, sin código**. El documento de diseño (`docs/ARI_GAME_BOOST_DISENO.md`) **todavía no existe**: la investigación previa seguía en curso al guardar este archivo.
+- Estado: **solo propuesta de diseño, sin código**. El diseño y la auditoría están en `docs/ARI_GAME_BOOST_DISENO.md`.
 - No se programa nada de Game Boost hasta que la Fase 1 (A, B y C) esté verificada.
 
 ### 2.2 Objetivo según la documentación del repositorio
