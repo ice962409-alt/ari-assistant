@@ -236,6 +236,30 @@ La base de datos de Ari es como un archivero con cajones, que se llaman **tablas
 
 Cuando una versión nueva necesita un cajón nuevo, no se puede tirar el archivero y empezar de cero: perderías todo. Por eso la base de datos lleva un **número de versión**, y al instalar Ari encima, ella ve "tengo la versión 3 y necesito la 4" y solo agrega el cajón que falta. A ese paso se le llama **migración**. Así nunca se borran tus mensajes ni tus recuerdos al actualizar.
 
+### Compilación limpia: errores, avisos y versiones fijas (Fase 1, criterio A)
+
+Al compilar, las herramientas pueden dar dos tipos de mensajes:
+
+- **Errores**: algo está mal y no sale el APK.
+- **Avisos** (warnings): el APK sale, pero algo huele raro. En la 0.66.0 había un aviso grave: el **R8** que trae Android Studio (el que encoge y revuelve el código) era más viejo que el **Kotlin** con el que está escrita Ari. No entendía los **metadatos de Kotlin** (las notas que Kotlin deja dentro del código para describir sus clases), y eso puede romper la app solo en la versión de entrega. La 0.66.1 trae un R8 más nuevo (9.1.29) y quedó sin avisos de Kotlin. Quedan 6 avisos de R8 sobre "lectura en paralelo" que no hacen daño y que solo se quitan con un Android Studio más nuevo; tú los aprobaste como excepción documentada.
+
+Dos ideas que salieron de ahí:
+
+- **Versiones fijas**: antes Ari pedía "la última versión" del motor LiteRT-LM. Así, el mismo código podía compilar con un motor distinto cada día. Ahora pide la 0.18.0 exacta: el mismo commit siempre da la misma Ari, y si algo falla se sabe qué cambió.
+- **El paso de GitHub que vigila los avisos**: cuenta los avisos de R8 y de Kotlin en cada compilación y la pone en rojo si aparece uno nuevo. Es como un detector de humo: avisa antes de que el problema llegue al teléfono.
+
+### El espacio de artefactos de GitHub
+
+Cada compilación guarda sus APK en GitHub como **artefactos** (los archivos que deja un trabajo de GitHub Actions). Cada una ocupa unos 200 MB, y por defecto se guardaban 90 días. En octubre se llenó el espacio del repositorio: la compilación salía bien, pero fallaba al guardar el APK. Se borraron 323 artefactos viejos, se dejó la 0.66.0 y ahora cada uno dura poco (**retención**): 14 días el APK principal, 7 los demás. GitHub tarda entre 6 y 12 horas en recalcular el espacio libre después de borrar.
+
+### Probar la base de datos real sin teléfono: Robolectric
+
+Las pruebas automáticas corren en la computadora de GitHub, que no es un Android. La base de datos de Ari usa **SQLite de Android**, así que antes solo se podía probar con una "memoria de mentira". **Robolectric** es una herramienta que hace creer al código que está dentro de un Android: le da un SQLite de verdad en la computadora. Con ella, desde la 0.66.1, las pruebas guardan mensajes, recuerdos y personas, cierran la base, la vuelven a abrir y comprueban que todo siga ahí. También fabrican una base vieja (versión 1, como la de la 0.1.0) y comprueban que al migrarla a la versión 4 no se pierda nada.
+
+Esto apoya el criterio C de la Fase 1, pero no lo sustituye: forzar el cierre en tu POCO sigue siendo la prueba real.
+
+Robolectric trae piezas de **AndroidX**, la colección moderna de librerías de Android. Por eso en el proyecto ahora va la línea `android.useAndroidX=true` en `gradle.properties`: sin ella, Gradle se negaba a compilar las pruebas (así falló el primer intento, el run 38882739724).
+
 ### Alarmas y notificaciones: cómo Ari te avisa estando cerrada
 
 Una app cerrada no puede "estar pendiente" de la hora: Android la detiene para ahorrar batería. Por eso Ari le pide al sistema una **alarma** (con el **AlarmManager**, el reloj despertador de Android): "despiértame el martes a las 9". A esa hora Android despierta a Ari solo un instante, ella muestra la **notificación** y vuelve a dormir. No hace falta internet ni que Gemma esté cargada.
@@ -618,3 +642,11 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Receptor (BroadcastReceiver)**: una parte de la app que despierta para atender un aviso de Android.
 - **Código 401, 403, 404**: respuestas de un servidor como GitHub. 401: la llave no sirve. 403: no tienes permiso o hiciste demasiadas consultas. 404: no existe, o es privado y no puedes verlo.
 - **Ventana de accesibilidad (TYPE_ACCESSIBILITY_OVERLAY)**: una ventana encima de todo que solo puede dibujar una app con el permiso de Accesibilidad. No genera el aviso de "se muestra sobre otras apps".
+- **Aviso (warning)**: mensaje de la compilación que no la detiene pero señala algo raro; el criterio A pide cero avisos (con la excepción aprobada de R8).
+- **R8**: la herramienta que encoge y revuelve el código de la versión de entrega.
+- **Metadatos de Kotlin**: notas que Kotlin guarda dentro del código compilado para describir sus clases; R8 tiene que entenderlas.
+- **Versión fija**: pedir una versión exacta de una librería (0.18.0) en vez de "la última", para que el mismo código compile siempre igual.
+- **Artefacto**: archivo que deja un trabajo de GitHub Actions, como el APK.
+- **Retención**: cuántos días guarda GitHub un artefacto antes de borrarlo solo.
+- **Robolectric**: herramienta que simula Android en la computadora para probar código como la base de datos sin teléfono.
+- **AndroidX**: la colección moderna de librerías oficiales de Android.
