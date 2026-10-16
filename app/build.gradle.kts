@@ -98,4 +98,6 @@ dependencies {
     // compilar (no vive en el repositorio; ver .github/workflows/android.yml).
     implementation(files("libs/sherpa-onnx-1.13.8.aar"))
     testImplementation("junit:junit:4.13.2")
+    // Pruebas de la base de datos real (SQLite de Android) en la JVM: AriDatabaseTest.
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }
