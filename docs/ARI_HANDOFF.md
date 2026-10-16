@@ -181,7 +181,7 @@ Decisiones de la Fase 1 (respuestas del usuario, 16/10/2026):
 
 ## 5. Cuestiones pendientes (decisiones que solo puede tomar el usuario)
 
-Las preguntas 1 a 5 ya están respondidas (sección 4). Siguen abiertas las 6 a 10.
+Las preguntas 1 a 5 ya están respondidas (sección 4). Las 6 a 9 están en el tablero desde el 16/10/2026 (fichas "fase2-ge", "buscar-sin-preguntar", "clave-propia" y "ramas-viejas"), igual que las de Game Boost ("game-boost-decisiones"; la 8 de ese documento ya se hizo: los criterios están en `docs/ARI_ESTADO.md`). La 10 quedó cubierta: cada versión publicada deja su etiqueta `ari-v<versión>` (la primera, `ari-v0.66.1` sobre 62426d1), que conserva todo el historial de la rama.
 
 1. Rama de referencia para Fase 1: ¿se evalúa la rama activa (0.66.0) o `main` (0.1.0)? ¿Se fusiona la rama activa en `main`?
 2. Motor: ¿se acepta LiteRT-LM (.litertlm) como motor válido de Fase 1, o GGUF/llama.cpp es obligatorio? Hoy la app rechaza los `.gguf` a propósito.

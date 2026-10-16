@@ -834,6 +834,10 @@ Auditoría del 15-16/10/2026 (ver `docs/ARI_HANDOFF.md`). Decisiones del usuario
 
 - El usuario respondió "Todo bien (B y C)" en la ficha "probar-fase1" del tablero (16/10/2026 18:56 UTC), con la 0.66.1 instalada desde Releases: prueba C (mensajes, recuerdo y persona siguen tras Forzar detención) y prueba B (con el modelo cargando, "qué hora es" contesta sin esperar a Gemma). No se anotaron tiempos. Con A aprobado en CI, la Fase 1 queda cerrada (ver `docs/ARI_HANDOFF.md`, sección 6).
 - La ficha "probar-064" quedó como "Ya no se hará" (16/10).
+- Texto oficial de los criterios de la Fase 1 (pedido del usuario del 15/10, con sus decisiones del 16/10):
+  - A. Compilación limpia para arm64-v8a: sin errores ni avisos de R8 o advertencias de Kotlin (excepción aprobada: 6 avisos de R8 "async parsing"), solo código nativo arm64-v8a, motor LiteRT-LM en versión fija.
+  - B. Arranque en frío sin cargar el modelo: la interfaz se puede usar al instante, sin esperar a que Gemma cargue (sin código nuevo).
+  - C. Persistencia de SQLite tras forzar el cierre en el POCO X8 Pro Max: memoria episódica (tabla `messages`) y semántica (tablas `memories` y `people`).
 - La Fase 2 espera decisiones del usuario: preguntas 6 a 10 del handoff y las 8 de Game Boost.
 
 ## ARI baja sus versiones de Releases (versión 0.67.0)
