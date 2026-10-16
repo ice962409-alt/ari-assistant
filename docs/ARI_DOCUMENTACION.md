@@ -454,12 +454,14 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 ## 3. Cómo instalar versiones nuevas
 
-1. Cada cambio que llega a main se compila solo en GitHub Actions: https://github.com/javierhedzd-ops/ari-assistant/actions
-2. Abre la ejecución más reciente, que debe tener la palomita verde, y descarga **ari-apk**.
+1. Cada versión se compila en GitHub Actions: https://github.com/javierhedzd-ops/ari-assistant/actions
+2. Tu Ari (la CEO) sale además como versión privada en **Releases**, con el APK listo para instalar (sin zip): https://github.com/javierhedzd-ops/ari-assistant/releases. Busca "ARI 0.xx (del dueño)" y toca **ari.apk**. Tienes que tener abierta tu sesión de GitHub, porque el repositorio es privado. Desde la 0.66.1 es la forma más segura de bajarla: no depende del espacio de artefactos de GitHub, que se llenó en octubre de 2026.
+3. También puedes abrir la ejecución más reciente con la palomita verde y descargar los artefactos (si GitHub tuvo espacio para guardarlos):
    - **ari-apk** es tu Ari completa, la CEO, con su equipo de modelos (versión de entrega, protegida).
    - **ari-debug-apk** es la misma, pero en versión de depuración: úsala solo si ari-apk fallara.
    - **ari-otros-apk** es la Ari para las demás personas: todo lo demás igual, pero sin el equipo de modelos ni el permiso de ubicación. Es la que les mandas.
-3. Instala el APK encima de la versión anterior. No hace falta desinstalar, y se conservan el modelo, el historial y los recuerdos.
+   - Si la ejecución sale en rojo con el aviso "GitHub no guardó uno o más artefactos", la compilación sí salió bien: tu APK está en Releases, pero los demás no se guardaron.
+4. Instala el APK encima de la versión anterior. No hace falta desinstalar, y se conservan el modelo, el historial y los recuerdos.
 
 ### Problemas conocidos
 
@@ -613,7 +615,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 
 - Internet más amplio (0.64.0, solo ARI): "busca en internet …" trae un resumen de la web (DuckDuckGo, con respaldo en Wikipedia). "busca en wikipedia …" y "¿quién fue …?" van a Wikipedia; el clima a Open-Meteo. Solo a petición y sin datos personales.
 
-- Compilación limpia (0.66.1, Fase 1, criterio A): la app compila sin los avisos de R8 y de Kotlin, solo para teléfonos de 64 bits (arm64-v8a), con el motor de Gemma en una versión fija (LiteRT-LM 0.18.0). No cambia nada de lo que ves en la app, salvo que la barra de botones de abajo mantiene el color de Ari en Android 15 y 16.
+- Compilación limpia (0.66.1, Fase 1, criterio A): la app compila sin los avisos de R8 y de Kotlin, solo para teléfonos de 64 bits (arm64-v8a), con el motor de Gemma en una versión fija (LiteRT-LM 0.18.0). No cambia nada de lo que ves en la app, salvo que la barra de botones de abajo mantiene el color de Ari en Android 15 y 16. Tu APK ahora también sale en Releases (versión privada "ARI 0.66.1 (del dueño)") porque el espacio de artefactos de GitHub se llenó; mientras siga lleno, el actualizador de dentro de la app no verá versiones nuevas y hay que bajarlas de Releases.
 
 ## 7. Archivos principales del código
 

@@ -16,6 +16,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.entrega.outputs.version }}
+      artefactos: ${{ steps.up_apk.outcome == 'success' && steps.up_otros.outcome == 'success' && steps.up_trader.outcome == 'success' && steps.up_debug.outcome == 'success' && steps.up_mapa.outcome == 'success' && steps.up_estado.outcome == 'success' }}
     env:
       HAS_WEB_TOKEN: ${{ secrets.ARI_WEB_TOKEN != '' }}
 
@@ -123,16 +126,46 @@ jobs:
             fi
           done
 
+      # Versión privada en GitHub Releases (este mismo repositorio): el APK del dueño y el mapa
+      # de nombres. Los archivos de Releases no gastan el espacio de artefactos de Actions, que
+      # se llenó en octubre de 2026. Aquí solo se preparan; los sube el trabajo "publicar", el
+      # único con permiso de escritura.
+      - name: Preparar versión privada
+        id: entrega
+        run: |
+          set -euo pipefail
+          mkdir -p entrega
+          cp app/build/outputs/apk/completa/release/app-completa-release.apk entrega/ari.apk
+          (cd app/build/outputs && zip -qr "$GITHUB_WORKSPACE/entrega/ari-mapa.zip" mapping)
+          version="$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          ls -l entrega
+
+      - name: Pasar la versión al trabajo de publicar
+        uses: actions/cache/save@v4
+        with:
+          path: entrega
+          key: ari-entrega-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # Si GitHub no tiene espacio para artefactos ("Artifact storage quota has been hit"), las
+      # subidas no cortan el trabajo: el APK del dueño sale igual en Releases. Al final, el
+      # trabajo "publicar" pone la ejecución en rojo para que el actualizador de ARI (que solo
+      # mira ejecuciones en verde y baja el artefacto ari-apk) no ofrezca una sin APK.
       # La Ari del dueño (la CEO, con su equipo de modelos), versión de entrega.
       - name: Guardar APK
+        id: up_apk
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ari-apk
           path: app/build/outputs/apk/completa/release/app-completa-release.apk
-          retention-days: 14
+          retention-days: 3
 
       # La Ari para otras personas (sin equipo de modelos), versión de entrega.
       - name: Guardar APK para otros
+        id: up_otros
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ari-otros-apk
@@ -141,6 +174,8 @@ jobs:
 
       # ARI Trader (hermano del dueño), especializada en trading, sin poderes de CEO.
       - name: Guardar APK de ARI Trader
+        id: up_trader
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ari-trader-apk
@@ -189,23 +224,74 @@ jobs:
 
       # Por si la versión de entrega fallara en el teléfono: la de depuración del dueño.
       - name: Guardar APK de depuración
+        id: up_debug
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ari-debug-apk
           path: app/build/outputs/apk/completa/debug/app-completa-debug.apk
-          retention-days: 7
+          retention-days: 3
 
       # El mapa para leer los informes de fallo de las versiones revueltas.
       - name: Guardar mapa de nombres
+        id: up_mapa
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ari-mapa
           path: app/build/outputs/mapping/
-          retention-days: 14
+          retention-days: 3
 
       - name: Guardar APK de Ari Estado
+        id: up_estado
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ari-estado-apk
           path: estado/build/outputs/apk/debug/estado-debug.apk
           retention-days: 7
+
+  # Sube a Releases (privado, en este mismo repositorio) lo que preparó "build". Es el único
+  # trabajo con permiso de escritura y no usa acciones de terceros.
+  publicar:
+    needs: build
+    runs-on: ubuntu-latest
+    # Dos compilaciones de la misma versión no borran y crean la versión privada a la vez.
+    concurrency:
+      group: ari-publicar-${{ needs.build.outputs.version }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - name: Recuperar la versión
+        uses: actions/cache/restore@v4
+        with:
+          path: entrega
+          key: ari-entrega-${{ github.run_id }}-${{ github.run_attempt }}
+          # "Re-run failed jobs" no repite build: sirve lo que guardó un intento anterior del run.
+          restore-keys: ari-entrega-${{ github.run_id }}-
+          fail-on-cache-miss: true
+
+      - name: Publicar en Releases (privado)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="ari-v$VERSION"
+          # Una sola versión privada por número de versión: si se vuelve a compilar, se reemplaza.
+          gh release delete "$tag" --cleanup-tag --yes 2>/dev/null || true
+          gh release create "$tag" entrega/ari.apk entrega/ari-mapa.zip \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "ARI $VERSION (del dueño)" \
+            --notes "ARI del dueño $VERSION. Compilación $GITHUB_RUN_NUMBER (run $GITHUB_RUN_ID), rama $GITHUB_REF_NAME, commit $GITHUB_SHA. Repositorio privado: no compartas este APK."
+          echo "Descarga: https://github.com/$GH_REPO/releases/download/$tag/ari.apk"
+
+      - name: Revisar que se guardaron los artefactos
+        if: ${{ needs.build.outputs.artefactos != 'true' }}
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          echo "::error::GitHub no guardó uno o más artefactos (revisa los pasos 'Guardar ...' de build; casi siempre es la cuota de almacenamiento). El APK del dueño y el mapa sí están en Releases: ari-v$VERSION. ari-otros-apk, ari-trader-apk, ari-debug-apk y ari-estado-apk no. La ejecución queda en rojo para que el actualizador de ARI no ofrezca una compilación sin ari-apk."
+          exit 1
