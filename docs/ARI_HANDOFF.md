@@ -1,7 +1,7 @@
 # ARI — Documento de traspaso (handoff)
 
-- Fecha de la auditoría: 15-16 de octubre de 2026 (última comprobación: 16/10/2026 03:08 UTC).
-- Tipo de sesión: auditoría de solo lectura. No se cambió código, no se hizo commit, push, fusión ni compilación nueva.
+- Fecha de la auditoría: 15-16 de octubre de 2026 (última comprobación: 16/10/2026 10:30 UTC).
+- Tipo de sesión: empezó como auditoría de solo lectura. Después, con autorización del usuario (16/10/2026), se trabajó el criterio A y las pruebas de la base de datos en la rama activa (sección 0).
 - Preparado en una copia de `main` (00527d1) y guardado en la rama activa `ccr-e45f2eee-wkjpdl` con autorización del usuario (16/10/2026). Solo se añadió este archivo; no se cambió código.
 - Para qué sirve: que cualquier sesión (Claude, ChatGPT u otra) retome ARI sin depender del historial de conversaciones.
 - Relación con otros documentos: este archivo es una foto verificada del estado. La bitácora completa, versión por versión, es `docs/ARI_ESTADO.md` **de la rama activa** (`ccr-e45f2eee-wkjpdl`, 813 líneas). El `ARI_ESTADO.md` de `main` (97 líneas) está desactualizado. No se duplicó esa bitácora aquí.
@@ -18,8 +18,11 @@ Tarea autorizada por el usuario el 16/10/2026: **trabajar el criterio A de la Fa
 - [x] Compilación limpia en CI: runs 38874693461 (717b9b0) y 38877539907 (e19b7f0). 0 avisos "parsing kotlin metadata" (antes 448), 0 advertencias `w:` de Kotlin (antes 32; Gradle 8.14.4 quita "Deprecated Gradle Version"), `native-code: 'arm64-v8a'` en las 4 APK, R8 9.1.29 en el classpath. Quedan 6 avisos de R8 "Class file resource provider does not support async parsing" por usar R8 9.1 con AGP 8.13: el usuario aprobó A con esa excepción documentada (16/10/2026).
 - [x] LiteRT-LM fijada en 0.18.0 (la que resolvía `latest.release`), e19b7f0.
 - [x] Artefactos: el espacio de GitHub estaba lleno. Con permiso del usuario se borraron 323 artefactos viejos (unos 9 GB) y se conservaron los 6 de la 0.66.0 (run 38671115372). Retención nueva: 14 días para `ari-apk` y el mapa, 7 para el resto.
-- [ ] Run en verde con artefactos: los dos runs anteriores compilaron limpio, pero fallaron al subir el APK porque GitHub recalcula el espacio cada 6 a 12 horas. Relanzar `android.yml` cuando se haya recalculado (a partir de las 15:00 UTC del 16/10).
-- [x] Documentación actualizada (`docs/ARI_ESTADO.md`, `docs/ARI_DOCUMENTACION.md` y este documento).
+- [x] Pruebas de la base de datos real (apoyan C, no la sustituyen): `AriDatabaseTest` con Robolectric 4.14.1 (6132458) y `android.useAndroidX=true` (f498381; sin esa línea falló el run 38882739724). En el run 38883320991 (f498381) pasaron todas las pruebas, la compilación salió limpia, el control de avisos y la ABI en verde; solo falló "Guardar APK" por la cuota de artefactos.
+- [ ] Prueba de "olvida" corregida: con "café" frente a "cafetería" no demostraba nada (ninguna contiene a la otra), ahora usa "cafe". Confirmar que pasa en el próximo run.
+- [ ] Run en verde con artefactos: los runs 38874693461, 38877539907 y 38883320991 compilaron limpio, pero fallaron al subir el APK ("Artifact storage quota has been hit… recalculated every 6-12 hours"). Relanzar `android.yml` cuando se haya recalculado (a partir de las 15:00 UTC del 16/10).
+- [x] Documentación actualizada (`docs/ARI_ESTADO.md`, `docs/ARI_DOCUMENTACION.md` y este documento). Exportadas a Drive la documentación y la guía de aprendizaje (16/10/2026).
+- [x] Afirmaciones de B y C de la sección 6 verificadas otra vez contra la 0.66.1 (16/10/2026, revisión con dos escépticos por cada duda): líneas actualizadas y cuatro precisiones (B5, B6, C4, C5).
 - [ ] Avisar al usuario con el enlace del run y del APK (`ari-apk`, 0.66.1), y desactivar la tarea programada.
 
 Si la compilación falla: leer el log, corregir solo lo necesario y relanzar. Si R8 9.1.29 no existe o no es compatible con AGP 8.13.2, no improvisar un cambio grande (por ejemplo, subir AGP a 9.x): parar y preguntar al usuario.
@@ -206,13 +209,13 @@ Para cerrarlo: el usuario define "limpia" (si es "sin errores", A pasa a APROBAD
 
 ### B. Arranque en frío de la interfaz sin cargar el modelo: PENDIENTE
 
-Lo que hace el código (rama activa):
-- La interfaz se construye en el hilo principal antes de tocar el modelo; el historial (30 mensajes) se muestra antes de la carga (`MainActivity.kt:232`, `:254`).
-- `loadSavedModel` (`:2467-2480`): sin archivo de modelo no carga nada y muestra "Toca Modelo para descargar a Gemma…"; con archivo, manda la carga a un executor en segundo plano.
-- **Con el modelo presente, la carga empieza siempre en cada arranque en frío.** No existe ajuste, bandera ni botón para abrir sin cargarlo. El literal "sin cargar el modelo" solo se cumple si no hay archivo.
-- Los fallos de Kotlin y OutOfMemoryError de la carga se capturan (`:2925`). Un cierre nativo (GPU) o por memoria del sistema mata todo el proceso, interfaz incluida. En CPU no hay marca de protección.
-- No se encontró trabajo pesado en el hilo principal (solo lecturas pequeñas de SQLite); no se ha medido.
-- Mientras el modelo no está listo, un mensaje libre no se responde ni se guarda: solo cambia la barra de estado (`:3061-3071`). Los agentes locales (hora, recordatorios, recuerdos, personas) sí responden.
+Lo que hace el código (rama activa; líneas de la 0.66.1, verificadas otra vez el 16/10/2026):
+- La interfaz se construye en el hilo principal antes de tocar el modelo: `onCreate` (`MainActivity.kt:179`) llama a `buildInterface()` (`:232`), luego a `restoreHistory()` (`:254`, muestra los 30 últimos mensajes, `HISTORY_PAGE` en `:5046`) y solo después a `loadSavedModel()` (`:255`).
+- `loadSavedModel` (`:2479-2492`): sin archivo de modelo no carga nada y, si no hay una descarga en curso, muestra "Toca Modelo para descargar a Gemma…". Con archivo, pone "Cargando el modelo guardado...", desactiva el botón Modelo y manda la carga al executor de un solo hilo (`:52-53`), en segundo plano.
+- **Con el modelo presente, la carga empieza siempre en cada arranque.** `loadSavedModel()` se llama sin condición (`:255`) y no existe ajuste, bandera ni botón para abrir sin cargarlo. `onDestroy` libera el modelo (`:4952`). El literal "sin cargar el modelo" solo se cumple si no hay archivo.
+- Los fallos de Kotlin y OutOfMemoryError de la carga se capturan (`catch (e: Throwable)` en `:2937-2947`, y `runCatching` en cada intento, `:2849` y `:2857`). Un cierre nativo (GPU) o por falta de memoria del sistema mata el proceso entero (así funciona Android). En la GPU hay marca "probando" (`:2848-2850`, `:2862-2875`) y en el siguiente arranque pasa a la CPU (`:2823-2827`). En la CPU no hay marca (`:2877-2886`), tampoco en el intento con memoria grande: si la CPU se cae de forma nativa, se vuelve a intentar igual en cada arranque.
+- No hay trabajo pesado en el hilo principal; no se ha medido. `AriApp` solo instala el manejador de errores (`FailureReport.kt:167-172`). En el hilo principal solo pasan cosas ligeras: revisar la firma con SHA-256 (`:182`), el candado de la CEO (`:193`), abrir SQLite (y crear tablas si hace falta), leer 30 mensajes y la lista de recuerdos (`:314-316`), leer preferencias, comprobar si existen archivos y crear TextToSpeech. El modelo, las voces, las alarmas, los informes y la red van en hilos aparte.
+- Mientras el modelo no está listo, un mensaje libre no se responde ni se guarda en el chat (`:3073-3081`). El texto se queda en el campo y la barra dice "El modelo aún no está listo…". Si Ari está en segundo plano avisa además con una notificación (`notifyIfAway`, `:2607-2616`). En modo voz sale del modo voz y dice "El modelo aún no está listo". Los agentes locales (hora, recordatorios, recuerdos, personas, recados, calendario, teléfono) y los manejadores locales (rutinas, medios, web, apps) sí responden sin modelo, porque van antes de esa comprobación (`ceo.route` en `:3064`; `:3010-3071`). Con otra persona hablando (modo invitado) solo responde el reloj (`:5011`).
 
 Evidencia física: ninguna. No consta un arranque sin modelo en el POCO ni una medida del arranque en frío. `ARI_ESTADO.md:74-75` sigue con "Pendiente de verificar: … carga automática del modelo".
 
@@ -222,15 +225,15 @@ No está BLOQUEADO: se puede probar con `ari-otros-apk` (otro paquete, sin model
 
 ### C. Persistencia de SQLite tras forzar el cierre (POCO X8 Pro Max), memoria episódica y semántica: PENDIENTE
 
-Lo que hace el código (rama activa):
-- Una sola base `ari.db` (v4, WAL). Cada INSERT es autocommit. No hay migraciones destructivas ni borrados al arrancar.
-- Mensajes: se guardan en un hilo de fondo (`saveMessage`, executor `storage`), y los errores se ignoran sin avisar (`:4038-4046`). Un "Forzar detención" justo después de enviar podría perder lo que aún esté en cola (milisegundos).
-- La respuesta de Gemma se guarda solo al terminar (`onDone`/`onError`): forzar el cierre a mitad de una respuesta pierde la respuesta parcial y lo "(Aprendido)" en ella. La pregunta sí queda.
-- Los comandos con "/" (`/recuerda`, `/memoria`) **no** se guardan en el historial; el recuerdo sí se guarda.
-- "recuerda que …" en lenguaje natural pasa por MemoryAgent, guarda el recuerdo y los dos mensajes, aunque el modelo no esté cargado.
-- Pasar de `main` (ari.db v1) a la rama activa conserva los datos según el código: mismo applicationId, misma clave de firma, versionCode 1 → 80 y `onUpgrade` solo crea tablas.
-- No hay pruebas automáticas de `AriDatabase` ni de sus migraciones (las pruebas usan FakeStore y no hay androidTest).
-- El código no usa los términos "episódica" ni "semántica" y no tiene búsqueda por significado: todos los recuerdos y hasta 25 personas van en las instrucciones de sistema de Gemma.
+Lo que hace el código (rama activa; líneas de la 0.66.1, verificadas otra vez el 16/10/2026):
+- Una sola base `ari.db` (v4, WAL; `AriDatabase.kt:366-367`). Los INSERT normales (mensajes, recuerdos, recordatorios, personas, tareas de agentes) son autocommit. La única transacción es al recuperar un respaldo (`importData`, `AriDatabase.kt:321-345`), que borra y vuelve a llenar todas las tablas de una vez. Las migraciones (`onUpgrade`, `:63-67`) solo crean tablas nuevas, y al arrancar no se borra nada de la base (solo archivos temporales de adjuntos en la caché). No hay `onDowngrade`: instalar una versión más vieja encima haría fallar la apertura de la base, sin borrar datos.
+- Mensajes: se guardan en un hilo de fondo (`saveMessage`, executor `storage`) y los errores se ignoran sin avisar (`MainActivity.kt:4050-4059`). Un "Forzar detención" justo después de enviar podría perder lo que aún esté en cola (milisegundos).
+- La respuesta de Gemma se guarda solo al terminar (`onDone`/`onError`, `:3371-3400`, `:3432-3452`): forzar el cierre a mitad de una respuesta pierde la respuesta parcial y lo "(Aprendido)" en ella. La pregunta sí queda (`:3085`).
+- Los comandos locales con "/" (`/recuerda`, `/memoria`, `/olvida`, `/agentes`) **no** se guardan en el historial; el recuerdo de `/recuerda` sí se guarda en `memories`. En cambio, los comandos que delegan en un agente (`/delega` con agente y tarea válidos, `/equipo`, `/laptop`) sí guardan la pregunta y la respuesta en el historial (`:3522-3547`, `:3983-4007`).
+- "recuerda que …" en lenguaje natural pasa por el CEO antes de revisar si el modelo está cargado (`ceo.route`, `:3064`). Si lo toma MemoryAgent, se guardan el recuerdo (`memories`), la pregunta y la respuesta (`messages`) y una línea en la bitácora (`agent_tasks`), aunque Gemma no esté cargada. Excepciones: si la frase habla de una persona ("recuerda que mi primo Luis es dentista"), la toma antes PeopleAgent y va a la libreta (`people`), no a `memories`; en modo invitado no se usa MemoryAgent.
+- Pasar de `main` (ari.db v1) a la rama activa conserva los datos según el código: mismo applicationId (`com.ari.assistant`), la misma `app/debug.keystore` en las dos ramas (mismo blob de git), versionCode 1 → 81 y `onUpgrade` solo crea tablas.
+- Pruebas automáticas de la base real desde el 16/10/2026: `app/src/test/java/com/ari/assistant/AriDatabaseTest.kt` (Robolectric, SQLite de Android en la JVM). Comprueban que mensajes, recuerdos, personas y bitácora siguen al cerrar y reabrir la base; que pasar de una base v1 hecha a mano (igual que la de `main`) a la v4 conserva mensajes y recuerdos y crea las tablas nuevas vacías; que el respaldo (`exportData`/`importData`) restaura recuerdos, mensajes, personas y recordatorios (no comprueba la bitácora ni el cifrado de `AriBackup`); que "olvida" borra solo palabras completas; y el orden de los mensajes. Pasaron en el run 38883320991. No sustituyen la prueba física: no hay forzar detención, ni WAL interrumpido, ni el POCO.
+- El código no usa los términos "episódica" ni "semántica" y no tiene búsqueda por significado (los embeddings solo se usan para reconocer la voz): todos los recuerdos y hasta 25 personas van en las instrucciones de sistema de Gemma (`openConversation`, `:4083-4123`; `MAX_PEOPLE_IN_PROMPT` en `:5028`).
 
 Evidencia física:
 - No hay ninguna prueba registrada de forzar el cierre y reabrir (ni en docs, ni en PR, ni en el tablero). `ARI_ESTADO.md:74-75` sigue pendiente.

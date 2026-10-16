@@ -96,11 +96,12 @@ class AriDatabaseTest {
 
     @Test
     fun forgettingOnlyRemovesWholeWords() {
+        // "cafe" sí está dentro de "cafetería": un contains() simple borraría los dos recuerdos.
         val db = open()
-        db.addMemory("me gusta el café")
+        db.addMemory("me gusta el Cafe")
         db.addMemory("trabajo en una cafetería")
 
-        assertEquals(1, db.deleteMemoriesMatching("café"))
+        assertEquals(1, db.deleteMemoriesMatching("cafe"))
         assertEquals(listOf("trabajo en una cafetería"), db.memories().map { it.content })
     }
 
