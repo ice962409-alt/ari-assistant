@@ -461,6 +461,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
    - **ari-debug-apk** es la misma, pero en versión de depuración: úsala solo si ari-apk fallara.
    - **ari-otros-apk** es la Ari para las demás personas: todo lo demás igual, pero sin el equipo de modelos ni el permiso de ubicación. Es la que les mandas.
    - Si la ejecución sale en rojo con el aviso "GitHub no guardó uno o más artefactos", la compilación sí salió bien: tu APK está en Releases, pero los demás no se guardaron.
+   - Desde la 0.67.0, tu Ari también se actualiza sola desde Releases: dile "busca actualizaciones". Para eso, la llave de GitHub de ARI (Ajustes → GitHub de ARI) necesita los permisos Actions: lectura y Contents: lectura.
 4. Instala el APK encima de la versión anterior. No hace falta desinstalar, y se conservan el modelo, el historial y los recuerdos.
 
 ### Problemas conocidos
@@ -616,6 +617,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - Internet más amplio (0.64.0, solo ARI): "busca en internet …" trae un resumen de la web (DuckDuckGo, con respaldo en Wikipedia). "busca en wikipedia …" y "¿quién fue …?" van a Wikipedia; el clima a Open-Meteo. Solo a petición y sin datos personales.
 
 - Compilación limpia (0.66.1, Fase 1, criterio A): la app compila sin los avisos de R8 y de Kotlin, solo para teléfonos de 64 bits (arm64-v8a), con el motor de Gemma en una versión fija (LiteRT-LM 0.18.0). No cambia nada de lo que ves en la app, salvo que la barra de botones de abajo mantiene el color de Ari en Android 15 y 16. Tu APK ahora también sale en Releases (versión privada "ARI 0.66.1 (del dueño)") porque el espacio de artefactos de GitHub se llenó; mientras siga lleno, el actualizador de dentro de la app no verá versiones nuevas y hay que bajarlas de Releases.
+- Fase 1 cerrada (16/10/2026): compilación limpia (A), interfaz usable al instante aunque Gemma esté cargando (B) y memoria que sigue tras forzar el cierre (C), los dos últimos probados por ti en el POCO.
+- ARI se actualiza desde Releases (0.67.0): "busca actualizaciones" ahora encuentra las versiones privadas de Releases y baja el APK directo. Si GitHub tiene espacio, también sigue sabiendo bajar de los artefactos como antes. La llave de GitHub de ARI necesita el permiso Contents: lectura.
 
 ## 7. Archivos principales del código
 

@@ -10,7 +10,16 @@ Convención: cada dato lleva su fuente (ruta:línea@rama, SHA, id de run de GitH
 
 ## 0. Trabajo en curso (leer primero)
 
-Tarea autorizada por el usuario el 16/10/2026: **trabajar el criterio A de la Fase 1 en `ccr-e45f2eee-wkjpdl`** (cambios, commit, push y compilación con `android.yml`). Si una sesión se corta, la siguiente sigue desde el primer paso sin marcar. Una tarea programada ("ARI: continuar criterio A") despierta a la sesión cada hora hasta terminar.
+**Fase 1 cerrada (16/10/2026):** A aprobado en CI y B y C confirmados por el usuario en el tablero (sección 6).
+
+Tarea actual, decidida por el usuario en el tablero (ficha "actualizador-releases", 16/10/2026 18:57 UTC: "Que ARI baje de Releases (agrego el permiso)"): **ARI 0.67.0, "busca actualizaciones" baja de Releases**.
+
+- [x] `AriUpdate.kt`: primero la versión privada más nueva de su rama en Releases (`ari-v*` con `ari.apk`; lee "Compilación N (run ID), rama R" de las notas); si no hay, el método anterior (última ejecución en verde + artifact `ari-apk`); con 403/404 en Releases y sin APK en Actions, pide el permiso Contents. Descarga del asset con `Accept: application/octet-stream`, sin mandar la llave al enlace temporal; acepta 302 y 200. Pruebas: `AriUpdateReleasesTest` (Robolectric) y `AriUpdateTest`. versionCode 82.
+- [ ] Revisión adversarial del cambio y correcciones.
+- [ ] Compilación con `android.yml` (build en verde y versión `ari-v0.67.0` en Releases; el run sale en rojo a propósito mientras la cuota de artefactos siga llena).
+- [ ] Avisar al usuario: enlace de la 0.67.0 (instalarla a mano, porque el actualizador de la 0.66.1 no ve Releases) y pasos para darle a la llave de GitHub de ARI el permiso Contents: lectura. Después, "busca actualizaciones" ya debería funcionar con las siguientes versiones.
+
+Tarea anterior (terminada), autorizada por el usuario el 16/10/2026: **trabajar el criterio A de la Fase 1 en `ccr-e45f2eee-wkjpdl`** (cambios, commit, push y compilación con `android.yml`). Si una sesión se corta, la siguiente sigue desde el primer paso sin marcar. Una tarea programada ("ARI: continuar criterio A") despierta a la sesión cada hora hasta terminar.
 
 - [x] Decisiones del usuario registradas (sección 4, 16/10/2026).
 - [x] Commit a61b589 (0.66.1): R8 9.1.29 en `build.gradle.kts`, 5 advertencias de Kotlin corregidas y CI que revisa la ABI de las 4 APK de la app (incluida Trader) y anota la versión de LiteRT-LM y de R8.
@@ -35,8 +44,8 @@ El usuario dio autorización general el 16/10/2026. Aun así, B y C dependen de 
 - El motor de IA es **LiteRT-LM con modelos .litertlm** (Gemma 4 E4B/E2B, Qwen). No hay GGUF ni llama.cpp dentro de la app: los `.gguf` se rechazan a propósito (`ModelFamily.kt:28-38`, commit 3f621fa).
 - La memoria persistente es SQLite (`ari.db`, versión 4, WAL, 5 tablas). No existe una separación "episódica/semántica" en el código; la correspondencia de la sección 6 es una interpretación.
 - AriCore (en Android), ModelManager, ResourceCoordinator, GameOrchestrator y GE **no existen** en ninguna rama. Hay equivalentes parciales (sección 2.4).
-- Fase 1: **A APROBADO** (16/10/2026, 0.66.1: sin errores, 0 avisos de R8 por metadatos de Kotlin, 0 advertencias de Kotlin, solo arm64-v8a; excepción aprobada: 6 avisos de R8 "async parsing"; APK en Releases `ari-v0.66.1`). **B PENDIENTE** y **C PENDIENTE** (sin pruebas físicas registradas).
-- No se debe avanzar a la Fase 2.
+- Fase 1: **A APROBADO** (16/10/2026, 0.66.1: sin errores, 0 avisos de R8 por metadatos de Kotlin, 0 advertencias de Kotlin, solo arm64-v8a; excepción aprobada: 6 avisos de R8 "async parsing"; APK en Releases `ari-v0.66.1`). **B APROBADO** y **C APROBADO** (confirmados por el usuario en el tablero el 16/10/2026 18:56 UTC: "Todo bien (B y C)", con las pruebas de la sección 7 y la 0.66.1; no se anotaron tiempos).
+- Fase 1 cerrada. La Fase 2 necesita decisiones del usuario: preguntas 6 a 10 de la sección 5 y las 8 de Game Boost (`docs/ARI_GAME_BOOST_DISENO.md`).
 
 ## 2. Objetivo y arquitectura
 
@@ -209,7 +218,9 @@ Por qué no se da por aprobado:
 
 Para cerrarlo: el usuario define "limpia" (si es "sin errores", A pasa a APROBADO para 9cbcaa3); o se eliminan los avisos (alinear Kotlin con el R8 del AGP), se fija la versión de LiteRT-LM y se relanza en verde.
 
-### B. Arranque en frío de la interfaz sin cargar el modelo: PENDIENTE
+### B. Arranque en frío de la interfaz sin cargar el modelo: APROBADO (16/10/2026, confirmado por el usuario)
+
+**Cierre:** el usuario respondió "Todo bien (B y C)" en la ficha "probar-fase1" del tablero (16/10/2026 18:56 UTC). La ficha pedía instalar la 0.66.1, forzar la detención con ARI cargada, abrirla y escribir "qué hora es" mientras dice "Cargando el modelo guardado…" (debe contestar sin esperar a Gemma). Con la decisión 4 del usuario (B = "interfaz usable al instante"), eso cumple el criterio. No se anotaron los tiempos de apertura ni de "Ari está lista". Lo que sigue es la evaluación anterior.
 
 Lo que hace el código (rama activa; líneas de la 0.66.1, verificadas otra vez el 16/10/2026):
 - La interfaz se construye en el hilo principal antes de tocar el modelo: `onCreate` (`MainActivity.kt:179`) llama a `buildInterface()` (`:232`), luego a `restoreHistory()` (`:254`, muestra los 30 últimos mensajes, `HISTORY_PAGE` en `:5046`) y solo después a `loadSavedModel()` (`:255`).
@@ -225,7 +236,9 @@ Sobre GGUF: el criterio menciona GGUF, pero el modelo real es `.litertlm` (`file
 
 No está BLOQUEADO: se puede probar con `ari-otros-apk` (otro paquete, sin modelo) o renombrando el modelo si está en el almacenamiento externo de la app. Si el modelo está en el almacenamiento interno, la única forma no destructiva de abrir la ARI completa sin cargarlo sería un cambio de código (por ejemplo, un "modo seguro"). Indicio sin verificar en la versión actual: el informe de la 0.36.0 dice "Modelo: elegido a mano", o sea, en el almacenamiento interno (`files/gemma-model.litertlm`).
 
-### C. Persistencia de SQLite tras forzar el cierre (POCO X8 Pro Max), memoria episódica y semántica: PENDIENTE
+### C. Persistencia de SQLite tras forzar el cierre (POCO X8 Pro Max), memoria episódica y semántica: APROBADO (16/10/2026, confirmado por el usuario)
+
+**Cierre:** el usuario respondió "Todo bien (B y C)" en la ficha "probar-fase1" del tablero (16/10/2026 18:56 UTC). La ficha pedía, con la 0.66.1 y Gemma cargada: "recuerda que mi palabra de prueba es PRUEBAC1610", agregar a "Pruebac" en Mi gente, un mensaje con respuesta, Forzar detención y comprobar al abrir que siguen los mensajes (episódica), el recuerdo y la persona (semántica, decisión 5). Apoyo en el entorno de desarrollo: `AriDatabaseTest` (run 38909849572). Lo que sigue es la evaluación anterior.
 
 Lo que hace el código (rama activa; líneas de la 0.66.1, verificadas otra vez el 16/10/2026):
 - Una sola base `ari.db` (v4, WAL; `AriDatabase.kt:366-367`). Los INSERT normales (mensajes, recuerdos, recordatorios, personas, tareas de agentes) son autocommit. La única transacción es al recuperar un respaldo (`importData`, `AriDatabase.kt:321-345`), que borra y vuelve a llenar todas las tablas de una vez. Las migraciones (`onUpgrade`, `:63-67`) solo crean tablas nuevas, y al arrancar no se borra nada de la base (solo archivos temporales de adjuntos en la caché). No hay `onDowngrade`: instalar una versión más vieja encima haría fallar la apertura de la base, sin borrar datos.
@@ -301,18 +314,12 @@ Prueba B:
 
 ## 10. Próxima acción concreta y segura
 
-Primera acción, sin instalar nada ni forzar el cierre:
-1. En el POCO X8 Pro Max, abrir ARI → Memoria → Respaldo → "Guardar un respaldo cifrado" y sacar el archivo del teléfono (por ejemplo, a Drive).
-2. Anotar la versión que muestra Ajustes → Acerca de Ari y el valor de Ajustes → "Velocidad de Gemma" (GPU o CPU).
+Fase 1 cerrada (16/10/2026). Ahora:
+1. Terminar la tarea de la sección 0 (ARI 0.67.0, actualizador desde Releases) y pasarle al usuario el enlace y los pasos del permiso Contents.
+2. Llevar al tablero las decisiones que abren la Fase 2: preguntas 6 a 10 de la sección 5 (dónde viven GE y GameOrchestrator, la búsqueda automática "BUSCAR:", la clave de publicación propia, ramas viejas) y las 8 de Game Boost (`docs/ARI_GAME_BOOST_DISENO.md`). Sin esas respuestas no se programa nada de la Fase 2.
+3. Registrar cada resultado con fecha y versión en `docs/ARI_ESTADO.md` y en este documento.
 
-Por qué esta primero: protege lo único que no se puede recuperar desde GitHub (los datos de la memoria) y resuelve tres incógnitas que deciden las pruebas: qué versión se evalúa (la última confirmada es la 0.55), si la GPU ya está en "falla" y si forzar el cierre durante la carga puede degradar el motor.
-
-Después:
-3. Las decisiones 1 a 5 ya están tomadas (sección 4) y A está aprobado. Instalar la 0.66.1 de Releases (`ari-v0.66.1` → `ari.apk`) encima de la versión actual y comprobar que abre.
-4. Ejecutar la prueba C y la prueba B de la sección 7 con la 0.66.1 (ficha "probar-fase1" del tablero).
-5. Registrar los resultados con fecha y versión en `docs/ARI_ESTADO.md` de la rama activa y actualizar este documento. Solo con A, B y C verificados se pasa a la Fase 2.
-
-Hasta entonces: no instalar `ari-debug-apk`, no desinstalar, no usar "Recuperar" y no darle acceso a GitHub a la tarea de relevo sin decidirlo antes.
+Sigue vigente: no instalar `ari-debug-apk`, no desinstalar ARI y no usar "Recuperar" sin necesidad.
 
 Antes de trabajar, cualquier sesión debe:
 - Volver a traer la rama activa (`git fetch origin ccr-e45f2eee-wkjpdl`) y leer la sección 0 y `git log` desde 9cbcaa3: desde el 16/10/2026 hay commits del criterio A, de las pruebas de la base de datos y de la entrega por Releases.
