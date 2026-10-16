@@ -91,7 +91,9 @@ android {
 }
 
 dependencies {
-    implementation("com.google.ai.edge.litertlm:litertlm-android:latest.release")
+    // Versión fija (antes latest.release): la que resolvió el run 38874693461. Así el mismo commit
+    // siempre compila el mismo motor. Para actualizarla, cambiarla aquí a propósito.
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")
     // Reconocer voces: sherpa-onnx (Apache 2.0). GitHub Actions descarga el .aar en app/libs al
     // compilar (no vive en el repositorio; ver .github/workflows/android.yml).
     implementation(files("libs/sherpa-onnx-1.13.8.aar"))

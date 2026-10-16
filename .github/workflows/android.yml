@@ -129,6 +129,7 @@ jobs:
         with:
           name: ari-apk
           path: app/build/outputs/apk/completa/release/app-completa-release.apk
+          retention-days: 14
 
       # La Ari para otras personas (sin equipo de modelos), versión de entrega.
       - name: Guardar APK para otros
@@ -136,6 +137,7 @@ jobs:
         with:
           name: ari-otros-apk
           path: app/build/outputs/apk/otros/release/app-otros-release.apk
+          retention-days: 7
 
       # ARI Trader (hermano del dueño), especializada en trading, sin poderes de CEO.
       - name: Guardar APK de ARI Trader
@@ -143,6 +145,7 @@ jobs:
         with:
           name: ari-trader-apk
           path: app/build/outputs/apk/trader/release/app-trader-release.apk
+          retention-days: 7
 
       # Página oficial: solo cuando se pide (publicar_web) y solo la Ari comercial, nunca la del dueño.
       # Necesita el secreto ARI_WEB_TOKEN (llave con permiso Contents de escritura solo en ari-web).
@@ -190,6 +193,7 @@ jobs:
         with:
           name: ari-debug-apk
           path: app/build/outputs/apk/completa/debug/app-completa-debug.apk
+          retention-days: 7
 
       # El mapa para leer los informes de fallo de las versiones revueltas.
       - name: Guardar mapa de nombres
@@ -197,9 +201,11 @@ jobs:
         with:
           name: ari-mapa
           path: app/build/outputs/mapping/
+          retention-days: 14
 
       - name: Guardar APK de Ari Estado
         uses: actions/upload-artifact@v4
         with:
           name: ari-estado-apk
           path: estado/build/outputs/apk/debug/estado-debug.apk
+          retention-days: 7
