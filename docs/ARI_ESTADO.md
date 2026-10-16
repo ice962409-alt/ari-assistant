@@ -811,3 +811,15 @@ Pedido del usuario: "si tiene el conocimiento lo saca de su modelo local; si no,
 - `AriWeb.autoQuery` saca esa consulta; `AriBrain.withoutNotes` ya no la dice en voz.
 - `MainActivity.handleAutoSearch` (solo CEO): al terminar la respuesta de Gemma, si hay "BUSCAR:", hace la búsqueda web (AriWeb.search: DuckDuckGo con respaldo en Wikipedia) y da el resultado. Así, lo que sabe lo responde su modelo y lo que no, lo busca solo.
 - Pruebas en `AriWebTest` (autoQuery).
+
+## Compilación limpia para arm64-v8a: criterio A de la Fase 1 (versión 0.66.1)
+
+Auditoría del 15-16/10/2026 (ver `docs/ARI_HANDOFF.md`). Decisiones del usuario: la Fase 1 se evalúa en esta rama, con LiteRT-LM; "compilación limpia" = sin errores ni avisos de R8 ni advertencias de Kotlin.
+- R8 9.1.29 en el classpath del build (`build.gradle.kts`): la R8 de AGP 8.13.2 no entendía los metadatos de Kotlin 2.4 (448 avisos). Esa versión solo está en el repositorio de versiones de R8 (`storage.googleapis.com/r8-releases/raw`), filtrado al módulo `com.android.tools:r8`.
+- Gradle 8.14.4 (quita el aviso "Deprecated Gradle Version" de Kotlin) y `gradle.properties` con más memoria para el daemon.
+- 5 advertencias de Kotlin corregidas: `Locale.forLanguageTag`, colores de barras (`paintSystemBars`: la barra de estado solo antes de Android 15; la barra de 3 botones siempre) y dos conversiones redundantes.
+- LiteRT-LM fijada en 0.18.0 (antes `latest.release`).
+- CI: las 4 APK de la app (también Trader) deben traer solo `arm64-v8a`; un paso falla si hay avisos de R8 por metadatos o advertencias `w:` de Kotlin; se anotan las versiones de LiteRT-LM y R8; retención de artefactos de 7 a 14 días.
+- Resultado: runs 38874693461 y 38877539907 con 0 avisos de R8 por metadatos y 0 advertencias de Kotlin. Excepción aprobada por el usuario: 6 avisos de R8 "Class file resource provider does not support async parsing" (R8 9.1 con AGP 8.13; solo afectan a la velocidad de compilación). Para quitarlos haría falta migrar a AGP 9.1.
+- Los dos runs fallaron al subir el APK: el espacio de artefactos de GitHub estaba lleno. Con permiso del usuario se borraron 323 artefactos viejos y se conservaron los de la 0.66.0. Falta un run en verde cuando GitHub recalcule el espacio (cada 6 a 12 horas).
+- Falta [prueba] en el teléfono: instalar la 0.66.1 encima y revisar que abre (R8 nueva). B y C siguen pendientes de las pruebas del usuario.

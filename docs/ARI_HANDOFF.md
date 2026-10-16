@@ -14,11 +14,12 @@ Tarea autorizada por el usuario el 16/10/2026: **trabajar el criterio A de la Fa
 
 - [x] Decisiones del usuario registradas (sección 4, 16/10/2026).
 - [x] Commit a61b589 (0.66.1): R8 9.1.29 en `build.gradle.kts`, 5 advertencias de Kotlin corregidas y CI que revisa la ABI de las 4 APK de la app (incluida Trader) y anota la versión de LiteRT-LM y de R8.
-- [ ] Revisión adversarial del diff (3 revisores) y corrección de lo que encuentren.
-- [ ] Lanzar `android.yml` (workflow_dispatch) sobre la rama y esperar unos 15 minutos. Revisar una sola vez, sin vigilar.
-- [ ] En el log: 0 avisos "parsing kotlin metadata", 0 líneas `w:` de código (el aviso "Deprecated Gradle Version" queda fuera del alcance), `native-code: 'arm64-v8a'` en las 4 APK, versión de LiteRT-LM resuelta y R8 9.1.29 en el classpath.
-- [ ] Fijar `litertlm-android` a la versión resuelta (sin `latest.release`), compilar otra vez y confirmar que sigue en verde y limpio.
-- [ ] Actualizar `docs/ARI_ESTADO.md`, `docs/ARI_DOCUMENTACION.md` y este documento (A = APROBADO, con el número de run).
+- [x] Revisión adversarial del diff (Kotlin, Gradle/R8, CI). Corregido: la barra de 3 botones en Android 15+ (257dffe) y R8 9.1.29 desde su repositorio oficial, que no está en Google Maven (717b9b0).
+- [x] Compilación limpia en CI: runs 38874693461 (717b9b0) y 38877539907 (e19b7f0). 0 avisos "parsing kotlin metadata" (antes 448), 0 advertencias `w:` de Kotlin (antes 32; Gradle 8.14.4 quita "Deprecated Gradle Version"), `native-code: 'arm64-v8a'` en las 4 APK, R8 9.1.29 en el classpath. Quedan 6 avisos de R8 "Class file resource provider does not support async parsing" por usar R8 9.1 con AGP 8.13: el usuario aprobó A con esa excepción documentada (16/10/2026).
+- [x] LiteRT-LM fijada en 0.18.0 (la que resolvía `latest.release`), e19b7f0.
+- [x] Artefactos: el espacio de GitHub estaba lleno. Con permiso del usuario se borraron 323 artefactos viejos (unos 9 GB) y se conservaron los 6 de la 0.66.0 (run 38671115372). Retención nueva: 14 días para `ari-apk` y el mapa, 7 para el resto.
+- [ ] Run en verde con artefactos: los dos runs anteriores compilaron limpio, pero fallaron al subir el APK porque GitHub recalcula el espacio cada 6 a 12 horas. Relanzar `android.yml` cuando se haya recalculado (a partir de las 15:00 UTC del 16/10).
+- [x] Documentación actualizada (`docs/ARI_ESTADO.md`, `docs/ARI_DOCUMENTACION.md` y este documento).
 - [ ] Avisar al usuario con el enlace del run y del APK (`ari-apk`, 0.66.1), y desactivar la tarea programada.
 
 Si la compilación falla: leer el log, corregir solo lo necesario y relanzar. Si R8 9.1.29 no existe o no es compatible con AGP 8.13.2, no improvisar un cambio grande (por ejemplo, subir AGP a 9.x): parar y preguntar al usuario.
@@ -186,6 +187,8 @@ Las preguntas 1 a 5 ya están respondidas (sección 4). Siguen abiertas las 6 a 
 Recordatorio: una compilación en verde no demuestra ninguna prueba física en el teléfono. No hay ningún registro de que la 0.66.0 esté instalada en el POCO X8 Pro Max. La última versión confirmada en el tablero es la 0.55 ("probar-055", "Todo bien", 14/10); la prueba de la 0.64 sigue pendiente.
 
 ### A. Compilación limpia para arm64-v8a: PENDIENTE (casi cumplido)
+
+**Actualización 16/10/2026:** compilación limpia verificada en CI (runs 38874693461 y 38877539907, versión 0.66.1): 0 avisos de R8 por metadatos de Kotlin, 0 advertencias de Kotlin y solo `arm64-v8a` en las 4 APK. Aprobado por el usuario con una excepción: 6 avisos informativos de R8 "async parsing" (R8 9.1 con AGP 8.13). Falta un run en verde con el APK subido (bloqueado por el espacio de artefactos de GitHub, ya liberado y pendiente de recálculo). Lo que sigue más abajo es la evaluación anterior (0.66.0).
 
 Evidencia a favor (rama activa @ 9cbcaa3):
 - Run 38671115372 (workflow_dispatch, job 116214221591): pruebas unitarias de los 3 sabores y compilación con "BUILD SUCCESSFUL", sin ninguna línea de error ni FAILED.

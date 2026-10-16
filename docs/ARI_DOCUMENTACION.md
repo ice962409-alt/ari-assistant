@@ -1,6 +1,6 @@
 # Ari — Documentación del proyecto
 
-Última actualización: 14 de octubre de 2026
+Última actualización: 16 de octubre de 2026
 
 Este documento lo mantiene Claude. Su fuente está en el repositorio, en docs/ARI_DOCUMENTACION.md, y se exporta a Google Drive, a la carpeta "Ari - Documentación de Claude", cada vez que se termina un cambio.
 
@@ -612,6 +612,8 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - **ARI Trader (0.61.0, para el hermano del dueño)**: copia de ARI especializada en trading, app aparte (com.ari.trader), sin los poderes de CEO. Es entrenadora, no asesora: no da consejos financieros ni señales, no tiene precios en vivo y avisa que el trading puede hacer perder dinero. Junta mejoras y, con "propón mejoras", las manda al dueño (por el mismo intermediario de los informes) para validar qué se puede agregar. El hermano no toca GitHub ni se actualiza solo. Se hace por partes: Parte 1 base + tutora + propuestas; faltan diario, checklist y leer gráficas.
 
 - Internet más amplio (0.64.0, solo ARI): "busca en internet …" trae un resumen de la web (DuckDuckGo, con respaldo en Wikipedia). "busca en wikipedia …" y "¿quién fue …?" van a Wikipedia; el clima a Open-Meteo. Solo a petición y sin datos personales.
+
+- Compilación limpia (0.66.1, Fase 1, criterio A): la app compila sin los avisos de R8 y de Kotlin, solo para teléfonos de 64 bits (arm64-v8a), con el motor de Gemma en una versión fija (LiteRT-LM 0.18.0). No cambia nada de lo que ves en la app, salvo que la barra de botones de abajo mantiene el color de Ari en Android 15 y 16.
 
 ## 7. Archivos principales del código
 
