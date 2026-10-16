@@ -2026,15 +2026,16 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Antes de Android 15 las barras del sistema se pintan con el fondo de Ari. Desde Android 15
-     * la app va de borde a borde y Android ignora estos colores, por eso solo se usan antes.
+     * Pinta las barras del sistema con el fondo de Ari. Desde Android 15 la barra de estado es
+     * transparente y su color no tiene efecto, pero la barra de 3 botones sigue usando
+     * navigationBarColor (si no, saldría el gris del tema).
      */
     @Suppress("DEPRECATION")
     private fun paintSystemBars() {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             window.statusBarColor = AriTheme.background
-            window.navigationBarColor = AriTheme.background
         }
+        window.navigationBarColor = AriTheme.background
     }
 
     /** Interfaz al estilo de Claude, oscura y con el color hielo de Ari. */
