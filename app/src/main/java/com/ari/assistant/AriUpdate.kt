@@ -6,8 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.zip.ZipInputStream
@@ -15,17 +17,23 @@ import java.util.zip.ZipInputStream
 /**
  * Solo en la ARI del dueño: se actualiza desde GitHub.
  *
- * 1. Busca la última compilación en verde de su rama (GitHub Actions) con la llave de
- *    Ajustes → GitHub de ARI (necesita el permiso Actions: lectura).
- * 2. Si es más nueva que la instalada, baja el APK (artifact "ari-apk").
- * 3. Android pide confirmar la instalación: ninguna app se puede actualizar sin que tú toques
- *    "Instalar", y Android solo la acepta si viene firmada con la misma clave.
+ * 1. Busca la versión privada más nueva de su rama en Releases ("ari-v<versión>", con el
+ *    archivo ari.apk), que publica android.yml en cada compilación. Necesita que la llave de
+ *    Ajustes → GitHub de ARI tenga el permiso Contents: lectura.
+ * 2. Si ahí no hay nada, como antes: la última compilación en verde de su rama (GitHub Actions)
+ *    y su artifact "ari-apk" (permiso Actions: lectura).
+ * 3. Si es más nueva que la instalada, baja el APK y Android pide confirmar la instalación:
+ *    ninguna app se puede actualizar sin que tú toques "Instalar", y Android solo la acepta si
+ *    viene firmada con la misma clave.
  *
  * Nada de tus datos sale del teléfono: solo se piden archivos a GitHub.
  */
 object AriUpdate {
 
     const val ARTIFACT = "ari-apk"
+    /** La versión privada de Releases: etiqueta ari-v<versión> y su archivo (trabajo "publicar" de android.yml). */
+    const val RELEASE_TAG_PREFIX = "ari-v"
+    const val RELEASE_ASSET = "ari.apk"
     private const val WORKFLOW = "android.yml"
 
     /** "busca actualizaciones", "actualízate", "¿hay versión nueva?". */
@@ -44,12 +52,23 @@ object AriUpdate {
     /** Qué significa cada respuesta de GitHub, en palabras. */
     fun explain(code: Int): String = when (code) {
         401 -> "La llave de GitHub no es válida o ya venció. Pega una nueva en Ajustes → GitHub de ARI."
-        403, 404 -> "A la llave le falta el permiso Actions (lectura). En GitHub, edítala y agrégalo; luego vuelve a intentarlo."
+        403, 404 -> "A la llave le falta un permiso de lectura: Contents (para las versiones de Releases) o Actions. En GitHub, edítala y agrégalos; luego vuelve a intentarlo."
         -1 -> "No pude conectarme a GitHub. Revisa tu internet."
         else -> "GitHub respondió con el código $code."
     }
 
-    data class Release(val runId: Long, val number: Int, val title: String, val created: String)
+    /**
+     * Una compilación que se puede instalar. Si [assetId] es mayor que 0 viene de Releases (el
+     * archivo ari.apk, de [size] bytes); si no, del artifact "ari-apk" de la ejecución [runId].
+     */
+    data class Release(
+        val runId: Long,
+        val number: Int,
+        val title: String,
+        val created: String,
+        val assetId: Long = 0L,
+        val size: Long = 0L
+    )
 
     sealed class Check {
         data class Available(val release: Release) : Check()
@@ -58,12 +77,57 @@ object AriUpdate {
         data class Failed(val message: String) : Check()
     }
 
+    /**
+     * La versión privada más nueva de la rama [branch] en la lista de Releases que manda GitHub
+     * ([json]), con su ari.apk ya subido. android.yml escribe en las notas
+     * "Compilación N (run ID), rama R, commit …": de ahí salen el número, el run y la rama.
+     */
+    fun newestRelease(json: String, branch: String): Release? {
+        val list = runCatching { JSONArray(json) }.getOrNull() ?: return null
+        return (0 until list.length()).mapNotNull { list.optJSONObject(it) }
+            .filter { it.optString("tag_name").startsWith(RELEASE_TAG_PREFIX) && !it.optBoolean("draft") }
+            .mapNotNull { release ->
+                val notes = release.optString("body")
+                val runId = Regex("\\(run (\\d+)\\)").find(notes)?.groupValues?.get(1)?.toLongOrNull()
+                    ?: return@mapNotNull null
+                if (Regex("rama ([^,\\s]+)").find(notes)?.groupValues?.get(1) != branch) return@mapNotNull null
+                val assets = release.optJSONArray("assets") ?: return@mapNotNull null
+                val apk = (0 until assets.length()).mapNotNull { assets.optJSONObject(it) }
+                    .firstOrNull { it.optString("name") == RELEASE_ASSET && it.optString("state") == "uploaded" }
+                    ?: return@mapNotNull null
+                Release(
+                    runId = runId,
+                    number = Regex("Compilación (\\d+)").find(notes)?.groupValues?.get(1)?.toIntOrNull() ?: 0,
+                    title = release.optString("name").take(120),
+                    created = release.optString("published_at").take(10),
+                    assetId = apk.optLong("id"),
+                    size = apk.optLong("size")
+                )
+            }
+            .maxByOrNull { it.runId }
+    }
+
     // --- Parte de Android ---
 
     /** Revisa si hay una compilación nueva. Corre fuera del hilo principal. */
     fun check(context: Context): Check {
         val token = AriGitHub.token(context) ?: return Check.NoToken
         val branch = BuildConfig.BUILD_BRANCH.ifEmpty { return Check.Failed("Esta versión no sabe de qué rama viene. Instala una compilada por GitHub.") }
+        val (code, text) = get("https://api.github.com/repos/${AriGitHub.REPO}/releases?per_page=10", token)
+        if (code == 401 || code == -1) return Check.Failed(explain(code))
+        if (code in 200..299) {
+            newestRelease(text, branch)?.let { release ->
+                return if (isNewer(release.runId, BuildConfig.BUILD_RUN)) Check.Available(release) else Check.UpToDate
+            }
+        }
+        val fromActions = checkActions(token, branch)
+        // Sin el permiso Contents, Releases contesta 403 o 404: si Actions tampoco tiene un APK, se dice.
+        if (code == 403 || code == 404) return fromActions as? Check.Available ?: Check.Failed(explain(code))
+        return fromActions
+    }
+
+    /** Como antes de Releases: la última compilación en verde de la rama, si tiene su artifact. */
+    private fun checkActions(token: String, branch: String): Check {
         val url = "https://api.github.com/repos/${AriGitHub.REPO}/actions/workflows/$WORKFLOW/runs" +
             "?branch=${java.net.URLEncoder.encode(branch, "UTF-8")}&status=success&per_page=1"
         val (code, text) = get(url, token)
@@ -82,20 +146,42 @@ object AriUpdate {
     /** Baja el APK de esa compilación. Devuelve el archivo o un mensaje de error. */
     fun download(context: Context, release: Release, progress: (Int) -> Unit): Pair<File?, String?> {
         val token = AriGitHub.token(context) ?: return null to explain(401)
+        if (release.assetId > 0) {
+            return fetch(
+                context, "https://api.github.com/repos/${AriGitHub.REPO}/releases/assets/${release.assetId}",
+                token, "application/octet-stream", zipped = false, total = release.size, progress = progress
+            )
+        }
         val (code, text) = get("https://api.github.com/repos/${AriGitHub.REPO}/actions/runs/${release.runId}/artifacts", token)
         if (code !in 200..299) return null to explain(code)
         val artifacts = runCatching { JSONObject(text).getJSONArray("artifacts") }.getOrNull() ?: return null to "GitHub no mandó la lista de archivos."
         val artifact = (0 until artifacts.length()).mapNotNull { artifacts.optJSONObject(it) }
             .firstOrNull { it.optString("name") == ARTIFACT && !it.optBoolean("expired") }
             ?: return null to "Esa compilación ya no tiene el APK (GitHub los borra con el tiempo)."
-        val total = artifact.optLong("size_in_bytes")
+        return fetch(
+            context, artifact.getString("archive_download_url"), token, "application/vnd.github+json",
+            zipped = true, total = artifact.optLong("size_in_bytes"), progress = progress
+        )
+    }
 
-        // GitHub contesta con una redirección a un enlace temporal; la llave no se manda ahí.
-        val first = URL(artifact.getString("archive_download_url")).openConnection() as HttpURLConnection
+    /**
+     * Pide [url] a GitHub. Lo normal es que conteste con una redirección a un enlace temporal
+     * (la llave no se manda ahí); los archivos de Releases a veces llegan directo.
+     */
+    private fun fetch(
+        context: Context, url: String, token: String, accept: String,
+        zipped: Boolean, total: Long, progress: (Int) -> Unit
+    ): Pair<File?, String?> {
+        val first = URL(url).openConnection() as HttpURLConnection
         val location = try {
             first.instanceFollowRedirects = false
             headers(first, token)
+            first.setRequestProperty("Accept", accept)
+            first.readTimeout = 60_000
             val status = first.responseCode
+            if (status in 200..299) return save(context, first.inputStream, zipped, total, progress)
+            // Releases: si la versión se volvió a compilar, su archivo cambió y el de antes ya no existe.
+            if (status == 404 && !zipped) return null to "Esa versión se reemplazó por una compilación más nueva. Dime otra vez \"busca actualizaciones\"."
             if (status !in 300..399) return null to explain(status)
             first.getHeaderField("Location") ?: return null to "GitHub no dio el enlace de descarga."
         } finally {
@@ -103,36 +189,49 @@ object AriUpdate {
         }
         if (!location.startsWith("https://")) return null to "El enlace de descarga no es seguro."
 
-        val folder = File(context.cacheDir, "actualizacion").apply { deleteRecursively(); mkdirs() }
-        val apk = File(folder, "ari.apk")
         val second = URL(location).openConnection() as HttpURLConnection
         try {
             second.connectTimeout = 15_000
             second.readTimeout = 60_000
             if (second.responseCode !in 200..299) return null to "La descarga falló (código ${second.responseCode})."
-            ZipInputStream(second.inputStream.buffered()).use { zip ->
-                var read = 0L
-                while (true) {
-                    val entry = zip.nextEntry ?: break
-                    if (entry.isDirectory || apkEntry(listOf(entry.name)) == null) continue
-                    apk.outputStream().use { out ->
-                        val buffer = ByteArray(64 * 1024)
-                        while (true) {
-                            val n = zip.read(buffer)
-                            if (n < 0) break
-                            out.write(buffer, 0, n)
-                            read += n
-                            if (total > 0) progress(((read * 100) / total).toInt().coerceIn(0, 99))
-                        }
-                    }
-                    break
-                }
-            }
+            return save(context, second.inputStream, zipped, total, progress)
         } finally {
             second.disconnect()
         }
+    }
+
+    /** Guarda el APK en la caché: tal cual (Releases) o sacándolo del zip (artifact). */
+    private fun save(context: Context, input: InputStream, zipped: Boolean, total: Long, progress: (Int) -> Unit): Pair<File?, String?> {
+        val folder = File(context.cacheDir, "actualizacion").apply { deleteRecursively(); mkdirs() }
+        val apk = File(folder, "ari.apk")
+        if (zipped) {
+            ZipInputStream(input.buffered()).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    if (entry.isDirectory || apkEntry(listOf(entry.name)) == null) continue
+                    copy(zip, apk, total, progress)
+                    break
+                }
+            }
+        } else {
+            input.buffered().use { copy(it, apk, total, progress) }
+        }
         if (!apk.isFile || apk.length() == 0L) return null to "El archivo de GitHub no traía el APK."
         return apk to null
+    }
+
+    private fun copy(input: InputStream, apk: File, total: Long, progress: (Int) -> Unit) {
+        apk.outputStream().use { out ->
+            val buffer = ByteArray(64 * 1024)
+            var read = 0L
+            while (true) {
+                val n = input.read(buffer)
+                if (n < 0) break
+                out.write(buffer, 0, n)
+                read += n
+                if (total > 0) progress(((read * 100) / total).toInt().coerceIn(0, 99))
+            }
+        }
     }
 
     /** Revisa que el APK sea ARI y no una versión más vieja. */

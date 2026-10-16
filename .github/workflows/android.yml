@@ -281,6 +281,8 @@ jobs:
           set -euo pipefail
           tag="ari-v$VERSION"
           # Una sola versión privada por número de versión: si se vuelve a compilar, se reemplaza.
+          # El actualizador de ARI (AriUpdate.newestRelease) lee de las notas "Compilación N (run ID),
+          # rama R,": si cambias ese formato, cámbialo también allí.
           gh release delete "$tag" --cleanup-tag --yes 2>/dev/null || true
           gh release create "$tag" entrega/ari.apk entrega/ari-mapa.zip \
             --target "$GITHUB_SHA" --prerelease \

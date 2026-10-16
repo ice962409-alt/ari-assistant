@@ -15,7 +15,7 @@ Convención: cada dato lleva su fuente (ruta:línea@rama, SHA, id de run de GitH
 Tarea actual, decidida por el usuario en el tablero (ficha "actualizador-releases", 16/10/2026 18:57 UTC: "Que ARI baje de Releases (agrego el permiso)"): **ARI 0.67.0, "busca actualizaciones" baja de Releases**.
 
 - [x] `AriUpdate.kt`: primero la versión privada más nueva de su rama en Releases (`ari-v*` con `ari.apk`; lee "Compilación N (run ID), rama R" de las notas); si no hay, el método anterior (última ejecución en verde + artifact `ari-apk`); con 403/404 en Releases y sin APK en Actions, pide el permiso Contents. Descarga del asset con `Accept: application/octet-stream`, sin mandar la llave al enlace temporal; acepta 302 y 200. Pruebas: `AriUpdateReleasesTest` (Robolectric) y `AriUpdateTest`. versionCode 82.
-- [ ] Revisión adversarial del cambio y correcciones.
+- [x] Revisión adversarial (7 agentes; sin problemas de compilación ni avisos). Corregido: las instrucciones de la llave dentro de la app no pedían Contents (MainActivity, paso 4) y novedades de la versión 82; un 404 al bajar una versión recompilada ya no culpa a la llave; la lista de Releases pide 10 en vez de 30.
 - [ ] Compilación con `android.yml` (build en verde y versión `ari-v0.67.0` en Releases; el run sale en rojo a propósito mientras la cuota de artefactos siga llena).
 - [ ] Avisar al usuario: enlace de la 0.67.0 (instalarla a mano, porque el actualizador de la 0.66.1 no ve Releases) y pasos para darle a la llave de GitHub de ARI el permiso Contents: lectura. Después, "busca actualizaciones" ya debería funcionar con las siguientes versiones.
 

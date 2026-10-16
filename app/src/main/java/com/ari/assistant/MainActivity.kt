@@ -3867,7 +3867,7 @@ class MainActivity : Activity() {
                 text = (if (AriGitHub.hasToken(this@MainActivity)) "Ya tengo una llave guardada. Si pegas otra, reemplaza a la anterior.\n\n" else "") +
                     "Con esta llave dejo mis propuestas de mejora como fichas (issues) en tu repositorio ari-assistant, y Claude las programa. También busco y bajo mis actualizaciones.\n\n" +
                     "Cómo crearla:\n1. Toca \"Abrir GitHub\".\n2. Nombre: ARI fichas. Caducidad: 90 días.\n" +
-                    "3. Acceso a repositorios: solo ari-assistant.\n4. Permisos → Issues: lectura y escritura; Actions: solo lectura (para actualizarme).\n" +
+                    "3. Acceso a repositorios: solo ari-assistant.\n4. Permisos → Issues: lectura y escritura; Contents y Actions: solo lectura (para actualizarme).\n" +
                     "5. Genera, copia la llave y pégala aquí. No la mandes por chat."
             })
             addView(field)

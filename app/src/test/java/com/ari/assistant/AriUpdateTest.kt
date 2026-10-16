@@ -37,6 +37,7 @@ class AriUpdateTest {
     @Test
     fun explainsGitHubAnswers() {
         assertTrue(AriUpdate.explain(403).contains("Actions"))
+        assertTrue(AriUpdate.explain(404).contains("Contents"))
         assertTrue(AriUpdate.explain(401).contains("llave"))
         assertTrue(AriUpdate.explain(-1).contains("internet"))
     }
