@@ -78,17 +78,31 @@ jobs:
       - name: Compilar APK
         run: ./gradlew :app:assembleCompletaRelease :app:assembleOtrosRelease :app:assembleTraderRelease :app:assembleCompletaDebug :estado:assembleDebug
 
+      # Anota qué versión de LiteRT-LM (el motor de Gemma) y de R8 se usaron en esta compilación.
+      - name: Versiones de dependencias
+        continue-on-error: true
+        run: |
+          ./gradlew -q :app:dependencyInsight --configuration completaReleaseRuntimeClasspath --dependency com.google.ai.edge.litertlm:litertlm-android
+          ./gradlew -q buildEnvironment | grep -E "com.android.tools:r8|com.android.tools.build:gradle" || true
+
       # Revisa que cada APK esté bien firmada y se pueda instalar (firma, versión, permisos).
+      # Las 4 APK de la app deben traer solo código nativo arm64-v8a: si no, la compilación falla.
       - name: Revisar APK
         run: |
           BT="$ANDROID_HOME/build-tools/36.0.0"
           for apk in app/build/outputs/apk/completa/release/app-completa-release.apk \
                      app/build/outputs/apk/otros/release/app-otros-release.apk \
+                     app/build/outputs/apk/trader/release/app-trader-release.apk \
                      app/build/outputs/apk/completa/debug/app-completa-debug.apk; do
             echo "=== $apk ($(stat -c %s "$apk") bytes)"
             "$BT/apksigner" verify --verbose --print-certs "$apk" | grep -E "Verified|Signer #1 certificate SHA-256|WARNING|ERROR" || true
             "$BT/aapt2" dump badging "$apk" | grep -E "^package:|sdkVersion|targetSdkVersion|native-code|application-debuggable|testOnly" || true
             "$BT/zipalign" -c -P 16 4 "$apk" && echo "zipalign OK" || echo "zipalign FALLA"
+            native="$("$BT/aapt2" dump badging "$apk" | grep "^native-code:" || true)"
+            if [ "$native" != "native-code: 'arm64-v8a'" ]; then
+              echo "::error::$apk no trae solo arm64-v8a (${native:-sin código nativo})"
+              exit 1
+            fi
           done
 
       # La Ari del dueño (la CEO, con su equipo de modelos), versión de entrega.

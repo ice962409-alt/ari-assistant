@@ -883,7 +883,7 @@ class MainActivity : Activity() {
             is com.ari.assistant.agents.ReminderParser.Result.Ok -> {
                 val id = database.addReminder(parsed.text, parsed.dueAt)
                 reminderAlarms.schedule(com.ari.assistant.agents.Reminder(id, parsed.text, parsed.dueAt))
-                val whenText = java.text.SimpleDateFormat("EEEE d 'a las' HH:mm", java.util.Locale("es", "MX")).format(
+                val whenText = java.text.SimpleDateFormat("EEEE d 'a las' HH:mm", java.util.Locale.forLanguageTag("es-MX")).format(
                     java.util.Date(parsed.dueAt.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())
                 )
                 answerLocally(text, "Listo, te aviso el $whenText para que sigas con Claude. Mientras, descansa.")
@@ -2025,10 +2025,21 @@ class MainActivity : Activity() {
         }
     }
 
+    /**
+     * Antes de Android 15 las barras del sistema se pintan con el fondo de Ari. Desde Android 15
+     * la app va de borde a borde y Android ignora estos colores, por eso solo se usan antes.
+     */
+    @Suppress("DEPRECATION")
+    private fun paintSystemBars() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            window.statusBarColor = AriTheme.background
+            window.navigationBarColor = AriTheme.background
+        }
+    }
+
     /** Interfaz al estilo de Claude, oscura y con el color hielo de Ari. */
     private fun buildInterface() {
-        window.statusBarColor = AriTheme.background
-        window.navigationBarColor = AriTheme.background
+        paintSystemBars()
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL

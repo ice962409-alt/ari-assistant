@@ -134,7 +134,7 @@ object AutoReport {
             val ram = runCatching {
                 val info = ActivityManager.MemoryInfo()
                 context.getSystemService(ActivityManager::class.java)?.getMemoryInfo(info)
-                ModelChoice.gb(info.totalMem).toString()
+                ModelChoice.gb(info.totalMem)
             }.getOrDefault("")
             val appVersion = runCatching {
                 @Suppress("DEPRECATION")

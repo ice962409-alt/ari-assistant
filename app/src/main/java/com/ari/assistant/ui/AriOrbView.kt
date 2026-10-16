@@ -292,7 +292,7 @@ class AriOrbView(context: Context) : View(context) {
             val spin = t * (if (mood == Mood.THINKING) 1.6f else 0.35f)
             for (i in 0 until 2) {
                 canvas.save()
-                canvas.rotate(Math.toDegrees((spin + i * PI).toDouble()).toFloat(), cx, cy)
+                canvas.rotate(Math.toDegrees(spin + i * PI).toFloat(), cx, cy)
                 swirl.color = if (i == 0) Color.argb(34, 255, 255, 255) else withAlpha(AriTheme.iceDeep, 30)
                 oval.set(cx - radius * 0.95f, cy - radius * 0.28f, cx + radius * 0.35f, cy + radius * 0.12f)
                 canvas.drawOval(oval, swirl)
