@@ -19,11 +19,11 @@ Tarea autorizada por el usuario el 16/10/2026: **trabajar el criterio A de la Fa
 - [x] LiteRT-LM fijada en 0.18.0 (la que resolvía `latest.release`), e19b7f0.
 - [x] Artefactos: el espacio de GitHub estaba lleno. Con permiso del usuario se borraron 323 artefactos viejos (unos 9 GB) y se conservaron los 6 de la 0.66.0 (run 38671115372). Retención nueva: 14 días para `ari-apk` y el mapa, 7 para el resto.
 - [x] Pruebas de la base de datos real (apoyan C, no la sustituyen): `AriDatabaseTest` con Robolectric 4.14.1 (6132458) y `android.useAndroidX=true` (f498381; sin esa línea falló el run 38882739724). En el run 38883320991 (f498381) pasaron todas las pruebas, la compilación salió limpia, el control de avisos y la ABI en verde; solo falló "Guardar APK" por la cuota de artefactos.
-- [ ] Prueba de "olvida" corregida: con "café" frente a "cafetería" no demostraba nada (ninguna contiene a la otra), ahora usa "cafe". Confirmar que pasa en el próximo run.
-- [ ] APK 0.66.1 entregado: el espacio de artefactos sigue lleno (probablemente hasta el próximo ciclo de facturación; los runs 38874693461, 38877539907 y 38883320991 compilaron limpio y fallaron solo al subir). Desde el 16/10, `android.yml` publica el APK del dueño y el mapa en la versión privada `ari-v<versión>` de Releases (trabajo `publicar`). Mientras la cuota siga llena, el run termina en rojo **a propósito** en el paso "Revisar que se guardaron los artefactos" de `publicar`: eso no es un fallo de compilación. Comprobar que build, pruebas, avisos y ABI están en verde y que la versión `ari-v0.66.1` tiene `ari.apk`.
+- [x] Prueba de "olvida" corregida: con "café" frente a "cafetería" no demostraba nada (ninguna contiene a la otra), ahora usa "cafe" (eb610c7). Pasó en el run 38909849572.
+- [x] APK 0.66.1 entregado (16/10/2026): run [38909849572](https://github.com/javierhedzd-ops/ari-assistant/actions/runs/38909849572) (62426d1). El trabajo build salió todo en verde (pruebas, compilación limpia, avisos, ABI). `publicar` creó la versión privada [ari-v0.66.1](https://github.com/javierhedzd-ops/ari-assistant/releases/tag/ari-v0.66.1), con `ari.apk` (82,5 MB) y `ari-mapa.zip`. El run quedó en rojo a propósito en "Revisar que se guardaron los artefactos": GitHub no guardó ningún artefacto (la cuota sigue llena). Mientras siga así, cada run saldrá en rojo en ese paso aunque todo compile bien, y el actualizador de dentro de ARI no verá versiones nuevas.
 - [x] Documentación actualizada (`docs/ARI_ESTADO.md`, `docs/ARI_DOCUMENTACION.md` y este documento). Exportadas a Drive la documentación y la guía de aprendizaje (16/10/2026).
 - [x] Afirmaciones de B y C de la sección 6 verificadas otra vez contra la 0.66.1 (16/10/2026, revisión con dos escépticos por cada duda): líneas actualizadas y cuatro precisiones (B5, B6, C4, C5).
-- [ ] Avisar al usuario con el enlace del run y del APK (Releases: `ari-v0.66.1` → `ari.apk`), y desactivar la tarea programada.
+- [x] Avisado el usuario con el enlace del run y del APK (Releases: `ari-v0.66.1` → `ari.apk`), en el chat y en el tablero, y desactivada la tarea programada "ARI: continuar criterio A" (16/10/2026).
 
 Si la compilación falla: leer el log, corregir solo lo necesario y relanzar. Si R8 9.1.29 no existe o no es compatible con AGP 8.13.2, no improvisar un cambio grande (por ejemplo, subir AGP a 9.x): parar y preguntar al usuario.
 
@@ -31,11 +31,11 @@ El usuario dio autorización general el 16/10/2026. Aun así, B y C dependen de 
 
 ## 1. Resumen
 
-- El desarrollo real está en la rama `ccr-e45f2eee-wkjpdl` @ `9cbcaa3` (versión 0.66.0, versionCode 80). Tiene 154 commits por delante de `main` y no tiene PR. `main` sigue en la 0.1.0 (00527d1).
+- El desarrollo real está en la rama `ccr-e45f2eee-wkjpdl` (auditada en `9cbcaa3`, versión 0.66.0; desde el 16/10/2026 en la 0.66.1, versionCode 81, commit 62426d1 y siguientes, solo cambios del criterio A, pruebas y documentación). Tiene 154 commits por delante de `main` y no tiene PR. `main` sigue en la 0.1.0 (00527d1).
 - El motor de IA es **LiteRT-LM con modelos .litertlm** (Gemma 4 E4B/E2B, Qwen). No hay GGUF ni llama.cpp dentro de la app: los `.gguf` se rechazan a propósito (`ModelFamily.kt:28-38`, commit 3f621fa).
 - La memoria persistente es SQLite (`ari.db`, versión 4, WAL, 5 tablas). No existe una separación "episódica/semántica" en el código; la correspondencia de la sección 6 es una interpretación.
 - AriCore (en Android), ModelManager, ResourceCoordinator, GameOrchestrator y GE **no existen** en ninguna rama. Hay equivalentes parciales (sección 2.4).
-- Fase 1: **A PENDIENTE** (compila sin errores y solo arm64-v8a, falta definir "limpia"), **B PENDIENTE** y **C PENDIENTE** (sin pruebas físicas registradas).
+- Fase 1: **A APROBADO** (16/10/2026, 0.66.1: sin errores, 0 avisos de R8 por metadatos de Kotlin, 0 advertencias de Kotlin, solo arm64-v8a; excepción aprobada: 6 avisos de R8 "async parsing"; APK en Releases `ari-v0.66.1`). **B PENDIENTE** y **C PENDIENTE** (sin pruebas físicas registradas).
 - No se debe avanzar a la Fase 2.
 
 ## 2. Objetivo y arquitectura
@@ -189,7 +189,9 @@ Las preguntas 1 a 5 ya están respondidas (sección 4). Siguen abiertas las 6 a 
 
 Recordatorio: una compilación en verde no demuestra ninguna prueba física en el teléfono. No hay ningún registro de que la 0.66.0 esté instalada en el POCO X8 Pro Max. La última versión confirmada en el tablero es la 0.55 ("probar-055", "Todo bien", 14/10); la prueba de la 0.64 sigue pendiente.
 
-### A. Compilación limpia para arm64-v8a: PENDIENTE (casi cumplido)
+### A. Compilación limpia para arm64-v8a: APROBADO (16/10/2026, con una excepción aprobada)
+
+**Cierre 16/10/2026:** run 38909849572 (62426d1, versión 0.66.1): pruebas, compilación, control de avisos (0 de R8 por metadatos de Kotlin, 0 `w:` de Kotlin) y ABI (`native-code: 'arm64-v8a'` en las 4 APK) en verde. Excepción aprobada por el usuario: 6 avisos de R8 "Class file resource provider does not support async parsing" (R8 9.1 con AGP 8.13). APK entregado en la versión privada `ari-v0.66.1` de Releases. El run figura en rojo solo por el paso que avisa de que GitHub no guardó los artefactos (cuota llena), a propósito. Falta la [prueba] del usuario: instalar la 0.66.1 encima y comprobar que abre (R8 nueva).
 
 **Actualización 16/10/2026:** compilación limpia verificada en CI (runs 38874693461 y 38877539907, versión 0.66.1): 0 avisos de R8 por metadatos de Kotlin, 0 advertencias de Kotlin y solo `arm64-v8a` en las 4 APK. Aprobado por el usuario con una excepción: 6 avisos informativos de R8 "async parsing" (R8 9.1 con AGP 8.13). Falta un run en verde con el APK subido (bloqueado por el espacio de artefactos de GitHub, ya liberado y pendiente de recálculo). Lo que sigue más abajo es la evaluación anterior (0.66.0).
 
@@ -306,13 +308,13 @@ Primera acción, sin instalar nada ni forzar el cierre:
 Por qué esta primero: protege lo único que no se puede recuperar desde GitHub (los datos de la memoria) y resuelve tres incógnitas que deciden las pruebas: qué versión se evalúa (la última confirmada es la 0.55), si la GPU ya está en "falla" y si forzar el cierre durante la carga puede degradar el motor.
 
 Después:
-3. El usuario responde las decisiones 1 a 5 de la sección 5 (rama, motor, "limpia", "sin cargar el modelo", "episódica/semántica") y autoriza o no la etiqueta de respaldo de la decisión 10.
-4. Ejecutar la prueba C y la prueba B de la sección 7 con la versión acordada.
+3. Las decisiones 1 a 5 ya están tomadas (sección 4) y A está aprobado. Instalar la 0.66.1 de Releases (`ari-v0.66.1` → `ari.apk`) encima de la versión actual y comprobar que abre.
+4. Ejecutar la prueba C y la prueba B de la sección 7 con la 0.66.1 (ficha "probar-fase1" del tablero).
 5. Registrar los resultados con fecha y versión en `docs/ARI_ESTADO.md` de la rama activa y actualizar este documento. Solo con A, B y C verificados se pasa a la Fase 2.
 
 Hasta entonces: no instalar `ari-debug-apk`, no desinstalar, no usar "Recuperar" y no darle acceso a GitHub a la tarea de relevo sin decidirlo antes.
 
 Antes de trabajar, cualquier sesión debe:
-- Volver a traer la rama activa (`git fetch origin ccr-e45f2eee-wkjpdl`) y comprobar que su head sigue siendo 9cbcaa3. Si cambió, la tarea de relevo pudo añadir commits.
+- Volver a traer la rama activa (`git fetch origin ccr-e45f2eee-wkjpdl`) y leer la sección 0 y `git log` desde 9cbcaa3: desde el 16/10/2026 hay commits del criterio A, de las pruebas de la base de datos y de la entrega por Releases.
 - Leer el `CLAUDE.md` de la rama en la que vaya a trabajar.
 - No compilar en el contenedor (Google Maven está bloqueado): usar `android.yml` con `workflow_dispatch`.
