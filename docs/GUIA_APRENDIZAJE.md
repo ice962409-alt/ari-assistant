@@ -259,6 +259,7 @@ Por eso, desde la 0.66.1, tu APK sale además en **Releases**: las "versiones" d
 Dos detalles de cómo quedó armado:
 
 - **Permisos mínimos**: el trabajo que sube a Releases necesita permiso de escritura. Se separó en un trabajo aparte ("publicar") que no usa herramientas de terceros. Así, las herramientas que compilan siguen con permiso de solo lectura. Es la regla del menor privilegio: a cada pieza, solo la llave que necesita.
+- **El permiso Contents de la llave**: la llave de GitHub de ARI es una llave "fine-grained": tiene una lista de permisos, uno por cada cosa que puede hacer. Actions deja ver las compilaciones y sus artefactos; Contents deja leer el código y las versiones de Releases. Desde la 0.67.0, ARI busca sus actualizaciones en Releases, así que la llave necesita Contents (solo lectura). Se agrega editando la llave en GitHub, sin cambiarla: la que ARI tiene guardada sigue sirviendo.
 - **Rojo a propósito**: el actualizador de dentro de ARI busca la última compilación en verde y baja de ahí el artefacto ari-apk. Si una compilación sin artefacto saliera en verde, ARI te ofrecería "Hay una ARI nueva" y fallaría al bajarla. Por eso, mientras falte espacio, la compilación termina en rojo con el aviso "GitHub no guardó uno o más artefactos", aunque el APK esté bien en Releases.
 
 ### Probar la base de datos real sin teléfono: Robolectric
