@@ -33,6 +33,13 @@
     <!-- usesCleartextTraffic: Ollama y LM Studio sirven HTTP sin cifrar. El único
          código de red (TeamAgent) solo se conecta a direcciones IPv4 privadas
          y solo en el hotspot del teléfono o en redes Wi-Fi aprobadas por el usuario. -->
+    <!-- Game Boost (solo la Ari CEO): ver si Eden está instalado y su versión. Solo se lee. -->
+    <queries>
+        <package android:name="dev.eden.eden_emulator" />
+        <package android:name="dev.eden.eden_emulator.nightly" />
+        <package android:name="dev.legacy.eden_emulator" />
+    </queries>
+
     <application
         android:usesCleartextTraffic="true"
         tools:replace="android:usesCleartextTraffic">

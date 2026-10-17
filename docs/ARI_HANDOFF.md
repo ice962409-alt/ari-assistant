@@ -12,7 +12,17 @@ Convención: cada dato lleva su fuente (ruta:línea@rama, SHA, id de run de GitH
 
 **Fase 1 cerrada (16/10/2026):** A aprobado en CI y B y C confirmados por el usuario en el tablero (sección 6).
 
-Tarea actual, decidida por el usuario en el tablero (ficha "actualizador-releases", 16/10/2026 18:57 UTC: "Que ARI baje de Releases (agrego el permiso)"): **ARI 0.67.0, "busca actualizaciones" baja de Releases**.
+Tarea actual (Fase 2, decisiones del usuario del 16/10/2026): **ARI 0.68.0, Game Boost GB-1 y GB-2** (ver `docs/ARI_GAME_BOOST_DISENO.md`).
+
+- [x] Lógica pura con pruebas (`agents/GameBoost.kt`, `GameBoostTest`): temperatura sin inventar, batería, Eden instalado, recomendaciones, informe, confianza de perfiles y sesiones huérfanas.
+- [x] Agente "Game Boost" (id `juego`, solo CEO, antes de PhoneAgent): "voy a jugar", "prepara Eden", "game boost"… Funciona sin Gemma.
+- [x] `GameBoostDevice.kt` (memoria, ARI, estado térmico y margen con caché de 10 s, batería, chip, Eden) y Ajustes → "Game Boost: el teléfono para jugar" (solo lectura, botón Actualizar). `<queries>` de Eden en el manifiesto de completa.
+- [x] Base v5: `game_profiles`, `game_sessions`, `game_measurements` (NOT NULL; mediciones enlazadas por `started_at`), en el respaldo cifrado. Pruebas de migración 4 → 5 y del respaldo.
+- [x] Revisión adversarial (12 agentes) y correcciones (ver `docs/ARI_ESTADO.md`, sección de la 0.68.0).
+- [ ] Compilación (build en verde y `ari-v0.68.0` en Releases).
+- [ ] Avisar al usuario y prueba física en el POCO: actualizar desde ARI ("busca actualizaciones"), comprobar que siguen mensajes, recuerdos y personas (migración v5), abrir Ajustes → Game Boost y decir "voy a jugar".
+
+Tarea anterior (terminada): ARI 0.67.0, decidida por el usuario en el tablero (ficha "actualizador-releases", 16/10/2026 18:57 UTC: "Que ARI baje de Releases (agrego el permiso)"): **ARI 0.67.0, "busca actualizaciones" baja de Releases**.
 
 - [x] `AriUpdate.kt`: primero la versión privada más nueva de su rama en Releases (`ari-v*` con `ari.apk`; lee "Compilación N (run ID), rama R" de las notas); si no hay, el método anterior (última ejecución en verde + artifact `ari-apk`); con 403/404 en Releases y sin APK en Actions, pide el permiso Contents. Descarga del asset con `Accept: application/octet-stream`, sin mandar la llave al enlace temporal; acepta 302 y 200. Pruebas: `AriUpdateReleasesTest` (Robolectric) y `AriUpdateTest`. versionCode 82.
 - [x] Revisión adversarial (7 agentes; sin problemas de compilación ni avisos). Corregido: las instrucciones de la llave dentro de la app no pedían Contents (MainActivity, paso 4) y novedades de la versión 82; un 404 al bajar una versión recompilada ya no culpa a la llave; la lista de Releases pide 10 en vez de 30.

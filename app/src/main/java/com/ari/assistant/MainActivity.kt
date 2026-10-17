@@ -21,6 +21,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.ari.assistant.agents.AriCeo
 import com.ari.assistant.agents.ClockAgent
+import com.ari.assistant.agents.GameBoost
+import com.ari.assistant.agents.GameBoostAgent
 import com.ari.assistant.agents.MemoryAgent
 import com.ari.assistant.agents.PeopleAgent
 import com.ari.assistant.agents.PhoneAgent
@@ -63,6 +65,9 @@ class MainActivity : Activity() {
     // Se lee y escribe desde el hilo principal y desde el hilo del modelo.
     @Volatile
     private var modelReady = false
+    /** Gemma se está cargando (para Game Boost: va a ocupar memoria aunque todavía no esté lista). */
+    @Volatile
+    private var modelLoading = false
     // true si Gemma cargó con la "vista" (puede ver imágenes y páginas de PDF).
     private var visionReady = false
     // Lo que adjuntaste y todavía no envías.
@@ -223,6 +228,11 @@ class MainActivity : Activity() {
         ceo.hire(PeopleAgent(database, { memoriesPending = true }))
         calendarAgent = CalendarAgent(AndroidCalendar(this))
         ceo.hire(calendarAgent)
+        // Game Boost (solo la ARI del dueño): mide el teléfono antes de jugar. Va antes del
+        // teléfono para que "abre game boost" no se tome como abrir una app. No necesita a Gemma.
+        if (resources.getBoolean(R.bool.ari_ceo)) {
+            ceo.hire(GameBoostAgent(GameBoostDevice(this, { modelReady }, { modelLoading })))
+        }
         phoneAgent = PhoneAgent(AndroidPhone(this))
         ceo.hire(phoneAgent)
         ceo.hire(MemoryAgent(database) { memoriesPending = true })
@@ -1362,6 +1372,35 @@ class MainActivity : Activity() {
         return true
     }
 
+    /** Game Boost (solo CEO): cómo está el teléfono para jugar. Solo lee y recomienda. */
+    private fun showGameBoost() {
+        val text = TextView(this).apply {
+            textSize = 14f
+            setTextColor(AriTheme.text)
+            setLineSpacing(0f, 1.2f)
+            setTextIsSelectable(true)
+            setPadding(dp(20f), dp(8f), dp(20f), dp(8f))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Game Boost")
+            .setView(ScrollView(this).apply { addView(text) })
+            .setPositiveButton("Actualizar", null)
+            .setNegativeButton("Cerrar", null)
+            .show()
+        val reader = GameBoostDevice(this, { modelReady }, { modelLoading })
+        fun measure() {
+            text.text = "Midiendo el teléfono…"
+            Thread {
+                val report = runCatching { GameBoost.report(reader.read()) }
+                    .getOrElse { "No pude medir el teléfono: ${it.message}" }
+                runOnUiThread { if (!isDestroyed) text.text = com.ari.assistant.ui.Markdown.render(report) }
+            }.start()
+        }
+        // "Actualizar" vuelve a medir sin cerrar la ventana.
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { measure() }
+        measure()
+    }
+
     private fun showSettingsDialog() {
         val name = profile.userName.ifEmpty { "sin nombre" }
         val ceo = resources.getBoolean(R.bool.ari_ceo)
@@ -1396,6 +1435,7 @@ class MainActivity : Activity() {
         if (ceo) items += item("GitHub de ARI: ${if (AriGitHub.hasToken(this)) "conectado" else "sin conectar"}") { setupGitHub() }
         if (ceo) items += item("Buscar actualización") { checkForUpdate(quiet = false) }
         if (ceo) items += item("Uso del teléfono y pasos") { setupUsage() }
+        if (ceo) items += item("Game Boost: el teléfono para jugar") { showGameBoost() }
         if (!ceo) items += item("Ari Premium") {
             AlertDialog.Builder(this)
                 .setTitle("Ari Premium")
@@ -2902,6 +2942,15 @@ class MainActivity : Activity() {
     }
 
     private fun initializeModel(modelFile: File) {
+        modelLoading = true
+        try {
+            loadModel(modelFile)
+        } finally {
+            modelLoading = false
+        }
+    }
+
+    private fun loadModel(modelFile: File) {
         if (lowMemoryDevice()) {
             runOnUiThread {
                 status.text = "Aviso: este teléfono tiene poca memoria RAM; Gemma puede tardar o fallar."

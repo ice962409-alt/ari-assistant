@@ -58,12 +58,66 @@ class AriDatabase(context: Context) :
         createAgentTasksTable(db)
         createRemindersTable(db)
         createPeopleTable(db)
+        createGameTables(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createAgentTasksTable(db)
         if (oldVersion < 3) createRemindersTable(db)
         if (oldVersion < 4) createPeopleTable(db)
+        if (oldVersion < 5) createGameTables(db)
+    }
+
+    /**
+     * Game Boost (versión 5): perfiles por juego, sesiones de juego y mediciones. Las
+     * mediciones se enlazan con su sesión por la hora de inicio (started_at), no por el id,
+     * porque el respaldo vuelve a numerar las filas. Todo es NOT NULL: el respaldo no sabe
+     * guardar valores vacíos.
+     */
+    private fun createGameTables(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE game_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game TEXT NOT NULL,
+                title_id TEXT NOT NULL DEFAULT '',
+                recommendations TEXT NOT NULL DEFAULT '',
+                confidence TEXT NOT NULL DEFAULT 'baja',
+                created_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE game_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                state TEXT NOT NULL,
+                game TEXT NOT NULL DEFAULT '',
+                eden_package TEXT NOT NULL DEFAULT '',
+                eden_version TEXT NOT NULL DEFAULT '',
+                ari_version TEXT NOT NULL DEFAULT '',
+                device TEXT NOT NULL DEFAULT '',
+                started_at INTEGER NOT NULL,
+                ended_at INTEGER NOT NULL DEFAULT 0,
+                gemma_released INTEGER NOT NULL DEFAULT 0,
+                ari_exit TEXT NOT NULL DEFAULT '',
+                created_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE game_measurements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_started_at INTEGER NOT NULL,
+                moment TEXT NOT NULL,
+                source TEXT NOT NULL,
+                name TEXT NOT NULL,
+                value TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
     }
 
     /** La libreta de personas (versión 4). facts: una por línea; birthday: "MM-DD" o vacío. */
@@ -330,8 +384,8 @@ class AriDatabase(context: Context) :
                     val values = ContentValues()
                     columns.forEach { column ->
                         when (column) {
-                            "success", "done" -> values.put(column, row.optInt(column, 0))
-                            "created_at", "due_at" -> values.put(column, row.optLong(column, System.currentTimeMillis()))
+                            in INT_COLUMNS -> values.put(column, row.optInt(column, 0))
+                            in LONG_COLUMNS -> values.put(column, row.optLong(column, System.currentTimeMillis()))
                             else -> values.put(column, row.getString(column))
                         }
                     }
@@ -351,8 +405,8 @@ class AriDatabase(context: Context) :
                 val row = JSONObject()
                 columns.forEachIndexed { index, column ->
                     when (column) {
-                        "success", "done" -> row.put(column, cursor.getInt(index))
-                        "created_at", "due_at" -> row.put(column, cursor.getLong(index))
+                        in INT_COLUMNS -> row.put(column, cursor.getInt(index))
+                        in LONG_COLUMNS -> row.put(column, cursor.getLong(index))
                         else -> row.put(column, cursor.getString(index))
                     }
                 }
@@ -364,7 +418,7 @@ class AriDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "ari.db"
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 5
 
         /** Tablas y columnas que viajan en el respaldo (el id se vuelve a crear). */
         private val TABLES = listOf(
@@ -372,7 +426,17 @@ class AriDatabase(context: Context) :
             "messages" to listOf("role", "content", "created_at"),
             "agent_tasks" to listOf("agent_id", "request", "reply", "success", "created_at"),
             "reminders" to listOf("text", "due_at", "done", "created_at"),
-            "people" to listOf("name", "relation", "facts", "birthday", "created_at")
+            "people" to listOf("name", "relation", "facts", "birthday", "created_at"),
+            "game_profiles" to listOf("game", "title_id", "recommendations", "confidence", "created_at"),
+            "game_sessions" to listOf(
+                "state", "game", "eden_package", "eden_version", "ari_version", "device",
+                "started_at", "ended_at", "gemma_released", "ari_exit", "created_at"
+            ),
+            "game_measurements" to listOf("session_started_at", "moment", "source", "name", "value", "created_at")
         )
+
+        /** Columnas que el respaldo guarda como número (el resto va como texto). */
+        private val INT_COLUMNS = setOf("success", "done", "gemma_released")
+        private val LONG_COLUMNS = setOf("created_at", "due_at", "started_at", "ended_at", "session_started_at")
     }
 }

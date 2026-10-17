@@ -83,6 +83,7 @@ object AriNews {
         79 to listOf(Item("Ya no niego que tengo internet", "Pídemelo de más formas: \"revisa en internet …\", \"busca en la web …\", \"qué dice internet de …\". Si quieres algo de internet, dímelo y lo busco.", ceoOnly = true)),
         80 to listOf(Item("Busco sola lo que no sé", "Si te sé la respuesta, te la doy; si no (noticias, precios, algo reciente), la busco sola en internet y te la traigo. Ya no tienes que decir \"busca\".", ceoOnly = true)),
         82 to listOf(Item("Me actualizo desde Releases", "A tu llave de GitHub agrégale el permiso Contents (solo lectura): en GitHub, Settings → Developer settings → Fine-grained tokens → tu llave de ARI → Edit. Luego dime \"busca actualizaciones\".", ceoOnly = true)),
+        83 to listOf(Item("Game Boost", "Antes de jugar con Eden, dime \"voy a jugar\" o abre Ajustes → Game Boost: te digo cómo están la memoria, la temperatura y la batería, y qué conviene hacer. Solo mido y recomiendo; no cambio nada.", ceoOnly = true)),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

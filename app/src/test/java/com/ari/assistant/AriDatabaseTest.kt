@@ -83,7 +83,7 @@ class AriDatabaseTest {
         }
 
         val upgraded = open()
-        assertEquals(4, upgraded.readableDatabase.version)
+        assertEquals(5, upgraded.readableDatabase.version)
         assertEquals(listOf("hola de la 0.1"), upgraded.recentMessages(30).map { it.content })
         assertEquals(listOf("me gusta el café"), upgraded.memories().map { it.content })
         // Las tablas nuevas existen y están vacías.
@@ -92,6 +92,45 @@ class AriDatabaseTest {
         assertTrue(upgraded.recentAgentTasks(5).isEmpty())
         upgraded.savePerson(Person(id = 0, name = "Luis"))
         assertEquals("Luis", upgraded.people().single().name)
+    }
+
+    @Test
+    fun upgradingFromVersion4KeepsEverythingAndAddsGameBoost() {
+        // Base como la de la 0.67.0: cinco tablas, versión 4.
+        val file = context.getDatabasePath(DB_NAME)
+        file.parentFile?.mkdirs()
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            db.execSQL("CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL, content TEXT NOT NULL, created_at INTEGER NOT NULL)")
+            db.execSQL("CREATE TABLE memories (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at INTEGER NOT NULL)")
+            db.execSQL(
+                "CREATE TABLE agent_tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT NOT NULL, request TEXT NOT NULL, " +
+                    "reply TEXT NOT NULL, success INTEGER NOT NULL, created_at INTEGER NOT NULL)"
+            )
+            db.execSQL(
+                "CREATE TABLE reminders (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT NOT NULL, due_at INTEGER NOT NULL, " +
+                    "done INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)"
+            )
+            db.execSQL(
+                "CREATE TABLE people (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, relation TEXT NOT NULL DEFAULT '', " +
+                    "facts TEXT NOT NULL DEFAULT '', birthday TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL)"
+            )
+            db.execSQL("INSERT INTO messages (role, content, created_at) VALUES ('user', 'hola de la 0.67', 1)")
+            db.execSQL("INSERT INTO memories (content, created_at) VALUES ('juego en el POCO', 1)")
+            db.execSQL("INSERT INTO people (name, relation, created_at) VALUES ('Luis', 'primo', 1)")
+            db.version = 4
+        }
+
+        val upgraded = open()
+        assertEquals(5, upgraded.readableDatabase.version)
+        assertEquals(listOf("hola de la 0.67"), upgraded.recentMessages(30).map { it.content })
+        assertEquals(listOf("juego en el POCO"), upgraded.memories().map { it.content })
+        assertEquals("Luis", upgraded.people().single().name)
+        listOf("game_profiles", "game_sessions", "game_measurements").forEach { table ->
+            upgraded.readableDatabase.rawQuery("SELECT COUNT(*) FROM $table", null).use {
+                assertTrue(it.moveToFirst())
+                assertEquals(0, it.getInt(0))
+            }
+        }
     }
 
     @Test
@@ -112,8 +151,24 @@ class AriDatabaseTest {
         source.addMemory("recuerdo del respaldo")
         source.savePerson(Person(id = 0, name = "Ana", facts = listOf("jefa", "cumple en mayo"), birthday = "05-10"))
         source.addReminder("tomar agua", LocalDateTime.of(2030, 1, 1, 9, 0))
+        source.writableDatabase.execSQL(
+            "INSERT INTO game_sessions (state, game, eden_version, started_at, gemma_released, created_at) " +
+                "VALUES ('CERRADA', 'Zelda', '1.0.0', 1700000000000, 1, 1)"
+        )
+        source.writableDatabase.execSQL(
+            "INSERT INTO game_measurements (session_started_at, moment, source, name, value, created_at) " +
+                "VALUES (1700000000000, 'antes', 'medido', 'memoria_libre_mb', '5200', 1)"
+        )
         val backup = source.exportData()
+        // Los números de Game Boost viajan como números, no como texto.
+        val session = backup.getJSONArray("game_sessions").getJSONObject(0)
+        assertTrue(session.get("started_at") is Long)
+        assertTrue(session.get("gemma_released") is Int)
+        assertTrue(backup.getJSONArray("game_measurements").getJSONObject(0).get("session_started_at") is Long)
 
+        // Lo de Game Boost posterior al respaldo desaparece al restaurar, y lo de antes vuelve.
+        source.writableDatabase.execSQL("DELETE FROM game_measurements")
+        source.writableDatabase.execSQL("INSERT INTO game_sessions (state, started_at, created_at) VALUES ('EN_CURSO', 1800000000000, 2)")
         source.addMemory("recuerdo nuevo, después del respaldo")
         source.importData(backup)
 
@@ -123,6 +178,22 @@ class AriDatabaseTest {
         assertEquals(listOf("jefa", "cumple en mayo"), ana.facts)
         assertEquals("05-10", ana.birthday)
         assertEquals(listOf("tomar agua"), source.pendingReminders().map { it.text })
+        // Game Boost viaja en el respaldo, con sus números y el enlace por la hora de inicio.
+        source.readableDatabase.rawQuery(
+            "SELECT s.game, s.started_at, s.gemma_released, m.value FROM game_sessions s " +
+                "JOIN game_measurements m ON m.session_started_at = s.started_at",
+            null
+        ).use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Zelda", it.getString(0))
+            assertEquals(1700000000000L, it.getLong(1))
+            assertEquals(1, it.getInt(2))
+            assertEquals("5200", it.getString(3))
+        }
+        source.readableDatabase.rawQuery("SELECT COUNT(*) FROM game_sessions", null).use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
     }
 
     @Test

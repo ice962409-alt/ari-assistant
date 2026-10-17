@@ -2,6 +2,7 @@
 
 - Estado: **propuesta de diseño, sin código**. Nada de esto está implementado ni probado.
 - Actualización 16/10/2026: la Fase 1 está cerrada y el usuario respondió las decisiones de la sección 8 (ver abajo). Se empieza por GB-1 y GB-2 juntas (versión 0.68.0), porque GB-1 sola no tiene nada visible que probar en el teléfono.
+- **GB-1 y GB-2 programadas en la 0.68.0** (ver sección 6): `agents/GameBoost.kt` (lógica pura y agente), `GameBoostDevice.kt` (lecturas de Android), Ajustes → Game Boost (pantalla de solo lectura) y la base v5. Cambio respecto a la sección 5: las mediciones se enlazan con su sesión por la hora de inicio (`session_started_at`), no por el id, porque el respaldo vuelve a numerar las filas; todas las columnas son `NOT NULL` por la misma razón.
 - Fecha: 16 de octubre de 2026.
 - Bloqueo: **no se programa nada de Game Boost hasta superar la Fase 1** (criterios A, B y C; ver `docs/ARI_HANDOFF.md`, sección 6). Varias piezas dependen directamente de B y C.
 - Base: rama `ccr-e45f2eee-wkjpdl` @ 9cbcaa3 (0.66.0). Las rutas `archivo:línea` se refieren a esa rama.
@@ -192,8 +193,8 @@ Prohibido en el diseño y en cualquier implementación futura:
 
 - **GB-0 (ahora):** solo documentación y decisiones. Sin código.
 - **Requisito previo:** Fase 1 verificada (A, B y C) y decisiones de la sección 8.
-- **GB-1:** lógica pura y pruebas JVM, sin tocar la interfaz ni el arranque: reglas de confianza, formato de recomendaciones, validación de lecturas térmicas (`NaN`, `NONE`), reconciliación de sesiones huérfanas.
-- **GB-2:** tablas nuevas (migración v4 a v5) y pantalla de solo lectura del estado del teléfono (memoria, térmico, batería).
+- **GB-1 (hecha en la 0.68.0):** lógica pura y pruebas JVM, sin tocar la interfaz ni el arranque: reglas de confianza, formato de recomendaciones, validación de lecturas térmicas (`NaN`, `NONE`), reconciliación de sesiones huérfanas.
+- **GB-2 (hecha en la 0.68.0):** tablas nuevas (migración v4 a v5) y pantalla de solo lectura del estado del teléfono (memoria, térmico, batería).
 - **GB-3:** preparación con aprobación (liberar Gemma, apagar servicios propios) y lanzamiento de Eden. Requiere la decisión sobre `loadSavedModel` (sección 4.2).
 - **GB-4:** recuperación al volver y registro de resultados.
 - Cada etapa: una versión, compilación en verde con `android.yml` y prueba física en el POCO registrada antes de la siguiente.

@@ -858,3 +858,14 @@ Respuestas del usuario en el tablero (detalle en `docs/ARI_HANDOFF.md`, sección
 - PR #1 (Termux) cerrado sin mezclar; las ramas viejas se quedan como historia.
 - Siguiente: Game Boost GB-1 y GB-2 en la versión 0.68.0 (lógica pura con pruebas, tablas nuevas v5 y una pantalla de solo lectura del estado del teléfono).
 
+
+## Game Boost, primera parte: el teléfono para jugar (versión 0.68.0)
+
+Fase 2, etapas GB-1 y GB-2 del diseño (`docs/ARI_GAME_BOOST_DISENO.md`). Solo en la ARI del dueño. Solo mide y recomienda: no cambia ajustes, no cierra apps y no toca Eden.
+- `agents/GameBoost.kt`: lógica pura con pruebas (`GameBoostTest`). Estado térmico sin inventar: si el margen térmico es NaN o 0 y el estado es "sin calentamiento", dice que el teléfono no da datos fiables. Temperatura de la batería, Eden instalado (paquetes conocidos `dev.eden.eden_emulator`, `.nightly` y `dev.legacy.eden_emulator`; si no, una app del lanzador que se llame "Eden", sin contar `com.miHoYo.Yuanshen`), recomendaciones, informe, confianza de perfiles y sesiones huérfanas (las dos últimas, para GB-3 y GB-4).
+- Agente "Game Boost" (id `juego`), contratado antes del agente de teléfono: "voy a jugar", "prepara Eden", "game boost", "modo juego", "¿cómo está el teléfono para jugar?". Funciona sin Gemma.
+- `GameBoostDevice.kt`: memoria libre y total, lo que ocupa ARI (PSS), estado térmico (Android 10+), margen térmico (Android 11+, como máximo una consulta cada 10 s), batería (nivel, temperatura, cargando, ahorro), chip (Android 12+) y Eden con su versión.
+- Ajustes → "Game Boost: el teléfono para jugar": ventana de solo lectura con botón "Actualizar".
+- Base de datos v5 (migración solo aditiva): `game_profiles`, `game_sessions` y `game_measurements`, todas NOT NULL, con las mediciones enlazadas por `started_at`. Entran en el respaldo cifrado (columnas numéricas tratadas como número). Pruebas: migración 4 → 5 sin perder nada y respaldo con Game Boost.
+- Revisión adversarial antes de subir (12 agentes; sin problemas de compilación ni avisos según una compilación de prueba con kotlinc 2.4.21 de un revisor). Corregido: "Eden" debe ser palabra suelta ("Edenred" no cuenta); el lanzador solo se recorre si no hay un Eden conocido; frases demasiado genéricas ("vamos a jugar", "quiero jugar") ya no disparan el informe y se entiende "celular"; el informe distingue "Gemma se está cargando" (`modelLoading`); "nivel de calor" en vez de "margen"; "con lo que pude medir" y aviso cuando no hay datos de temperatura o memoria; sin promesas de versión; la memoria de ARI aclara que no cuenta la GPU; la confianza sigue la regla del diseño (misma versión de Eden); la prueba del respaldo comprueba tipos numéricos y la restauración de verdad.
+- Falta [prueba] del usuario en el POCO: actualizar, comprobar que siguen mensajes, recuerdos y personas, abrir Game Boost y decir "voy a jugar".

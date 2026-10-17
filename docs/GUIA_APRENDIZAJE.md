@@ -270,6 +270,19 @@ Esto apoya el criterio C de la Fase 1, pero no lo sustituye: forzar el cierre en
 
 Robolectric trae piezas de **AndroidX**, la colección moderna de librerías de Android. Por eso en el proyecto ahora va la línea `android.useAndroidX=true` en `gradle.properties`: sin ella, Gradle se negaba a compilar las pruebas (así falló el primer intento, el run 38882739724).
 
+### Game Boost: lo que una app puede (y no puede) hacer por un juego
+
+Android protege a cada app de las demás: una app no puede cerrar otras, ni subir la velocidad del procesador, ni cambiar cómo se enfría el teléfono. La propia documentación de Android dice que una app de terceros no puede mejorar la memoria, la batería ni la temperatura del teléfono. Por eso las apps que prometen "acelerar" juegos casi siempre exageran.
+
+Lo que ARI sí puede hacer, y es lo que hace Game Boost:
+- **Medir** con datos que Android le da a cualquier app: memoria libre, temperatura de la batería, si está cargando y el **estado térmico**.
+- **Recomendar**: tú decides y aplicas los cambios dentro de Eden.
+- **Soltar su propia memoria**: Gemma ocupa bastante. En la siguiente etapa ARI podrá descargarla antes de jugar, con tu permiso.
+
+El **estado térmico** es lo que Android sabe del calor del teléfono: de "sin calentamiento" a "crítico". El **margen térmico** (thermal headroom) es un número que ARI muestra como "nivel de calor": 0 es fresco y 1.0 significa que el teléfono ya se frena fuerte para no calentarse más. Ojo: aunque se llame "margen", el número sube con el calor. Android pide no preguntarlo más de una vez cada 10 segundos, y algunos teléfonos no lo informan (dan "NaN", que significa "no es un número"). Cuando eso pasa, ARI te dice que no hay datos en lugar de inventarlos.
+
+"Lo que ocupa ARI" se mide con el **PSS**: la memoria del propio proceso de ARI, contando su parte de lo que comparte con otros. Gemma vive dentro de ese proceso, pero si corre en la GPU, parte de lo que ocupa queda fuera de esa cuenta: el número es orientativo.
+
 ### Alarmas y notificaciones: cómo Ari te avisa estando cerrada
 
 Una app cerrada no puede "estar pendiente" de la hora: Android la detiene para ahorrar batería. Por eso Ari le pide al sistema una **alarma** (con el **AlarmManager**, el reloj despertador de Android): "despiértame el martes a las 9". A esa hora Android despierta a Ari solo un instante, ella muestra la **notificación** y vuelve a dormir. No hace falta internet ni que Gemma esté cargada.
@@ -662,3 +675,7 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **AndroidX**: la colección moderna de librerías oficiales de Android.
 - **GB-hora**: forma de medir el almacenamiento por tiempo: 1 GB guardado durante 1 hora. GitHub suma las del mes.
 - **Releases (versiones)**: la página de un repositorio con archivos listos para descargar, como un APK. No gasta el espacio de artefactos.
+- **Estado térmico**: lo que Android sabe del calor del teléfono, de "sin calentamiento" a "crítico".
+- **Margen térmico (thermal headroom)**: número que dice qué tan cerca está el teléfono de frenarse por calor (ARI lo llama "nivel de calor"); en 1.0 ya se frena fuerte.
+- **NaN**: "no es un número"; así responde una función cuando no tiene un dato válido.
+- **PSS**: la memoria que ocupa un proceso, contando su parte de la memoria compartida.
