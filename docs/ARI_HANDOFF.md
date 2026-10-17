@@ -197,6 +197,11 @@ Decisiones para la Fase 2 (respuestas del usuario en el tablero, 16/10/2026, 19:
 - Game Boost: **acepta las 7 recomendaciones** ("game-boost-decisiones"): solo en la ARI del dueño; tras "preparar juego", ARI no recarga Gemma mientras haya una sesión de juego abierta; temperatura solo antes y después (sin servicio en primer plano); sin "Acceso a uso"; perfiles e historial en el respaldo cifrado; nombre "Game Boost". Eden instalado: **versión 1.0.0** (el paquete se detecta en el teléfono y el usuario lo confirma).
 - Prueba de la 0.67.0 ("probar-067"): "Todo bien" (16/10/2026 19:57 UTC).
 
+Nuevo rumbo (conversación del 17/10/2026, ~01:00 UTC). El usuario pausó el proyecto ("Ari no funciona bien") y explicó su objetivo: trabajar en la **base de ARI**, sacar el máximo rendimiento del modelo local, plática fluida, que entienda bien por voz, y usar a ARI para **dar instrucciones a otros modelos que programen en automático**. Se le explicó que no se puede copiar a Claude a su teléfono (los pesos no se distribuyen, no cabría, y las condiciones de uso no permiten entrenar otros modelos con las respuestas de Claude); la alternativa es que ARI dirija a quien programa. Decisiones:
+- Prioridad: **medir y rendimiento** primero (banco de pruebas de Gemma en el POCO); después voz y "jefa de programación".
+- Quién programa cuando ARI lo pida: **los dos, según la tarea** (lo sencillo a los modelos de la laptop; lo difícil a Claude vía GitHub).
+- Game Boost: **publicar la 0.68.0 tal cual** y después seguir con la base.
+
 ## 5. Cuestiones pendientes (decisiones que solo puede tomar el usuario)
 
 Las preguntas 1 a 5 ya están respondidas (sección 4). Las 6 a 9 están en el tablero desde el 16/10/2026 (fichas "fase2-ge", "buscar-sin-preguntar", "clave-propia" y "ramas-viejas"), igual que las de Game Boost ("game-boost-decisiones"; la 8 de ese documento ya se hizo: los criterios están en `docs/ARI_ESTADO.md`). La 10 quedó cubierta: cada versión publicada deja su etiqueta `ari-v<versión>` (la primera, `ari-v0.66.1` sobre 62426d1), que conserva todo el historial de la rama.
