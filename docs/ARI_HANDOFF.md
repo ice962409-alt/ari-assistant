@@ -201,6 +201,8 @@ Nuevo rumbo (conversación del 17/10/2026, ~01:00 UTC). El usuario pausó el pro
 - Prioridad: **medir y rendimiento** primero (banco de pruebas de Gemma en el POCO); después voz y "jefa de programación".
 - Quién programa cuando ARI lo pida: **los dos, según la tarea** (lo sencillo a los modelos de la laptop; lo difícil a Claude vía GitHub).
 - Game Boost: **publicar la 0.68.0 tal cual** y después seguir con la base.
+- Arquitectura por capas (explicada y aceptada el 17/10): órdenes claras → agentes de código, sin modelo; plática y órdenes libres → modelo chico en la GPU (Gemma 4 E4B, comparar con Qwen3-4B); tareas pesadas → modelo grande por turnos (Termux), en otro equipo (POCO X6 Pro, Dimensity 8300-Ultra, como trabajador; laptop cuando la tenga) o Claude vía GitHub.
+- **"ARI = mi teléfono"** (17/10): el usuario quiere que ARI controle absolutamente todo el teléfono. Piezas aprobadas, en este orden y después de la 0.69.0 (voz, WhatsApp y rendimiento): (1) asistente predeterminado (ROLE_ASSISTANT), (2) control de cualquier app con Accesibilidad (ciclo mirar → hacer → revisar), (3) Shizuku para poderes de sistema sin root, (4) ARI como pantalla de inicio. Root y "propietario del dispositivo" se desaconsejaron. ARI debe preguntar **siempre**, y poder contestarse por voz, antes de: mensajes y llamadas; borrar o desinstalar; dinero y compras. Los ajustes y permisos los puede cambiar sola. Además: solo obedecer la voz del dueño y nunca instrucciones leídas en pantalla (inyección), con registro de lo que hizo.
 
 ## 5. Cuestiones pendientes (decisiones que solo puede tomar el usuario)
 
