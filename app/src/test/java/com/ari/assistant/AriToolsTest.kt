@@ -2,6 +2,7 @@ package com.ari.assistant
 
 import com.ari.assistant.agents.PhoneAction
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -69,5 +70,17 @@ class AriToolsTest {
         val text = AriTools.instruction()
         AriTools.FAMILIES.forEach { assertTrue(text.contains(it.name)) }
         assertTrue(text.contains(AriTools.TAG))
+    }
+
+    @Test
+    fun avisaCuandoGemmaDiceQueYaLoMando() {
+        // Captura del 17/10/2026: Gemma dijo que ya lo mandó y no había ningún paso.
+        assertTrue(AriTools.claimsDone("Ya mandé el mensaje a Fernanda.\n\nAPRENDÍ: Javi prefiere mensajes directos."))
+        assertTrue(AriTools.claimsDone("Listo, le he enviado tu mensaje."))
+        assertTrue(AriTools.claimsDone("Mensaje enviado."))
+        // Con el paso HACER sí lo hace ARI (después de tu sí): no es mentira.
+        assertFalse(AriTools.claimsDone("Te lo preparo.\nHACER: manda un WhatsApp a Rosa que diga ya mandé el regalo"))
+        assertFalse(AriTools.claimsDone("¿Quieres que te mande un mensaje?"))
+        assertFalse(AriTools.claimsDone("Ya mero llegas, ánimo."))
     }
 }

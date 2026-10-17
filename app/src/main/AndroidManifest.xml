@@ -63,6 +63,11 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@android:style/Theme.Material.NoActionBar">
+        <!-- La GPU del teléfono para Gemma (LiteRT-LM): sin esto, en Android 12+ la app no ve
+             las bibliotecas de OpenCL del fabricante y Gemma corre en la CPU. -->
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        <uses-native-library android:name="libvndksupport.so" android:required="false" />
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

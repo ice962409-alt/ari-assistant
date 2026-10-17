@@ -12,7 +12,19 @@ Convención: cada dato lleva su fuente (ruta:línea@rama, SHA, id de run de GitH
 
 **Fase 1 cerrada (16/10/2026):** A aprobado en CI y B y C confirmados por el usuario en el tablero (sección 6).
 
-Tarea actual (Fase 2, decisiones del usuario del 16/10/2026): **ARI 0.68.0, Game Boost GB-1 y GB-2** (ver `docs/ARI_GAME_BOOST_DISENO.md`).
+Tarea actual (nuevo rumbo del 17/10/2026, "la base de ARI"): **ARI 0.69.0, voz confiable y WhatsApp por voz** (rama `ccr-1b43ba33-9f7lpu`; cada sesión de Claude trabaja en su propia rama). Detalle en `docs/ARI_ESTADO.md`, sección de la 0.69.0.
+
+- [x] WhatsApp por voz: "mensaje" = WhatsApp, más formas de decirlo, "¿Qué le escribo a X?", "mi niña" encuentra "Niña", SMS de respaldo sin WhatsApp (`PhoneCommands`, `PhoneAgent`, `Answers`, `AriMessages`).
+- [x] Confirmación por voz de mensajes y llamadas con Accesibilidad, y envío solo del texto exacto en WhatsApp (`AutoSend.armConfirmed`, `AriSendService`); los pasos "HACER:" en voz se confirman hablando.
+- [x] Gemma ya no puede decir "ya lo mandé" sin un paso (`AriTools.claimsDone`) y `SpokenCommand` limpia "París…", "Hacer:" y "abre WhatsApp y…".
+- [x] Reconocedor con vigilante, reintento y lo parcial; "Ari" sin saludo y en el live en pausa; detector que no se queda sordo; voz del dueño de lejos; diario de la voz (`VoiceTrace`).
+- [x] GPU declarada (`uses-native-library`) y actualizador sin filtro por rama.
+- [x] Pruebas puras corridas en el contenedor con kotlinc (64 en verde, sin avisos).
+- [ ] Commit, push, `android.yml` en verde y `ari-v0.69.0` en Releases.
+- [ ] Avisar al usuario: instalar la 0.69.0 a mano desde Releases (esta vez el actualizador de la 0.68.0 no la ve por el cambio de rama) y probar la voz y WhatsApp (ficha en el tablero).
+- Siguiente: 0.70.0 (MTP, `prefillPrefaceOnInit` y banco de pruebas de Gemma) y después el plan "ARI = mi teléfono" (sección 4). Pendiente de la voz: aviso con pantalla bloqueada (C4), batería y arranque automático (C6), ruido (C8) y modelo de "Ari" (C15).
+
+Tarea anterior (terminada, falta la prueba del usuario): **ARI 0.68.0, Game Boost GB-1 y GB-2** (ver `docs/ARI_GAME_BOOST_DISENO.md`).
 
 - [x] Lógica pura con pruebas (`agents/GameBoost.kt`, `GameBoostTest`): temperatura sin inventar, batería, Eden instalado, recomendaciones, informe, confianza de perfiles y sesiones huérfanas.
 - [x] Agente "Game Boost" (id `juego`, solo CEO, antes de PhoneAgent): "voy a jugar", "prepara Eden", "game boost"… Funciona sin Gemma.

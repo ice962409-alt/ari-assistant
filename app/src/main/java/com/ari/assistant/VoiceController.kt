@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -75,6 +77,18 @@ class VoiceController(
     private var streamOpen = false
     private var streamActive = false
 
+    // Escucha en curso: lo que llega del reconocedor fuera de una escucha se ignora.
+    private var listening = false
+    // Lo último que el reconocedor alcanzó a escribir; si al final no entrega nada, se usa esto.
+    private var lastPartial = ""
+    // Reintentos silenciosos de esta escucha cuando el reconocedor falla por dentro.
+    private var restarts = 0
+    private val handler = Handler(Looper.getMainLooper())
+    // Vigilante: si el reconocedor se queda callado (ni resultado ni error), Ari no se traba.
+    private val watchdog = Runnable { onStuck() }
+    // Reintento con un reconocedor nuevo (se cancela si mientras tanto dejas de hablar con Ari).
+    private val restart = Runnable { listen() }
+
     val isRecognitionAvailable: Boolean
         get() = SpeechRecognizer.isRecognitionAvailable(activity)
 
@@ -143,15 +157,28 @@ class VoiceController(
     }
 
     fun startListening() {
+        restarts = 0
+        handler.removeCallbacks(restart)
+        listen()
+    }
+
+    private fun listen() {
         stopSpeaking()
 
+        // Una escucha anterior que siga abierta se cierra antes de empezar otra.
+        if (listening) recognizer?.cancel()
         val activeRecognizer = recognizer
             ?: SpeechRecognizer.createSpeechRecognizer(activity).also {
                 it.setRecognitionListener(recognitionListener)
                 recognizer = it
             }
+        listening = true
+        lastPartial = ""
+        armWatchdog()
+        VoiceTrace.add("escucha")
 
         stopCapture()
+        closeReadSide()
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -160,9 +187,10 @@ class VoiceController(
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.toLanguageTag())
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
-            // Al terminar de hablar, Ari contesta enseguida (si el reconocedor lo permite).
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 800L)
+            // Al terminar de hablar, Ari contesta pronto, pero deja pausar a media frase
+            // ("mándale un mensaje a… mi niña… que diga…") sin cortarte.
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L)
         }
 
         if (speakerMode && !ownAudioUnsupported && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -195,11 +223,39 @@ class VoiceController(
             stopCapture()
             recognizer?.cancel()
             listener.onOwnAudioUnsupported()
-            startListening()
+            // Solo si Ari sigue escuchando (si ya la detuviste, no vuelve a abrir el micrófono).
+            if (listening) listen()
             return
         }
         listener.onSpeakerAudio(result.samples)
     }
+
+    private fun armWatchdog() {
+        handler.removeCallbacks(watchdog)
+        handler.postDelayed(watchdog, WATCHDOG_MS)
+    }
+
+    /** El reconocedor no avisó nada en un buen rato: se usa lo que alcanzó a oír o se reintenta. */
+    private fun onStuck() {
+        if (!listening) return
+        VoiceTrace.add("trabado")
+        val heard = lastPartial
+        endListening()
+        recognizer?.cancel()
+        if (usable(heard)) listener.onSpeechResult(heard)
+        else listener.onSpeechError("No te escuché.", noSpeech = true)
+    }
+
+    /** Termina la escucha actual (lo que llegue después de esta se ignora). */
+    private fun endListening() {
+        listening = false
+        handler.removeCallbacks(watchdog)
+        stopCapture()
+        closeReadSide()
+    }
+
+    /** Una frase a medias sirve si trae al menos dos palabras ("abre WhatsApp"). */
+    private fun usable(partial: String) = partial.trim().split(Regex("\\s+")).count { it.isNotEmpty() } >= 2
 
     private fun stopCapture() {
         capture?.stop()
@@ -212,9 +268,9 @@ class VoiceController(
     }
 
     fun stopListening() {
-        stopCapture()
+        handler.removeCallbacks(restart)
+        endListening()
         recognizer?.cancel()
-        closeReadSide()
     }
 
     /** Lee [text] en voz alta; al terminar llama a [Listener.onSpeakingFinished]. */
@@ -318,6 +374,8 @@ class VoiceController(
     }
 
     fun release() {
+        handler.removeCallbacks(restart)
+        endListening()
         recognizer?.destroy()
         recognizer = null
         tts?.shutdown()
@@ -339,25 +397,56 @@ class VoiceController(
         override fun onEvent(eventType: Int, params: Bundle?) {}
 
         override fun onPartialResults(partialResults: Bundle?) {
+            if (!listening) return
             val text = firstResult(partialResults)
-            if (!text.isNullOrBlank()) listener.onPartialSpeech(text)
+            if (!text.isNullOrBlank()) {
+                lastPartial = text
+                armWatchdog()
+                listener.onPartialSpeech(text)
+            }
         }
 
         override fun onResults(results: Bundle?) {
-            closeReadSide()
+            if (!listening) return
+            val heard = lastPartial
+            endListening()
             val text = firstResult(results)
-            if (text.isNullOrBlank()) {
-                listener.onSpeechError("No te escuché.", noSpeech = true)
-            } else {
-                listener.onSpeechResult(text)
+            when {
+                !text.isNullOrBlank() -> {
+                    VoiceTrace.add("resultado")
+                    listener.onSpeechResult(text)
+                }
+                // Sin resultado final, pero sí había escrito algo: no se tira tu frase.
+                usable(heard) -> {
+                    VoiceTrace.add("resultado (lo parcial)")
+                    listener.onSpeechResult(heard)
+                }
+                else -> {
+                    VoiceTrace.add("vacío")
+                    listener.onSpeechError("No te escuché.", noSpeech = true)
+                }
             }
         }
 
         override fun onError(error: Int) {
-            stopCapture()
-            closeReadSide()
+            if (!listening) return
+            val heard = lastPartial
+            endListening()
+            VoiceTrace.add("error $error")
             val noSpeech = error == SpeechRecognizer.ERROR_NO_MATCH ||
                 error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT
+            if (noSpeech && usable(heard)) {
+                listener.onSpeechResult(heard)
+                return
+            }
+            // El reconocedor se trabó por dentro: se crea uno nuevo y se reintenta una vez, sin avisar.
+            if (error in RESTARTABLE && restarts < MAX_RESTARTS) {
+                restarts++
+                recognizer?.destroy()
+                recognizer = null
+                handler.postDelayed(restart, RESTART_DELAY_MS)
+                return
+            }
             listener.onSpeechError(errorMessage(error), noSpeech)
         }
     }
@@ -378,6 +467,18 @@ class VoiceController(
     }
 
     companion object {
+        /** Sin noticias del reconocedor en este tiempo, Ari deja de esperar. */
+        private const val WATCHDOG_MS = 15_000L
+        private const val MAX_RESTARTS = 1
+        private const val RESTART_DELAY_MS = 300L
+
+        /** Errores del propio reconocedor (no tuyos): ocupado, cliente o servidor caído. */
+        val RESTARTABLE = setOf(
+            SpeechRecognizer.ERROR_CLIENT,
+            SpeechRecognizer.ERROR_RECOGNIZER_BUSY,
+            SpeechRecognizer.ERROR_SERVER_DISCONNECTED
+        )
+
         /** Quita el formato Markdown que no tiene sentido leer en voz alta. */
         fun cleanForSpeech(text: String): String =
             text.replace(Regex("```[\\s\\S]*?```"), " ")

@@ -13,4 +13,13 @@ class AutoSendTest {
         assertFalse(AutoSend.matches("[Ari de Javier] llego a las 9", recado))
         assertFalse(AutoSend.matches("hola", "hola"))
     }
+
+    @Test
+    fun unWhatsAppConfirmadoSoloSiEsElMismoTexto() {
+        assertTrue(AutoSend.matches(" ya voy  para allá", "ya voy para allá", confirmed = true))
+        assertFalse(AutoSend.matches("ya voy", "ya voy para allá", confirmed = true))
+        assertFalse(AutoSend.matches("", "", confirmed = true))
+        // Sin confirmar, solo los recados con la marca de Ari.
+        assertFalse(AutoSend.matches("ya voy", "ya voy"))
+    }
 }

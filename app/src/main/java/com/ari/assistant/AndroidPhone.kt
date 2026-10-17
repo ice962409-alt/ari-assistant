@@ -65,6 +65,14 @@ class AndroidPhone(context: Context) : PhoneLauncher {
     override val callsDirectly: Boolean
         get() = context.resources.getBoolean(com.ari.assistant.R.bool.ari_ceo) && AutoSend.enabled(context)
 
+    /** Solo la Ari CEO con Accesibilidad envía sola el WhatsApp que confirmaste. */
+    override val sendsDirectly: Boolean
+        get() = callsDirectly
+
+    override fun armSend(text: String, name: String) = AutoSend.armConfirmed(text, name)
+
+    override fun disarmSend() = AutoSend.disarm()
+
     /** Solo la Ari CEO con el permiso de calendario: la cita se guarda sin abrir el calendario. */
     override fun saveEvent(title: String, start: java.time.LocalDateTime): Boolean {
         if (!context.resources.getBoolean(com.ari.assistant.R.bool.ari_ceo)) return false

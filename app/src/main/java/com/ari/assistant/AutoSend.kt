@@ -5,23 +5,29 @@ import android.os.SystemClock
 import android.provider.Settings
 
 /**
- * Envío automático de recados (solo en la Ari CEO): justo antes de abrir tu app de mensajes
- * con un recado, Ari lo "arma". Su servicio de Accesibilidad (src/completa) toca "enviar" solo
- * si el recado está armado, es reciente y el texto en pantalla es exactamente ese recado.
- * En la Ari para otros no hay servicio, así que esto nunca hace nada.
+ * Envío automático (solo en la Ari CEO): justo antes de abrir tu app de mensajes con un recado,
+ * o WhatsApp con un mensaje que confirmaste con tu "sí", Ari lo "arma". Su servicio de
+ * Accesibilidad (src/completa) toca "enviar" solo si está armado, es reciente y el texto en
+ * pantalla es exactamente ese. En la Ari para otros no hay servicio, así que esto nunca hace nada.
  */
 object AutoSend {
 
     /** Cuánto dura armado un recado. */
     const val VALID_MS = 20_000L
 
-    data class Pending(val text: String, val name: String, val at: Long)
+    /** [confirmed]: un WhatsApp que el dueño aprobó con su "sí" (no lleva la marca "[Ari"). */
+    data class Pending(val text: String, val name: String, val at: Long, val confirmed: Boolean = false)
 
     @Volatile
     private var pending: Pending? = null
 
     fun arm(text: String, name: String) {
         pending = Pending(text, name, SystemClock.elapsedRealtime())
+    }
+
+    /** Un WhatsApp que confirmaste: se envía solo si en la caja está exactamente [text]. */
+    fun armConfirmed(text: String, name: String) {
+        pending = Pending(text, name, SystemClock.elapsedRealtime(), confirmed = true)
     }
 
     /** El recado armado si sigue vigente (sin quitarlo). */
@@ -38,9 +44,13 @@ object AutoSend {
         return services.split(':').any { it.startsWith(context.packageName + "/") && it.endsWith("AriSendService") }
     }
 
-    /** ¿El texto que hay en la caja de mensaje es el recado armado? (sin Android, para probarlo). */
-    fun matches(onScreen: String, recado: String): Boolean {
+    /**
+     * ¿El texto que hay en la caja de mensaje es el armado? Un recado lleva la marca "[Ari";
+     * un WhatsApp confirmado solo tiene que ser igual (sin Android, para probarlo).
+     */
+    fun matches(onScreen: String, recado: String, confirmed: Boolean = false): Boolean {
         fun clean(text: String) = text.replace(Regex("\\s+"), " ").trim()
-        return clean(onScreen) == clean(recado) && recado.trim().startsWith("[Ari")
+        if (clean(recado).isEmpty() || clean(onScreen) != clean(recado)) return false
+        return confirmed || recado.trim().startsWith("[Ari")
     }
 }

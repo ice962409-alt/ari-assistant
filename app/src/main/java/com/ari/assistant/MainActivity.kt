@@ -20,6 +20,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import com.ari.assistant.agents.AriCeo
+import com.ari.assistant.agents.Answers
+import com.ari.assistant.agents.SpokenCommand
 import com.ari.assistant.agents.ClockAgent
 import com.ari.assistant.agents.GameBoost
 import com.ari.assistant.agents.GameBoostAgent
@@ -1220,6 +1222,35 @@ class MainActivity : Activity() {
         return true
     }
 
+    /** El agente del teléfono preguntó algo ("¿Qué le escribo a…?", "¿Le mando…?"): esto es la respuesta. */
+    private fun handlePhoneAnswer(text: String): Boolean {
+        if (!phoneAgent.claims(text)) return false
+        delegateSafely(text, AriCeo.Delegation(phoneAgent, com.ari.assistant.agents.AgentTask(text, PhoneAgent.ANSWER, text)))
+        return true
+    }
+
+    /** Pasos de Gemma esperando tu "sí" dicho en voz (en el chat se usa la ventanita). */
+    private var pendingTools: Pair<List<AriTools.Step.Run>, List<AriTools.Step.Run>>? = null
+
+    private fun handleToolsAnswer(text: String): Boolean {
+        val (all, safe) = pendingTools ?: return false
+        pendingTools = null
+        when {
+            Answers.yes(text) -> {
+                input.text.clear()
+                answerLocally(text, "Va, lo hago.")
+                executeTools(all, confirmed = true)
+            }
+            Answers.no(text) -> {
+                input.text.clear()
+                answerLocally(text, if (safe.isNotEmpty()) "Va, eso no. Lo demás sí." else "Va, no hago nada.")
+                if (safe.isNotEmpty()) executeTools(safe)
+            }
+            else -> return false
+        }
+        return true
+    }
+
     /** Un toque delicado esperando tu "sí". */
     private var pendingControl: AppControl.Command? = null
 
@@ -1451,6 +1482,17 @@ class MainActivity : Activity() {
             } else {
                 askAutoReports(null)
             }
+        }
+        items += item("Diario de la voz") {
+            AlertDialog.Builder(this)
+                .setTitle("Diario de la voz")
+                .setMessage(
+                    "Los últimos pasos de escucharte, para saber por qué me quedé escuchando sin hacer nada. " +
+                        "No guarda audio, ni lo que dijiste, ni nombres. Va en \"Reportar un problema\".\n\n" + VoiceTrace.text()
+                )
+                .setPositiveButton("Cerrar", null)
+                .setNeutralButton("Borrar") { _, _ -> VoiceTrace.clear() }
+                .show()
         }
         items += item("Reportar un problema") { askProblemReport() }
         items += item("Acerca de Ari y licencias") { showAbout() }
@@ -2326,7 +2368,8 @@ class MainActivity : Activity() {
     private val liveVisible: Boolean
         get() = ::liveOverlay.isInitialized && liveOverlay.visibility == android.view.View.VISIBLE
 
-    private fun openLive() {
+    /** [greet]: false cuando la abriste diciendo "Ari": escucha tu orden enseguida, sin saludo. */
+    private fun openLive(greet: Boolean = true) {
         // Aparece suavecito, como si Ari se acercara.
         liveOverlay.animate().cancel()
         liveOverlay.alpha = 0f
@@ -2340,8 +2383,14 @@ class MainActivity : Activity() {
         liveCaption.text = if (modelReady) "" else "Todavía no cargo a Gemma: puedo hacer recordatorios, abrir apps y más, pero para platicar toca Modelo."
         liveStatus.text = "Toca a Ari para hablar"
         if (!voiceMode) {
-            greetOnStart = true
+            greetOnStart = greet
             toggleVoiceMode()
+        } else if (!greet && !busy && !voice.isSpeaking) {
+            // Ya estaba en modo live (en pausa): "Ari" la vuelve a poner a escuchar.
+            silentAttempts = 0
+            downloadWatcher.removeCallbacks(endStandby)
+            downloadWatcher.removeCallbacks(listenInBackground)
+            startRecognizer()
         }
     }
 
@@ -2428,7 +2477,7 @@ class MainActivity : Activity() {
         }
         if (intent?.action == ACTION_LIVE) {
             intent.action = null
-            if (LiveShortcutActivity.consumeTicket()) liveOverlay.post { openLive() }
+            if (LiveShortcutActivity.consumeTicket()) liveOverlay.post { openLive(greet = false) }
         }
     }
 
@@ -3020,8 +3069,14 @@ class MainActivity : Activity() {
             sendWithAttachment(input.text.toString().trim(), attachment)
             return
         }
-        val text = input.text.toString().trim()
-        if (text.isEmpty()) return
+        val typed = input.text.toString().trim()
+        if (typed.isEmpty()) return
+
+        // "¿Qué le escribo a…?" y "¿Le mando…? Dime sí o no." esperan tu respuesta tal cual.
+        if (!busy && !guestMode && handlePhoneAnswer(typed)) return
+        if (!busy && !guestMode && handleToolsAnswer(typed)) return
+        // "París abre WhatsApp y…", "Hacer: mándale…": la orden limpia (ver SpokenCommand).
+        val text = if (typed.startsWith("/")) typed else SpokenCommand.clean(typed)
 
         if (text.startsWith("/")) {
             if (isAgentCommand(text)) {
@@ -3454,7 +3509,10 @@ class MainActivity : Activity() {
                             designReview = false
                             chat.addNote("Esas son mis ideas. Si te gustan, di \"propón mejoras\" y se las paso a Claude.")
                         }
-                        if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) runTools(response.toString())
+                        val toolQuestion = if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) runTools(response.toString()) else null
+                        // Gemma no toca el teléfono: si dice "ya lo mandé" sin un paso HACER, se aclara.
+                        val falseClaim = !forGuest && AriTools.claimsDone(response.toString())
+                        if (falseClaim) chat.addNote(AriTools.FALSE_CLAIM_NOTE)
                         if (!forGuest && resources.getBoolean(R.bool.ari_ceo)) handleAutoSearch(response.toString())
                         if (!forGuest) tutorTopic?.let { topic ->
                             AriTutor.summaryIn(response.toString())?.let { saveTutorSummary(topic, it) }
@@ -3467,11 +3525,19 @@ class MainActivity : Activity() {
                         if (speakLive && voiceMode) {
                             status.text = "Ari está hablando..."
                             voice.streamSentence(AriBrain.withoutNotes(SpeechChunker.rest(speech)))
+                            if (falseClaim) voice.streamSentence(AriTools.FALSE_CLAIM_SPOKEN)
+                            toolQuestion?.let { voice.streamSentence(it) }
                             // Si la interrumpiste mientras pensaba, te escucha en cuanto termina.
                             if (!voice.endStream()) listen()
                         } else if (voiceMode) {
                             status.text = "Ari está hablando..."
-                            voice.speak(AriBrain.withoutNotes(response.toString()))
+                            voice.speak(
+                                listOfNotNull(
+                                    AriBrain.withoutNotes(response.toString()),
+                                    AriTools.FALSE_CLAIM_SPOKEN.takeIf { falseClaim },
+                                    toolQuestion
+                                ).joinToString(" ")
+                            )
                         } else {
                             status.text = "Ari está lista."
                         }
@@ -3530,6 +3596,11 @@ class MainActivity : Activity() {
             status.text = "Error de respuesta: ${e.message ?: e.javaClass.simpleName}"
             chat.appendAri("_No pude generar la respuesta._")
             chat.finishAri()
+            // La respuesta en voz quedó abierta: se cierra y Ari vuelve a escucharte.
+            if (voiceMode) {
+                voice.stopSpeaking()
+                listen()
+            }
         }
     }
 
@@ -3660,44 +3731,57 @@ class MainActivity : Activity() {
 
     // --- Solo ARI: tus apps son sus herramientas (ver AriTools) ---
 
-    /** Ejecuta los pasos "HACER:" de Gemma: lo seguro sola; lo delicado, después de tu "sí". */
-    private fun runTools(response: String) {
+    /**
+     * Ejecuta los pasos "HACER:" de Gemma: lo seguro sola; lo delicado, después de tu "sí".
+     * En voz devuelve la pregunta para decirla (y tu "sí" o "no" se contesta hablando).
+     */
+    private fun runTools(response: String): String? {
         val steps = AriTools.plan(response)
-        if (steps.isEmpty()) return
+        if (steps.isEmpty()) return null
         steps.filterIsInstance<AriTools.Step.Unknown>().forEach { step ->
             chat.addNote("Todavía no sé hacer \"${step.command}\". Lo anoté como mejora.")
             val prefs = routinePrefs()
             AriImprovements.save(prefs, AriImprovements.add(AriImprovements.load(prefs), "Herramienta que falta: ${step.command}"))
         }
         val runnable = steps.filterIsInstance<AriTools.Step.Run>()
-        if (runnable.isEmpty()) return
+        if (runnable.isEmpty()) return null
         val delicate = runnable.filter { it.risk == AriTools.Risk.ASK }
         if (delicate.isEmpty()) {
             executeTools(runnable)
-            return
+            return null
         }
         val safe = runnable.filter { it.risk == AriTools.Risk.SAFE }
+        val sends = AutoSend.enabled(this)
+        if (voiceMode) {
+            pendingTools = runnable to safe
+            val question = "¿Lo hago? " + delicate.joinToString(". ") { AriTools.describe(it.action) } + ". Dime sí o no."
+            chat.addNote(question)
+            return question
+        }
         AlertDialog.Builder(this)
             .setTitle("¿Lo hago?")
             .setMessage(
                 delicate.joinToString("\n") { "• " + AriTools.describe(it.action) } +
                     (if (safe.isNotEmpty()) "\n\nTambién (sin preguntar): " + safe.joinToString(", ") { it.command } else "") +
-                    "\n\nEl mensaje queda listo; el último toque de enviar lo das tú."
+                    (if (sends) "\n\nSi dices que sí, lo envío yo." else "\n\nEl mensaje queda listo; el último toque de enviar lo das tú.")
             )
-            .setPositiveButton("Sí") { _, _ -> executeTools(runnable) }
+            .setPositiveButton("Sí") { _, _ -> executeTools(runnable, confirmed = true) }
             .setNegativeButton("No") { _, _ ->
                 chat.addNote("No hice nada de eso.")
                 if (safe.isNotEmpty()) executeTools(safe)
             }
             .show()
+        return null
     }
 
-    private fun executeTools(steps: List<AriTools.Step.Run>) {
+    /** [confirmed]: ya dijiste que sí a todo esto, así que el agente no vuelve a preguntar. */
+    private fun executeTools(steps: List<AriTools.Step.Run>, confirmed: Boolean = false) {
+        val action = if (confirmed) PhoneAgent.CONFIRMED else "herramienta"
         Thread {
             steps.forEachIndexed { index, step ->
                 if (index > 0) Thread.sleep(1500)
                 val result = runCatching {
-                    phoneAgent.execute(com.ari.assistant.agents.AgentTask(step.command, "herramienta", step.command))
+                    phoneAgent.execute(com.ari.assistant.agents.AgentTask(step.command, action, step.command))
                 }.getOrNull()
                 runOnUiThread {
                     if (isDestroyed) return@runOnUiThread
@@ -4093,6 +4177,12 @@ class MainActivity : Activity() {
                 pendingContactRequest = text
                 requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS), REQUEST_CONTACTS)
             }
+            // Si el agente del teléfono quedó preguntando, tu siguiente "sí" es para él.
+            if (agent === phoneAgent && phoneAgent.waiting()) {
+                pendingReply = null
+                pendingControl = null
+                pendingTools = null
+            }
         }
     }
 
@@ -4381,6 +4471,8 @@ class MainActivity : Activity() {
 
     private fun stopVoiceMode(message: String) {
         voiceMode = false
+        AriWakeWord.livePaused = false
+        VoiceTrace.add("voz apagada")
         bargeIn.stop()
         guestMode = false
         speaker = null
@@ -4424,10 +4516,13 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Ari deja de escuchar pero sigue lista: tocas "Hablar" en la notificación y continúa. */
+    /** Ari deja de escuchar pero sigue lista: tocas "Hablar" en la notificación (o dices "Ari") y continúa. */
     private fun standby(message: String) {
         voice.stopAll()
         silentAttempts = 0
+        VoiceTrace.add("en pausa")
+        // En pausa nadie usa el micrófono: el detector de "Ari" puede volver a escuchar.
+        AriWakeWord.livePaused = true
         status.text = message
         setLive(AriOrbView.Mood.IDLE, "Toca a Ari para hablar", message)
         LiveSessionService.update(this, message)
@@ -4472,14 +4567,21 @@ class MainActivity : Activity() {
     private val bargeIn = com.ari.assistant.voz.BargeInMonitor {
         if (!isDestroyed && voiceMode && voice.isSpeaking) {
             voice.stopSpeaking()
-            setLive(AriOrbView.Mood.LISTENING, "Te escucho…")
-            if (!busy) listen()
+            VoiceTrace.add("interrumpida")
+            if (!busy) {
+                setLive(AriOrbView.Mood.LISTENING, "Te escucho…")
+                listen()
+            } else {
+                // Aún está pensando: te escucha en cuanto termine.
+                setLive(AriOrbView.Mood.THINKING, "Un momento…")
+            }
         }
     }
 
     private fun bargeInEnabled() = voicePrefs().getBoolean(KEY_BARGE_IN, true)
 
     private fun startRecognizer() {
+        AriWakeWord.livePaused = false
         bargeIn.stop()
         speakerReady = !voice.speakerMode
         heldSpeech = null
@@ -4489,6 +4591,8 @@ class MainActivity : Activity() {
 
     private fun handleSpeech(text: String) {
         if (!voiceMode) return
+        // Solo cuántas palabras: el diario no guarda lo que dijiste.
+        VoiceTrace.add("frase de ${text.trim().split(Regex("\\s+")).size} palabras" + if (busy) " (ocupada)" else "")
         input.setText(text)
         sendMessage()
     }
@@ -4547,6 +4651,7 @@ class MainActivity : Activity() {
         speakerSeen = true
         guestMode = who == null || !who.owner
         if (!changed) return
+        VoiceTrace.add(if (who == null) "voz nueva" else if (who.owner) "voz: dueño" else "voz: otra persona")
         val note = when {
             who == null -> "No reconozco esta voz: no usaré tus datos personales mientras hable."
             who.owner -> "Te reconozco, ${who.name}."
@@ -4612,9 +4717,11 @@ class MainActivity : Activity() {
         override fun onSpeakerAudio(samples: FloatArray?) {
             if (!voiceMode || !voice.speakerMode) return
             val prints = voicePrints
+            // Quién venía hablando: si eras tú, una frase dudosa (de lejos) no te vuelve "voz nueva".
+            val ownerBefore = if (!speakerSeen) null else speaker?.owner == true
             voiceWorker.execute {
                 val embedding = samples?.let { voiceIdentity.embedding(it) }
-                val who = embedding?.let { VoicePrints.identify(it, prints) }
+                val who = embedding?.let { VoicePrints.identify(it, prints, ownerBefore = ownerBefore) }
                 runOnUiThread {
                     if (isDestroyed) return@runOnUiThread
                     // Frase muy corta ("sí", "ajá"): se queda quien venía hablando.
@@ -4657,13 +4764,19 @@ class MainActivity : Activity() {
 
         override fun onSpeechError(message: String, noSpeech: Boolean) {
             if (!voiceMode) return
+            // Si Ari está trabajando en tu pedido, al terminar vuelve a escucharte sola.
+            if (busy) return
 
             if (noSpeech && ++silentAttempts < MAX_SILENT_ATTEMPTS) {
+                VoiceTrace.add("sin oír ($silentAttempts)")
                 listen()
             } else if (noSpeech && !inForeground) {
-                standby("En pausa: no te escuché. Toca Hablar para seguir.")
+                standby("En pausa: no te escuché. Toca Hablar o di \"Ari\" para seguir.")
             } else if (noSpeech) {
                 stopVoiceMode("Modo voz pausado: no te escuché. Toca \"$VOICE_START_LABEL\" para seguir.")
+            } else if (!inForeground) {
+                // Un error del reconocedor fuera de Ari no termina el modo live: queda en pausa.
+                standby(message)
             } else {
                 stopVoiceMode(message)
             }

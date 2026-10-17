@@ -19,6 +19,9 @@ class AriMessagesTest {
         assertNull(AriMessages.request("dime qué hora es"))
         assertNull(AriMessages.request("recuérdame llamar a mamá"))
         assertNull(AriMessages.request("manda un WhatsApp a Juan que diga hola"))
+        // Con WhatsApp en la frase no es un recado entre Ari: va por WhatsApp.
+        assertNull(AriMessages.request("dile a mi niña por WhatsApp que ya voy"))
+        assertNull(AriMessages.request("dile a mi niña que ya voy por wasap"))
     }
 
     @Test

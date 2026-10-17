@@ -11,6 +11,8 @@ sealed class PhoneAction {
     /** [number] vacío: WhatsApp pregunta a quién enviarlo. */
     data class WhatsApp(val number: String, val text: String) : PhoneAction()
     data class WhatsAppContact(val name: String, val text: String) : PhoneAction()
+    /** "manda un WhatsApp a mi niña" sin texto: Ari pregunta qué le escribe. Trae [name] o [number]. */
+    data class WhatsAppAsk(val name: String, val number: String = "") : PhoneAction()
     /** Mensaje de texto (SMS) listo para enviar; [number] vacío: el usuario elige a quién. */
     data class Sms(val number: String, val text: String) : PhoneAction()
     data class SmsContact(val name: String, val text: String) : PhoneAction()
@@ -82,13 +84,42 @@ object PhoneCommands {
         WHATSAPP.find(p)?.let { found ->
             if (found.range.first != 0) return@let
             return message(o, p, found.range.last + 1, ::whatsAppAction,
-                "¿Qué le escribo? Dime, por ejemplo: manda un WhatsApp a Juan que diga ya voy.") ?: return null
+                "¿Qué le escribo? Dime, por ejemplo: manda un WhatsApp a Juan que diga ya voy.",
+                SAYING_WHATSAPP, ::whatsAppAsk) ?: return null
+        }
+
+        // "mándale un mensaje a mi niña por WhatsApp que ya voy", "dile a Juan por WhatsApp que…".
+        WHATSAPP_TO.find(p)?.let { found ->
+            if (found.range.first != 0) return@let
+            // "dile a mi niña que ya voy por WhatsApp": eso no es un nombre; lo atiende el canal al final.
+            val target = found.groupValues[1].trim()
+            if (NUMBER.matchEntire(target) == null && words(target) > MAX_RECIPIENT_WORDS) return@let
+            return whatsAppTo(o, p, found)
+        }
+
+        // "dile a mi niña que ya voy por WhatsApp": el canal al final.
+        TRAILING_CHANNEL.find(p)?.let { tail ->
+            val p2 = p.substring(0, tail.range.first)
+            val o2 = o.substring(0, tail.range.first)
+            val found = MESSAGE_TO.find(p2)?.takeIf { it.range.first == 0 } ?: return@let
+            return message(o2, p2, found.range.last + 1, ::whatsAppAction,
+                "¿Qué le escribo? Dime, por ejemplo: manda un WhatsApp a Juan que diga ya voy.",
+                SAYING_WHATSAPP, ::whatsAppAsk) ?: return null
         }
 
         SMS.find(p)?.let { found ->
             if (found.range.first != 0) return@let
             return message(o, p, found.range.last + 1, ::smsAction,
-                "¿Qué le escribo? Dime, por ejemplo: mándale un mensaje a mamá que diga ya llegué.") ?: return null
+                "¿Qué le escribo? Dime, por ejemplo: mándale un SMS a mamá que diga ya llegué.") ?: return null
+        }
+
+        // "mándale un mensaje a Fernanda que diga hola": para el dueño, un mensaje es un WhatsApp
+        // (decisión del 17/10/2026). Si el teléfono no tiene WhatsApp, el agente usa SMS.
+        MESSAGE.find(p)?.let { found ->
+            if (found.range.first != 0) return@let
+            return message(o, p, found.range.last + 1, ::whatsAppAction,
+                "¿Qué le escribo? Dime, por ejemplo: mándale un mensaje a mamá que diga ya llegué.",
+                SAYING_WHATSAPP, ::whatsAppAsk) ?: return null
         }
 
         EMAIL.find(p)?.let { found ->
@@ -180,23 +211,52 @@ object PhoneCommands {
     private fun message(
         o: String, p: String, after: Int,
         build: (number: String, name: String, text: String) -> PhoneAction,
-        missing: String
+        missing: String,
+        sayingRule: Regex = SAYING,
+        ask: ((number: String, name: String) -> PhoneAction)? = null
     ): PhoneAction? {
         val rest = o.substring(after)
         val restPlain = p.substring(after)
         val number = NUMBER.find(restPlain)
         var textStart = number?.range?.last?.plus(1) ?: 0
-        val saying = SAYING.find(restPlain, textStart)
+        val saying = sayingRule.find(restPlain, textStart)
         saying?.let { textStart = it.range.last + 1 }
         val text = rest.substring(textStart).trim().trim(':', ',', ' ')
+        if (saying == null && ask != null) {
+            // "manda un WhatsApp a mi niña" o "al 55…": falta el texto y Ari lo pregunta.
+            if (number != null && text.isEmpty()) return ask(digits(number.value), "")
+            val name = rest.trim().trim(',', ' ')
+            if (number == null && name.isNotEmpty() && words(name) <= MAX_NAME_WORDS) return ask("", name)
+        }
         if (text.isEmpty()) return PhoneAction.Missing(missing)
+        // "escribe un WhatsApp para mi novia que sea bonito" pide redactarlo: eso lo hace Gemma.
+        if (ask != null && DRAFT.containsMatchIn(ReminderParser.plain(text))) return null
         if (number == null && saying == null) return null
         if (number == null && saying != null) {
             val name = rest.substring(0, saying.range.first).trim().trim(',', ' ')
-            if (name.isNotEmpty() && name.split(" ").size <= MAX_NAME_WORDS) return build("", name, text)
+            if (name.isNotEmpty() && words(name) <= MAX_NAME_WORDS) return build("", name, text)
         }
         return build(number?.value?.let(::digits).orEmpty(), "", text)
     }
+
+    /** El destinatario va entre "a" y "por WhatsApp"; lo que sigue es el mensaje (con o sin "que"). */
+    private fun whatsAppTo(o: String, p: String, found: MatchResult): PhoneAction? {
+        val target = found.groups[1]!!.range
+        val who = o.substring(target.first, target.last + 1).trim().trim(',', ' ')
+        val number = NUMBER.matchEntire(p.substring(target.first, target.last + 1).trim())?.value?.let(::digits)
+        if (number == null && who.isEmpty()) return null
+        val rest = o.substring(found.range.last + 1)
+        val restPlain = p.substring(found.range.last + 1)
+        val saying = SAYING_WHATSAPP.find(restPlain)?.takeIf { restPlain.substring(0, it.range.first).isBlank() }
+        val text = rest.substring(saying?.range?.last?.plus(1) ?: 0).trim().trim(':', ',', ' ')
+        if (text.isEmpty()) return if (number != null) PhoneAction.WhatsAppAsk("", number) else PhoneAction.WhatsAppAsk(who)
+        if (DRAFT.containsMatchIn(ReminderParser.plain(text))) return null
+        return if (number != null) PhoneAction.WhatsApp(number, text) else PhoneAction.WhatsAppContact(who, text)
+    }
+
+    private fun whatsAppAsk(number: String, name: String): PhoneAction = PhoneAction.WhatsAppAsk(name, number)
+
+    private fun words(text: String) = text.trim().split(Regex("\\s+")).size
 
     private fun whatsAppAction(number: String, name: String, text: String): PhoneAction =
         if (name.isNotEmpty()) PhoneAction.WhatsAppContact(name, text) else PhoneAction.WhatsApp(number, text)
@@ -251,7 +311,11 @@ object PhoneCommands {
     /** Elige el contacto por su nombre, sin importar acentos ni mayúsculas ("mama" encuentra "Mamá"). */
     fun pickContact(name: String, contacts: List<PhoneContact>): ContactChoice {
         // Un contacto con varios números aparece una vez (gana el primero: el principal).
-        val matches = best(name, contacts, { it.name }, { simplify(it.name) })
+        // "mi niña" también encuentra a "Niña" si nadie se llama "Mi niña".
+        val matches = best(name, contacts, { it.name }, { simplify(it.name) }).ifEmpty {
+            val bare = simplify(name).replace(Regex("^mis?\\s+"), "")
+            if (bare == simplify(name)) emptyList() else best(bare, contacts, { it.name }, { simplify(it.name) })
+        }
         return when {
             matches.isEmpty() -> ContactChoice.None
             matches.size == 1 -> ContactChoice.Found(matches[0])
@@ -283,6 +347,8 @@ object PhoneCommands {
 
     private const val MAX_CHOICES = 4
     private const val MAX_NAME_WORDS = 3
+    /** Con "por WhatsApp" detrás se sabe dónde termina el nombre: se permite uno más largo. */
+    private const val MAX_RECIPIENT_WORDS = 4
 
     private val POLITE = Regex("^[¿¡\\s]*(?:ari[,:]?\\s+)?(?:(?:por favor|porfa)[,]?\\s+)?(?:(?:puedes|podrias)\\s+)?")
     private val NUMBER = Regex("\\+?\\d[\\d\\s-]{6,}\\d")
@@ -295,10 +361,24 @@ object PhoneCommands {
     private val SETTINGS = Regex(
         "^(?:abre|abrir|abreme)\\s+(?:los\\s+|la\\s+)?(?:ajustes|configuracion)(?:\\s+(?:de|del)(?:\\s+la)?\\s+(wifi|wi-fi|bluetooth|sonido|pantalla|bateria|ubicacion|notificaciones))?$"
     )
+    /** Cómo escribe el reconocimiento de voz "WhatsApp". */
+    private const val CHANNEL = "(?:whatsapp|whatsap|watsapp|watsap|whats|wasap|wassap|wasa|wats|guasap|guasa)"
     private val WHATSAPP = Regex(
-        "^(?:manda|mandale|envia|enviale|escribe|escribele)\\s+(?:un\\s+)?(?:mensaje\\s+(?:de|por|en)\\s+)?(?:whatsapp|whats|wasap|wats)\\b(?:\\s+(?:al|a|para)\\b)?"
+        "^(?:manda|mandale|envia|enviale|escribe|escribele|dile|avisale)\\s+(?:un\\s+)?(?:(?:mensaje\\s+)?(?:de|por|en)\\s+)?$CHANNEL\\b(?:\\s+(?:al|a|para)\\b)?"
+    )
+    // Va antes de SMS: "manda un mensaje a mi niña por WhatsApp" es WhatsApp, no SMS.
+    private val WHATSAPP_TO = Regex(
+        "^(?:manda|mandale|envia|enviale|escribe|escribele|dile|avisale)\\s+(?:un\\s+)?(?:mensaje\\s+)?(?:al|a|para)\\s+(.+?)\\s+(?:por|en|de|via)\\s+$CHANNEL\\b"
+    )
+    private val TRAILING_CHANNEL = Regex("\\s+(?:por|en|via)\\s+$CHANNEL$")
+    private val MESSAGE_TO = Regex(
+        "^(?:manda|mandale|envia|enviale|escribe|escribele|dile|avisale)\\s+(?:un\\s+)?(?:mensaje\\s+)?(?:al|a|para)\\b"
     )
     private val SAYING = Regex("\\s*(?:que\\s+diga|diciendo|con\\s+el\\s+texto|:)\\s*")
+    /** En WhatsApp también vale "que le diga" y un "que" solo: "mándale un WhatsApp a Ana que ya voy". */
+    private val SAYING_WHATSAPP = Regex("\\s*(?:que\\s+le\\s+digas?|que\\s+diga|diciendo|con\\s+el\\s+texto|:|\\bque\\b)\\s*")
+    /** "…que sea bonito": pide redactar el mensaje, no mandarlo así. */
+    private val DRAFT = Regex("^(?:sea|suene|tenga|este)\\b")
     private val DIAL = Regex("^(?:llama|llamale|marca|marcale|marcame)(?:\\s+(?:a|al))?\\s+(.+)$")
     private val ALARM = Regex(
         "^(?:(?:pon|ponme|programa|programame|crea|activa)(?:\\s+(?:una|la))?\\s+alarma|despiertame)(?:\\s+para)?(?:\\s+manana)?\\s+" +
@@ -309,9 +389,13 @@ object PhoneCommands {
     private val TIMER = Regex(
         "^(?:pon|ponme|programa|inicia|activa)(?:\\s+(?:un|el))?\\s+(?:temporizador|timer|cronometro)(?:\\s+de)?\\s+(\\d{1,4}|un|una|media)\\s+(segundos?|minutos?|mins?|horas?)$"
     )
-    // Va después de WHATSAPP: "manda un mensaje por WhatsApp" ya se atendió.
+    // Van después de WHATSAPP: "manda un mensaje por WhatsApp" ya se atendió.
+    // SMS solo si lo dice ("mensaje de texto", "SMS"); un "mensaje" a secas va por WhatsApp.
     private val SMS = Regex(
-        "^(?:manda|mandale|envia|enviale|escribe|escribele)\\s+(?:un\\s+)?(?:mensaje(?:\\s+de\\s+texto)?|sms)\\b(?:\\s+(?:al|a|para)\\b)?"
+        "^(?:manda|mandale|envia|enviale|escribe|escribele)\\s+(?:un\\s+)?(?:mensaje\\s+de\\s+texto|sms)\\b(?:\\s+(?:al|a|para)\\b)?"
+    )
+    private val MESSAGE = Regex(
+        "^(?:manda|mandale|envia|enviale|escribe|escribele)\\s+(?:un\\s+)?(?:mensaje|mensajito)\\b(?:\\s+(?:al|a|para)\\b)?"
     )
     private val EMAIL = Regex(
         "^(?:manda|mandale|envia|enviale|escribe|escribele)\\s+(?:un\\s+)?(?:correo(?:\\s+electronico)?|email|e-mail|mail)\\b(?:\\s+(?:al|a|para)\\b)?"

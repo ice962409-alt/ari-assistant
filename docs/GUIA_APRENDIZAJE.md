@@ -533,6 +533,38 @@ Android tiene una "caja fuerte" en el hardware del teléfono, el **Keystore**. A
 
 Android no deja que una app consulte internet cuando quiera, para cuidar la batería. Ari Estado usa el **JobScheduler**, el sistema de "tareas programadas" de Android: revisa cada 15 minutos (lo mínimo permitido) y solo cuando hay red.
 
+### Por qué Ari se quedaba escuchando: el reconocedor y su vigilante
+
+El reconocimiento de voz de Android es otra app (la de Google) que Ari usa por encargo. Le avisa a Ari con mensajes: "ya estoy escuchando", "esto llevo escrito" (resultado parcial), "esto dijiste" (resultado final) o "hubo un error". Si uno de esos avisos nunca llega, Ari se queda esperando para siempre: eso era el "se queda escuchando y no hace nada".
+
+En la 0.69.0 Ari se cuida de tres formas:
+
+- **Un vigilante (watchdog)**: un reloj que se reinicia con cada aviso. Si pasan 15 segundos sin noticias, Ari deja de esperar y usa lo que alcanzó a oír.
+- **Guardar lo parcial**: si el reconocedor escribió "abre WhatsApp" pero al final dice "no te entendí", Ari usa lo que ya había escrito en vez de tirarlo.
+- **Reintentar con uno nuevo**: algunos errores son del propio reconocedor (está "ocupado" o se desconectó). Ari crea uno nuevo y lo intenta otra vez, sin molestarte.
+
+Ejemplo del proyecto: el reconocedor escribió "París abre WhatsApp y mándale un mensaje a mi niña". "París" era "Ari" mal escuchado: ahora Ari lo quita si lo que sigue es una orden.
+
+### El diario de la voz: un registro circular
+
+Para encontrar un fallo que solo pasa a veces, sirve anotar los pasos con la hora: "escucha", "error 7", "resultado". Ari guarda los últimos 60 en memoria, y cuando entra uno nuevo se borra el más viejo (eso se llama búfer circular, como una libreta de 60 hojas en la que siempre arrancas la primera). No guarda audio, ni lo que dijiste, ni nombres, y se borra al cerrar Ari. Lo ves en Ajustes → "Diario de la voz" y va en "Reportar un problema".
+
+### Confirmar con la voz: un "sí" que se puede decir
+
+Antes, cuando Gemma proponía mandar un mensaje, Ari mostraba una ventanita "¿Lo hago?" que solo se podía tocar. Hablando con ella no había forma de contestar, así que el mensaje se quedaba sin enviar. Ahora Ari pregunta en voz alta ("¿Le mando a Fernanda por WhatsApp: hola? Dime sí o no.") y guarda la pregunta pendiente unos minutos. Si lo siguiente que dices es "sí", "dale" o "mándalo", lo hace; si dices "no" o "espera", no; y si dices otra cosa, olvida la pregunta y atiende lo nuevo. Así funciona cualquier asistente que confirma antes de algo delicado.
+
+### Abrir apps desde atrás (segundo plano)
+
+Desde Android 10, una app que no está en pantalla no puede abrir otras apps cuando quiera, para que nadie te salte con ventanas. Hay excepciones, y una es tener un servicio de Accesibilidad activo (como "Manejar mis apps" de Ari). Por eso, con ese permiso, Ari puede abrir el chat de WhatsApp y tocar "enviar" aunque estés en otra app. Ari solo toca "enviar" si la caja tiene exactamente el texto que tú aprobaste y solo durante 20 segundos.
+
+### Cuando un modelo dice que ya hizo algo (y no lo hizo)
+
+Gemma solo escribe texto: no puede tocar el teléfono. Si dice "ya mandé el mensaje", está inventando (a eso se le llama alucinación). Por eso Ari tiene dos protecciones: la instrucción de Gemma le prohíbe decir "ya lo mandé", y si aun así lo dice sin escribir un paso "HACER:", Ari te avisa "Ojo: no envié nada" y te dice cómo pedirlo.
+
+### Declarar la GPU: las bibliotecas del fabricante
+
+Para usar la GPU, Gemma necesita unas bibliotecas que trae el teléfono (OpenCL). Desde Android 12, una app solo puede usarlas si las pide en su manifiesto (el archivo que describe la app) con `uses-native-library`. ARI no las pedía, así que es probable que Gemma estuviera corriendo en la CPU, más lenta. La 0.69.0 ya las pide (como opcionales: si el teléfono no las tiene, la app se instala igual).
+
 ## 7. Herramientas para trabajar con Claude
 
 ### Skills y plugins
@@ -679,3 +711,12 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Margen térmico (thermal headroom)**: número que dice qué tan cerca está el teléfono de frenarse por calor (ARI lo llama "nivel de calor"); en 1.0 ya se frena fuerte.
 - **NaN**: "no es un número"; así responde una función cuando no tiene un dato válido.
 - **PSS**: la memoria que ocupa un proceso, contando su parte de la memoria compartida.
+- **Reconocedor de voz**: la app que convierte lo que dices en texto; Ari la usa por encargo.
+- **Resultado parcial**: lo que el reconocedor lleva escrito mientras todavía hablas.
+- **Vigilante (watchdog)**: un reloj que detecta que algo se quedó trabado y actúa si no hay noticias a tiempo.
+- **Búfer circular**: una lista de tamaño fijo en la que lo nuevo empuja fuera a lo más viejo.
+- **Confirmación**: preguntar "¿lo hago?" antes de algo delicado, como enviar o llamar.
+- **Alucinación**: cuando un modelo de IA afirma algo inventado, como "ya lo mandé".
+- **Segundo plano**: cuando una app trabaja sin estar en la pantalla.
+- **Manifiesto**: el archivo que describe una app ante Android: sus permisos, pantallas y lo que necesita.
+- **OpenCL**: las bibliotecas que permiten hacer cuentas en la GPU del teléfono.

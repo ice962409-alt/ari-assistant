@@ -24,6 +24,7 @@ object FailureReport {
     const val MAX_CHARS = 6000
     private const val MAX_TRACE_LINES = 40
     private const val MAX_MESSAGE = 300
+    private const val VOICE_LINES = 30
 
     /** Arma el texto del informe (sin Android, para poder probarlo). */
     fun text(device: List<Pair<String, String>>, what: String, details: String, note: String = ""): String {
@@ -135,7 +136,9 @@ object FailureReport {
     /** Un informe que escribe quien prueba (Ajustes → Reportar un problema). */
     fun manual(context: Context, note: String): String {
         val last = pending(context)
-        return text(device(context), "Reporte de quien prueba", last?.let { "Último fallo guardado:\n$it" } ?: "", note)
+        // El diario de la voz va primero (es corto): si el informe se recorta, se pierde la traza, no esto.
+        val voice = "Diario de la voz (últimos pasos):\n" + VoiceTrace.text(VOICE_LINES)
+        return text(device(context), "Reporte de quien prueba", voice + (last?.let { "\n\nÚltimo fallo guardado:\n$it" } ?: ""), note)
     }
 
     /** Datos del teléfono que ayudan a encontrar el fallo. Nada personal. */

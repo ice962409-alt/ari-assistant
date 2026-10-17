@@ -11,18 +11,69 @@ interface PhoneLauncher {
     val callsDirectly: Boolean get() = false
     /** Guarda la cita directo en tu calendario (solo la Ari CEO con permiso). false si no se pudo. */
     fun saveEvent(title: String, start: java.time.LocalDateTime): Boolean = false
+    /** true si Ari puede tocar "enviar" ella sola en WhatsApp (solo la Ari CEO con Accesibilidad). */
+    val sendsDirectly: Boolean get() = false
+    /** Justo antes de abrir el chat: deja armado el envío de exactamente [text] (ver AutoSend). */
+    fun armSend(text: String, name: String) = Unit
+    fun disarmSend() = Unit
 }
 
 /**
  * Agente del teléfono: abre apps y prepara acciones (marcar, WhatsApp,
- * alarmas, temporizadores, búsquedas, mapas, cámara, ajustes). Nunca llama
- * ni envía nada por su cuenta: el último paso lo confirma el usuario en la app.
+ * alarmas, temporizadores, búsquedas, mapas, cámara, ajustes).
+ * Sin Accesibilidad, el último paso (enviar, llamar) lo das tú en la app. Con ella (Ari CEO),
+ * Ari envía el WhatsApp o llama sola, pero solo después de tu "sí" (decisión del 17/10/2026:
+ * mensajes y llamadas siempre se confirman, y se puede contestar con la voz).
  */
-class PhoneAgent(private val phone: PhoneLauncher) : Agent {
+class PhoneAgent(
+    private val phone: PhoneLauncher,
+    private val clock: () -> Long = System::currentTimeMillis
+) : Agent {
 
     /** true cuando la última orden necesitaba los contactos y no hay permiso: la app lo pide. */
     @Volatile
     var needsContactsPermission = false
+
+    /** Un WhatsApp o una llamada esperando tu "sí". */
+    data class Pending(val action: PhoneAction, val name: String, val at: Long)
+
+    /** A quién le falta el texto ("¿Qué le escribo a…?"): lo siguiente que digas es el mensaje. */
+    data class Composing(val name: String, val number: String, val at: Long)
+
+    @Volatile
+    var pending: Pending? = null
+        private set
+
+    @Volatile
+    var composing: Composing? = null
+        private set
+
+    /** ¿Hay una pregunta del agente esperando respuesta? (Las viejas se olvidan.) */
+    fun waiting(): Boolean {
+        val now = clock()
+        if (pending?.let { now - it.at > WAIT_MS } == true) pending = null
+        if (composing?.let { now - it.at > WAIT_MS } == true) composing = null
+        return pending != null || composing != null
+    }
+
+    /**
+     * ¿[text] contesta la pregunta pendiente? Al "¿qué le escribo?" cualquier cosa es el mensaje;
+     * al "¿le mando…?" solo un sí o un no. Si es otra cosa, la pregunta se olvida y la frase
+     * se atiende normal.
+     */
+    fun claims(text: String): Boolean {
+        if (!waiting()) return false
+        if (composing != null) return true
+        if (Answers.yes(text) || Answers.no(text)) return true
+        pending = null
+        return false
+    }
+
+    /** Olvida cualquier pregunta pendiente (por ejemplo, si cambia quién habla). */
+    fun forget() {
+        pending = null
+        composing = null
+    }
 
     override val id = "telefono"
     override val name = "Agente del teléfono"
@@ -40,18 +91,32 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
     }
 
     override fun execute(task: AgentTask): AgentResult {
+        if (task.action == ANSWER) return answer(task.argument)
+        // "confirmado": ya dijiste que sí (por ejemplo al "¿Lo hago?" de los pasos de Gemma).
+        val confirmed = task.action == CONFIRMED
         val action = PhoneCommands.parse(task.argument)
             ?: return AgentResult("No entendí qué hacer en el teléfono.", success = false)
 
         if (action is PhoneAction.Missing) return AgentResult(action.message, success = false)
 
         if (action is PhoneAction.DialContact) return withContact(action.name) { contact ->
-            if (phone.launch(PhoneAction.Dial(contact.number)))
-                AgentResult(
-                    if (phone.callsDirectly) "Llamando a ${contact.name} (${contact.number})…"
-                    else "Te dejé marcado a ${contact.name} (${contact.number}). Toca llamar para confirmar."
-                )
-            else AgentResult("No encontré una app de teléfono.", success = false)
+            call(contact.number, "${contact.name} (${contact.number})", confirmed)
+        }
+        if (action is PhoneAction.Dial && phone.callsDirectly) return call(action.number, "el ${action.number}", confirmed)
+
+        if (action is PhoneAction.WhatsAppAsk) {
+            forget()
+            if (action.number.isNotEmpty()) {
+                composing = Composing("el ${action.number}", action.number, clock())
+                return AgentResult("¿Qué le escribo al ${action.number}?")
+            }
+            return withContact(action.name) { contact ->
+                composing = Composing(contact.name, contact.number, clock())
+                AgentResult("¿Qué le escribo a ${contact.name}?")
+            }
+        }
+        if (action is PhoneAction.WhatsApp && action.number.isNotEmpty()) {
+            return whatsApp(action.number, "el ${action.number}", action.text, confirmed)
         }
 
         if (action is PhoneAction.SmsContact) return withContact(action.name) { contact ->
@@ -61,9 +126,7 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
         }
 
         if (action is PhoneAction.WhatsAppContact) return withContact(action.name) { contact ->
-            if (phone.launch(PhoneAction.WhatsApp(contact.number, action.text)))
-                AgentResult("Abrí el chat de ${contact.name} en WhatsApp con el mensaje listo. Revísalo y toca enviar.")
-            else AgentResult("No encontré WhatsApp en tu teléfono.", success = false)
+            whatsApp(contact.number, contact.name, action.text, confirmed)
         }
 
         if (action is PhoneAction.OpenApp) {
@@ -105,6 +168,80 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
         }
         return AgentResult(confirmation(action))
     }
+
+    /** La respuesta a "¿Qué le escribo a…?" o a "¿Le mando…? Dime sí o no." */
+    private fun answer(text: String): AgentResult {
+        composing?.let { target ->
+            composing = null
+            if (Answers.no(text)) return AgentResult("Va, no le escribo.")
+            val body = Answers.messageBody(text)
+            if (body.isEmpty()) {
+                composing = target.copy(at = clock())
+                return AgentResult("No te entendí. ¿Qué le escribo ${to(target.name)}?", success = false)
+            }
+            return whatsApp(target.number, target.name, body, confirmed = false)
+        }
+        val waiting = pending ?: return AgentResult("Ya no tengo nada pendiente. Dímelo otra vez, por favor.", success = false)
+        pending = null
+        if (!Answers.yes(text)) {
+            return AgentResult(if (waiting.action is PhoneAction.Dial) "Va, no llamo." else "Va, no lo mando.")
+        }
+        return when (val action = waiting.action) {
+            is PhoneAction.WhatsApp -> openWhatsApp(action, waiting.name, send = true)
+            is PhoneAction.Dial -> dial(action.number, waiting.name)
+            else -> AgentResult("No pude hacerlo.", success = false)
+        }
+    }
+
+    /** Con Accesibilidad, primero pregunta; sin ella, abre el chat y el último toque es tuyo. */
+    private fun whatsApp(number: String, name: String, text: String, confirmed: Boolean): AgentResult {
+        val action = PhoneAction.WhatsApp(number, text)
+        if (phone.sendsDirectly && !confirmed) {
+            forget()
+            pending = Pending(action, name, clock())
+            return AgentResult("¿Le mando ${to(name)} por WhatsApp: \"$text\"? Dime sí o no.")
+        }
+        return openWhatsApp(action, name, send = phone.sendsDirectly)
+    }
+
+    private fun openWhatsApp(action: PhoneAction.WhatsApp, name: String, send: Boolean): AgentResult {
+        if (send) phone.armSend(action.text, name)
+        if (phone.launch(action)) {
+            return AgentResult(
+                if (send) "Va, se lo mando ${to(name)}. Si en unos segundos no se envía, toca enviar."
+                else "Abrí el chat ${of(name)} en WhatsApp con el mensaje listo. Revísalo y toca enviar."
+            )
+        }
+        if (send) phone.disarmSend()
+        // Sin WhatsApp, el mismo mensaje por SMS (ese lo envías tú).
+        if (action.number.isNotEmpty() && phone.launch(PhoneAction.Sms(action.number, action.text))) {
+            return AgentResult("No encontré WhatsApp: te dejé un SMS para $name con el texto listo. Revísalo y toca enviar.")
+        }
+        return AgentResult("No encontré WhatsApp en tu teléfono.", success = false)
+    }
+
+    /** Si Ari llama sola, primero pregunta. */
+    private fun call(number: String, name: String, confirmed: Boolean): AgentResult {
+        if (phone.callsDirectly && !confirmed) {
+            forget()
+            pending = Pending(PhoneAction.Dial(number), name, clock())
+            return AgentResult("¿Llamo ${to(name)}? Dime sí o no.")
+        }
+        return dial(number, name)
+    }
+
+    private fun dial(number: String, name: String): AgentResult =
+        if (phone.launch(PhoneAction.Dial(number)))
+            AgentResult(
+                if (phone.callsDirectly) "Llamando ${to(name)}…"
+                else "Te dejé marcado ${to(name)}. Toca llamar para confirmar."
+            )
+        else AgentResult("No encontré una app de teléfono.", success = false)
+
+    /** "a Juan", pero "al 5512345678" (los números se nombran "el 55…"). */
+    private fun to(name: String) = if (name.startsWith("el ")) "al ${name.removePrefix("el ")}" else "a $name"
+
+    private fun of(name: String) = if (name.startsWith("el ")) "del ${name.removePrefix("el ")}" else "de $name"
 
     /** Busca a [name] en los contactos; si no hay permiso, pide que la app lo solicite. */
     private fun withContact(name: String, act: (PhoneContact) -> AgentResult): AgentResult {
@@ -184,5 +321,11 @@ class PhoneAgent(private val phone: PhoneLauncher) : Agent {
 
     companion object {
         private const val ACTION = "telefono"
+        /** La tarea que contesta una pregunta pendiente del agente. */
+        const val ANSWER = "respuesta"
+        /** Una orden que ya confirmaste: no se vuelve a preguntar. */
+        const val CONFIRMED = "confirmado"
+        /** Cuánto espera Ari tu respuesta antes de olvidar la pregunta. */
+        const val WAIT_MS = 2 * 60 * 1000L
     }
 }

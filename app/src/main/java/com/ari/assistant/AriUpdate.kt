@@ -45,6 +45,27 @@ object AriUpdate {
     /** Una compilación es más nueva si su número de ejecución es mayor que la instalada. */
     fun isNewer(latestRun: Long, installedRun: Long) = installedRun == 0L || latestRun > installedRun
 
+    /**
+     * ¿La versión de Releases es más nueva que la instalada? Primero el número de versión
+     * (0.69.0 > 0.68.0); con el mismo número, la compilación más reciente.
+     */
+    fun isNewerRelease(version: String, run: Long, installedVersion: String, installedRun: Long): Boolean {
+        val order = compareVersions(version, installedVersion)
+        return order > 0 || (order == 0 && isNewer(run, installedRun))
+    }
+
+    /** Compara "0.69.0" con "0.68.1" número por número (lo que no es número se ignora). */
+    fun compareVersions(a: String, b: String): Int {
+        fun parts(v: String) = v.substringBefore('-').split('.').map { it.filter(Char::isDigit).toIntOrNull() ?: 0 }
+        val x = parts(a)
+        val y = parts(b)
+        for (i in 0 until maxOf(x.size, y.size)) {
+            val diff = x.getOrElse(i) { 0 }.compareTo(y.getOrElse(i) { 0 })
+            if (diff != 0) return diff
+        }
+        return 0
+    }
+
     /** El APK dentro del zip que entrega GitHub. */
     fun apkEntry(names: List<String>): String? = names.firstOrNull { it.endsWith(".apk") && !it.contains("/") }
         ?: names.firstOrNull { it.endsWith(".apk") }
@@ -67,7 +88,9 @@ object AriUpdate {
         val title: String,
         val created: String,
         val assetId: Long = 0L,
-        val size: Long = 0L
+        val size: Long = 0L,
+        /** "0.69.0", de la etiqueta ari-v0.69.0 (vacío si viene de Actions). */
+        val version: String = ""
     )
 
     sealed class Check {
@@ -78,11 +101,13 @@ object AriUpdate {
     }
 
     /**
-     * La versión privada más nueva de la rama [branch] en la lista de Releases que manda GitHub
-     * ([json]), con su ari.apk ya subido. android.yml escribe en las notas
-     * "Compilación N (run ID), rama R, commit …": de ahí salen el número, el run y la rama.
+     * La versión privada más nueva en la lista de Releases que manda GitHub ([json]), con su
+     * ari.apk ya subido: la de número de versión más alto, de cualquier rama (cada sesión de
+     * Claude trabaja en una rama nueva; si se filtrara por rama, ARI dejaría de ver las nuevas).
+     * android.yml escribe en las notas "Compilación N (run ID), rama R, commit …": de ahí salen
+     * el número y el run.
      */
-    fun newestRelease(json: String, branch: String): Release? {
+    fun newestRelease(json: String): Release? {
         val list = runCatching { JSONArray(json) }.getOrNull() ?: return null
         return (0 until list.length()).mapNotNull { list.optJSONObject(it) }
             .filter { it.optString("tag_name").startsWith(RELEASE_TAG_PREFIX) && !it.optBoolean("draft") }
@@ -90,7 +115,6 @@ object AriUpdate {
                 val notes = release.optString("body")
                 val runId = Regex("\\(run (\\d+)\\)").find(notes)?.groupValues?.get(1)?.toLongOrNull()
                     ?: return@mapNotNull null
-                if (Regex("rama ([^,\\s]+)").find(notes)?.groupValues?.get(1) != branch) return@mapNotNull null
                 val assets = release.optJSONArray("assets") ?: return@mapNotNull null
                 val apk = (0 until assets.length()).mapNotNull { assets.optJSONObject(it) }
                     .firstOrNull { it.optString("name") == RELEASE_ASSET && it.optString("state") == "uploaded" }
@@ -101,10 +125,11 @@ object AriUpdate {
                     title = release.optString("name").take(120),
                     created = release.optString("published_at").take(10),
                     assetId = apk.optLong("id"),
-                    size = apk.optLong("size")
+                    size = apk.optLong("size"),
+                    version = release.optString("tag_name").removePrefix(RELEASE_TAG_PREFIX)
                 )
             }
-            .maxByOrNull { it.runId }
+            .maxWithOrNull { a, b -> compareVersions(a.version, b.version).takeIf { it != 0 } ?: a.runId.compareTo(b.runId) }
     }
 
     // --- Parte de Android ---
@@ -116,8 +141,9 @@ object AriUpdate {
         val (code, text) = get("https://api.github.com/repos/${AriGitHub.REPO}/releases?per_page=10", token)
         if (code == 401 || code == -1) return Check.Failed(explain(code))
         if (code in 200..299) {
-            newestRelease(text, branch)?.let { release ->
-                return if (isNewer(release.runId, BuildConfig.BUILD_RUN)) Check.Available(release) else Check.UpToDate
+            newestRelease(text)?.let { release ->
+                val newer = isNewerRelease(release.version, release.runId, BuildConfig.VERSION_NAME, BuildConfig.BUILD_RUN)
+                return if (newer) Check.Available(release) else Check.UpToDate
             }
         }
         val fromActions = checkActions(token, branch)

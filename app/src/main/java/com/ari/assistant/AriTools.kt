@@ -72,9 +72,27 @@ object AriTools {
             append(family.examples.joinToString("; ") { "\"$it\"" }).append("\n")
         }
         append("Máximo $MAX_STEPS pasos. Usa los nombres de contactos tal como el usuario los dijo. ")
+        append("Tú no envías ni llamas: ARI lo hace después, cuando el usuario dice que sí. Nunca digas \"ya lo mandé\" ")
+        append("ni \"ya lo envié\"; di \"te lo preparo\" y escribe el paso. ")
         append("No escribas $TAG si el usuario solo platica o pregunta algo. ")
         append("Si algo no se puede con estas formas (por ejemplo pagar, comprar o borrar), no lo inventes: dilo y anótalo como MEJORA.")
     }
+
+    /** Lo que se aclara cuando Gemma dice que ya hizo algo que no hizo. */
+    const val FALSE_CLAIM_NOTE = "Ojo: no envié ni hice nada en el teléfono. Para mandarlo dime, por ejemplo: " +
+        "manda un WhatsApp a Fernanda que diga hola."
+    const val FALSE_CLAIM_SPOKEN = "Ojo: en realidad no lo envié. Dime: manda un WhatsApp a, y el nombre."
+
+    private val CLAIM = Regex(
+        "\\b(?:(?:ya|listo,?)\\s+(?:se\\s+)?(?:lo\\s+|la\\s+|le\\s+|les\\s+|te\\s+)?(?:mande|envie|llame|marque|escribi|agende|pague|compre)|" +
+            "(?:he|hemos)\\s+(?:enviado|mandado|llamado|marcado)|(?:mensaje|whatsapp|correo)\\s+(?:enviado|mandado))\\b"
+    )
+
+    /** true si la respuesta dice que ya envió, llamó o pagó, pero no trae ningún paso "HACER:". */
+    fun claimsDone(response: String): Boolean =
+        stepsIn(response).isEmpty() && CLAIM.containsMatchIn(
+            com.ari.assistant.agents.ReminderParser.plain(AriBrain.withoutNotes(response))
+        )
 
     /** Los pasos que Gemma marcó, en orden. */
     fun stepsIn(response: String): List<String> =

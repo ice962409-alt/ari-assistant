@@ -1,6 +1,6 @@
 # Ari — Documentación del proyecto
 
-Última actualización: 16 de octubre de 2026
+Última actualización: 17 de octubre de 2026
 
 Este documento lo mantiene Claude. Su fuente está en el repositorio, en docs/ARI_DOCUMENTACION.md, y se exporta a Google Drive, a la carpeta "Ari - Documentación de Claude", cada vez que se termina un cambio.
 
@@ -253,13 +253,13 @@ La primera vez, Ari pide permiso para mandarte notificaciones. Si tu teléfono s
 
 ### Ari usa tu teléfono por ti
 
-Ari abre tus apps y te prepara acciones. Por seguridad, **nunca llama ni envía nada sola**: deja todo listo y tú confirmas en la app (tocar "llamar" o "enviar").
+Ari abre tus apps y te prepara acciones. Por seguridad, **nunca llama ni envía nada sin tu "sí"**. Sin el permiso "Manejar mis apps", deja todo listo y tú confirmas en la app (tocar "llamar" o "enviar"). Con ese permiso (solo tu ARI), te pregunta "¿Le mando a Fernanda por WhatsApp: 'hola'? Dime sí o no." o "¿Llamo a mamá?", y con tu "sí" (dicho o escrito) lo hace ella.
 
 - **Abrir apps**: "abre WhatsApp", "abre Spotify", "abre la app de Google Maps". Si hay varias parecidas (WhatsApp y WhatsApp Business), Ari pregunta cuál.
 - **Llamar**: "llama a mamá", "márcale a Juan Pérez" o "llama al 55 1234 5678". Ari deja el número marcado.
-- **WhatsApp**: "manda un WhatsApp a Juan que diga ya voy" o "envíale un WhatsApp a mi hermana diciendo llego a las 8" abre el chat con el mensaje escrito. También con número ("al 55 1234 5678 que diga …"). Sin nombre ni número ("manda un WhatsApp que diga hola"), eliges el chat tú.
-- **Contactos**: la primera vez que nombras a alguien, Ari pide permiso para leer tus contactos y, si aceptas, repite la orden sola. Busca sin importar acentos ("mama" encuentra "Mamá"); si hay varios parecidos (Juan Pérez y Juan Carlos), te pregunta cuál. Solo lee nombres y números, no los guarda ni salen del teléfono. Si no das el permiso, sigue funcionando con números.
-- **Mensajes de texto (SMS)**: "mándale un mensaje a mamá que diga ya llegué" o "manda un SMS al 55 1234 5678 que diga hola".
+- **WhatsApp**: "mándale un mensaje a Fernanda que diga hola", "manda un WhatsApp a Juan que ya voy", "dile a mi niña por WhatsApp que llego a las 8" o "envíale un WhatsApp a mi hermana diciendo llego a las 8". Desde la 0.69.0, un "mensaje" a secas va por WhatsApp (si el teléfono no tiene WhatsApp, te deja un SMS). Si no dices el texto ("mándale un mensaje a mi niña"), Ari pregunta "¿Qué le escribo a…?" y lo siguiente que digas es el mensaje. También con número ("al 55 1234 5678 que diga …"). Sin nombre ni número ("manda un WhatsApp que diga hola"), eliges el chat tú. Si dices "abre WhatsApp y mándale un mensaje a…", lo entiende como un solo WhatsApp.
+- **Contactos**: la primera vez que nombras a alguien, Ari pide permiso para leer tus contactos y, si aceptas, repite la orden sola. Busca sin importar acentos ("mama" encuentra "Mamá") y "mi niña" encuentra a "Niña"; si hay varios parecidos (Juan Pérez y Juan Carlos), te pregunta cuál. Solo lee nombres y números, no los guarda ni salen del teléfono. Si no das el permiso, sigue funcionando con números.
+- **Mensajes de texto (SMS)**: "mándale un SMS a mamá que diga ya llegué", "manda un mensaje de texto a…" o "manda un SMS al 55 1234 5678 que diga hola".
 - **Correo**: "escríbele un correo a ana@ejemplo.com que diga llego tarde" abre tu app de correo con el texto.
 - Si dices "escribe un mensaje bonito para mi novia" o "un correo para mi jefe pidiendo vacaciones" (sin número ni "que diga"), Ari entiende que quieres que te ayude a **redactarlo**, y te lo escribe ella en el chat.
 - **Música**: "pon música de Bad Bunny", "pon Despacito en Spotify", "reproduce Bohemian Rhapsody". Funciona con Spotify, YouTube Music, Deezer o la app de música del teléfono.
@@ -621,6 +621,7 @@ En el chat, cada respuesta del equipo dice quién la escribió, por ejemplo "[De
 - ARI se actualiza desde Releases (0.67.0): "busca actualizaciones" ahora encuentra las versiones privadas de Releases y baja el APK directo. Si GitHub tiene espacio, también sigue sabiendo bajar de los artefactos como antes. La llave de GitHub de ARI necesita el permiso Contents: lectura.
 - Privacidad de las búsquedas (decisión del 16/10/2026: "dejarla así"): solo tu ARI busca en internet. Cuando se lo pides ("busca en internet…", "busca en wikipedia…", el clima) o cuando no sabe algo y busca sola, manda únicamente el texto de la búsqueda a DuckDuckGo, a Wikipedia en español o a Open-Meteo (el clima). Nunca manda tus pláticas, recuerdos ni datos de tu gente. Esos servicios ven la dirección de internet de tu teléfono, como cualquier página. La búsqueda automática la redacta Gemma sin preguntarte. La Ari para otros y ARI Trader no buscan en internet, así que su política pública sigue siendo correcta.
 - Game Boost, primera parte (0.68.0): antes de jugar con Eden, dile a ARI "voy a jugar" o abre Ajustes → Game Boost. Te dice cuánta memoria libre hay, cuánto ocupa ella, si el teléfono está caliente, la batería, el chip y qué versión de Eden tienes, y te recomienda qué hacer (por ejemplo, no jugar mientras carga). Solo mide y recomienda: no cambia nada ni puede acelerar el teléfono. Si el teléfono no da datos de temperatura fiables, te lo dice en vez de inventarlos. Funciona aunque Gemma no esté cargada. En la próxima etapa podrá soltar a Gemma y abrir Eden, siempre con tu permiso.
+- Voz confiable y WhatsApp por voz (0.69.0), por lo que reportaste el 17/10: un "mensaje" va por WhatsApp; si no dices el texto, te pregunta qué escribir; con "Manejar mis apps" te pregunta "¿Le mando…?" y con tu "sí" lo envía ella (también las llamadas se confirman antes). Si Gemma dice "ya lo mandé" sin haberlo hecho, ARI lo aclara. Si el reconocedor escribe "París" en vez de "Ari", lo quita. Al llamarla con "Ari", escucha tu orden enseguida (sin saludo), también con el modo live en pausa. El reconocedor ya no tira tu frase si te pausas ni se queda trabado (tiene un vigilante), y si solo tu voz está registrada ya no te toma por "voz nueva" cuando hablas de lejos. Ajustes → "Diario de la voz" muestra los últimos pasos de escucharte (sin audio ni lo que dijiste) y va en "Reportar un problema". ARI también declara la GPU para Gemma. Esta vez la 0.69.0 se instala a mano desde Releases; las siguientes las encuentra sola "busca actualizaciones", aunque vengan de otra rama.
 
 ## 7. Archivos principales del código
 

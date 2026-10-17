@@ -84,6 +84,12 @@ object AriNews {
         80 to listOf(Item("Busco sola lo que no sé", "Si te sé la respuesta, te la doy; si no (noticias, precios, algo reciente), la busco sola en internet y te la traigo. Ya no tienes que decir \"busca\".", ceoOnly = true)),
         82 to listOf(Item("Me actualizo desde Releases", "A tu llave de GitHub agrégale el permiso Contents (solo lectura): en GitHub, Settings → Developer settings → Fine-grained tokens → tu llave de ARI → Edit. Luego dime \"busca actualizaciones\".", ceoOnly = true)),
         83 to listOf(Item("Game Boost", "Antes de jugar con Eden, dime \"voy a jugar\" o abre Ajustes → Game Boost: te digo cómo están la memoria, la temperatura y la batería, y qué conviene hacer. Solo mido y recomiendo; no cambio nada.", ceoOnly = true)),
+        84 to listOf(
+            Item("Mensajes por WhatsApp", "Di \"mándale un mensaje a Fernanda que diga hola\": un mensaje ahora va por WhatsApp (para SMS di \"mándale un SMS\"). Si no me dices el texto, te pregunto qué le escribo."),
+            Item("Lo envío yo", "Con Ajustes → Manejar mis apps activado, te pregunto \"¿Le mando…?\" y con tu \"sí\" (dicho o escrito) envío el WhatsApp yo misma. Las llamadas también te las confirmo antes.", ceoOnly = true),
+            Item("Te escucho mejor", "Si me llamas diciendo \"Ari\", escucho tu orden enseguida, sin saludo. Si haces una pausa a media frase ya no te corto, y si el micrófono se traba me recupero sola. En Ajustes → Diario de la voz ves qué pasó."),
+            Item("Te reconozco de lejos", "Si solo tu voz está registrada, ya no te tomo por \"voz nueva\" cuando me hablas un poco lejos."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

@@ -88,7 +88,10 @@ class PhoneCommandsTest {
 
     @Test
     fun mensajesYCorreos() {
-        assertEquals(PhoneAction.SmsContact("mamá", "ya llegué"), parse("Mándale un mensaje a mamá que diga ya llegué"))
+        // Un "mensaje" a secas va por WhatsApp; SMS solo si lo pides.
+        assertEquals(PhoneAction.WhatsAppContact("mamá", "ya llegué"), parse("Mándale un mensaje a mamá que diga ya llegué"))
+        assertEquals(PhoneAction.SmsContact("mamá", "ya llegué"), parse("Mándale un SMS a mamá que diga ya llegué"))
+        assertEquals(PhoneAction.SmsContact("mamá", "hola"), parse("manda un mensaje de texto a mamá que diga hola"))
         assertEquals(PhoneAction.Sms("5512345678", "hola"), parse("manda un sms al 5512345678 que diga hola"))
         assertEquals(
             PhoneAction.Email("ana@ejemplo.com", "llego tarde"),
@@ -147,5 +150,42 @@ class PhoneCommandsTest {
         assertEquals(PhoneAction.Ride("", "uber"), parse("pide un taxi"))
         assertEquals(PhoneAction.Note("comprar leche"), parse("anota en Keep comprar leche"))
         assertEquals(PhoneAction.Note("llamar al dentista"), parse("Apunta en mis notas que llamar al dentista"))
+    }
+
+    @Test
+    fun whatsappPorVozComoLoDices() {
+        // El caso del informe del 17/10/2026.
+        assertEquals(
+            PhoneAction.WhatsAppContact("Fernanda", "Hola te saluda Ari, cómo estás"),
+            parse("mándale un mensaje a Fernanda que diga Hola te saluda Ari, cómo estás?")
+        )
+        assertEquals(PhoneAction.WhatsAppContact("mi niña", "ya voy"), parse("dile a mi niña por WhatsApp que ya voy"))
+        assertEquals(PhoneAction.WhatsAppContact("Juan", "ya voy"), parse("dile por whatsapp a Juan que ya voy"))
+        assertEquals(PhoneAction.WhatsAppContact("Ana", "ya voy"), parse("mándale un whatsapp a Ana que ya voy"))
+        assertEquals(PhoneAction.WhatsAppContact("mi niña", "ya voy"), parse("dile a mi niña que ya voy por WhatsApp"))
+        assertEquals(PhoneAction.WhatsAppContact("Juan", "llego tarde"), parse("mándale un mensaje a Juan por guasap que le diga llego tarde"))
+        assertEquals(PhoneAction.WhatsApp("5512345678", "hola"), parse("manda un mensaje al 55 1234 5678 por WhatsApp que diga hola"))
+    }
+
+    @Test
+    fun sinTextoPreguntaQueLeEscribo() {
+        assertEquals(PhoneAction.WhatsAppAsk("mi niña"), parse("mándale un mensaje a mi niña por WhatsApp"))
+        assertEquals(PhoneAction.WhatsAppAsk("mi niña"), parse("Mándale un mensaje a mi niña"))
+        assertEquals(PhoneAction.WhatsAppAsk("mi hermana"), parse("manda un guasap a mi hermana"))
+        assertEquals(PhoneAction.WhatsAppAsk("", "5512345678"), parse("manda un whatsapp al 55 1234 5678"))
+        assertTrue(parse("manda un whatsapp") is PhoneAction.Missing)
+        // Pedir que lo redacte sigue siendo cosa de Gemma.
+        assertNull(parse("escribe un mensaje para mi novia que sea bonito"))
+        assertNull(parse("escribe un whatsapp bonito para mi novia"))
+    }
+
+    @Test
+    fun miNinaEncuentraANina() {
+        val contacts = listOf(PhoneContact("Niña", "5511111111"), PhoneContact("Mamá", "5522222222"))
+        val found = PhoneCommands.pickContact("mi niña", contacts)
+        assertEquals(PhoneContact("Niña", "5511111111"), (found as PhoneCommands.ContactChoice.Found).contact)
+        // Si alguien se llama "Mi niña", gana ese.
+        val exact = PhoneCommands.pickContact("mi niña", contacts + PhoneContact("Mi Niña ❤️", "5533333333"))
+        assertEquals("5533333333", (exact as PhoneCommands.ContactChoice.Found).contact.number)
     }
 }

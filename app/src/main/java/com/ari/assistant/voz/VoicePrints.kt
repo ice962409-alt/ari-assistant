@@ -36,15 +36,39 @@ object VoicePrints {
         return (dot / (sqrt(na) * sqrt(nb))).toFloat()
     }
 
-    /** Qué tanto se parece [embedding] a la persona: el promedio de sus muestras. */
-    fun score(embedding: FloatArray, print: VoicePrint): Float =
-        if (print.samples.isEmpty()) 0f else print.samples.map { cosine(embedding, it) }.average().toFloat()
+    /**
+     * Cuánto le puede faltar a la voz del dueño para seguir siendo él cuando es la única voz
+     * registrada y venía hablando él (o apenas empieza): de cerca o de lejos la misma voz da
+     * números distintos, y no debe volverse "voz nueva".
+     */
+    const val OWNER_DOUBT = 0.15f
 
-    /** La persona que habla, o null si no se parece lo suficiente a nadie. */
-    fun identify(embedding: FloatArray, prints: List<VoicePrint>, threshold: Float = THRESHOLD): VoicePrint? {
+    /**
+     * Qué tanto se parece [embedding] a la persona: el promedio de la mitad de sus muestras que
+     * más se parecen (así una frase dicha de lejos se compara con las muestras más parecidas,
+     * no con todas).
+     */
+    fun score(embedding: FloatArray, print: VoicePrint): Float {
+        if (print.samples.isEmpty()) return 0f
+        val sorted = print.samples.map { cosine(embedding, it) }.sortedDescending()
+        return sorted.take((sorted.size + 1) / 2).average().toFloat()
+    }
+
+    /**
+     * La persona que habla, o null si no se parece lo suficiente a nadie.
+     * [ownerBefore]: true si venía hablando el dueño, null si aún no habla nadie, false si otra persona.
+     */
+    fun identify(
+        embedding: FloatArray,
+        prints: List<VoicePrint>,
+        threshold: Float = THRESHOLD,
+        ownerBefore: Boolean? = false
+    ): VoicePrint? {
         val ranked = prints.map { it to score(embedding, it) }.sortedByDescending { it.second }
         val best = ranked.firstOrNull() ?: return null
-        if (best.second < threshold) return null
+        val onlyOwner = prints.all { it.owner }
+        val needed = if (onlyOwner && ownerBefore != false) threshold - OWNER_DOUBT else threshold
+        if (best.second < needed) return null
         val second = ranked.getOrNull(1)?.second ?: -1f
         if (best.second - second < MARGIN) return null
         return best.first

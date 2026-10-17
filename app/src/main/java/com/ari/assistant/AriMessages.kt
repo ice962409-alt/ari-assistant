@@ -20,8 +20,15 @@ object AriMessages {
         setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
     )
 
+    private val WHATSAPP = Regex(
+        "\\b(?:whatsapp|whatsap|watsapp|watsap|whats|wasap|wassap|wasa|wats|guasap|guasa)\\b",
+        RegexOption.IGNORE_CASE
+    )
+
     /** "Dile a mi mamá que llego a las 8" → (mamá, "llego a las 8"). */
     fun request(text: String): Request? {
+        // "dile a mi niña por WhatsApp que…" va por WhatsApp (PhoneCommands), no como recado.
+        if (WHATSAPP.containsMatchIn(text)) return null
         val match = ASK.find(text.trim()) ?: return null
         val recipient = match.groupValues[1].trim()
             .replace(Regex("^(?:mi|mis|la|el)\\s+", RegexOption.IGNORE_CASE), "")

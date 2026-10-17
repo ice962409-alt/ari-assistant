@@ -57,16 +57,21 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
             placeCall(event, call)
             return
         }
-        // Solo los recados armados, y solo en las apps de mensajes.
+        // Solo lo armado (recados o un WhatsApp que confirmaste), y solo en las apps de mensajes.
         val pending = AutoSend.current() ?: return
-        if (event?.packageName?.toString() !in MESSAGING) return
+        val app = event?.packageName?.toString()
+        if (app !in (if (pending.confirmed) WHATSAPP else MESSAGING)) return
         val root = rootInActiveWindow ?: return
-        val box = findCompose(root) ?: return
-        if (!AutoSend.matches(box.text?.toString().orEmpty(), pending.text)) return
+        val box = findCompose(root, pending) ?: return
+        if (!AutoSend.matches(box.text?.toString().orEmpty(), pending.text, pending.confirmed)) return
         val send = findSend(root) ?: return
         if (send.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
             AutoSend.disarm()
-            AriChat.ariSays(this, "Listo, le mandé el recado a ${pending.name}.", alert = false)
+            AriChat.ariSays(
+                this,
+                if (pending.confirmed) "Listo, le mandé tu WhatsApp a ${pending.name}." else "Listo, le mandé el recado a ${pending.name}.",
+                alert = false
+            )
         }
     }
 
@@ -267,9 +272,16 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
 
     // --- Recados ---
 
-    /** La caja donde se escribe el mensaje (editable y con el recado de Ari). */
-    private fun findCompose(root: AccessibilityNodeInfo): AccessibilityNodeInfo? =
-        find(root) { it.isEditable && it.text?.toString()?.contains("[Ari") == true }
+    /** La caja donde se escribe el mensaje (editable y con el texto armado). */
+    private fun findCompose(root: AccessibilityNodeInfo, pending: AutoSend.Pending): AccessibilityNodeInfo? {
+        if (pending.confirmed) {
+            COMPOSE_IDS.forEach { id ->
+                root.findAccessibilityNodeInfosByViewId(id)?.firstOrNull { it.isEditable }?.let { return it }
+            }
+            return find(root) { it.isEditable && AutoSend.matches(it.text?.toString().orEmpty(), pending.text, confirmed = true) }
+        }
+        return find(root) { it.isEditable && it.text?.toString()?.contains("[Ari") == true }
+    }
 
     /** El botón de enviar: por su nombre interno o por lo que dice ("Enviar", "Send", "SMS"). */
     private fun findSend(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
@@ -292,7 +304,11 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
             "com.google.android.apps.messaging", "com.samsung.android.messaging", "com.android.mms",
             "com.android.messaging", "com.miui.mms"
         )
+        val WHATSAPP = setOf("com.whatsapp", "com.whatsapp.w4b")
+        val COMPOSE_IDS = listOf("com.whatsapp:id/entry", "com.whatsapp.w4b:id/entry")
         val SEND_IDS = listOf(
+            "com.whatsapp:id/send",
+            "com.whatsapp.w4b:id/send",
             "com.google.android.apps.messaging:id/send_message_button_icon",
             "com.google.android.apps.messaging:id/send_message_button_container",
             "com.samsung.android.messaging:id/send_button",

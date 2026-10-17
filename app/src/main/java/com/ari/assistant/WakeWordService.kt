@@ -69,8 +69,8 @@ class WakeWordService : Service() {
             return START_NOT_STICKY
         }
         if (!running) startListening(model)
-        // Si Android cierra el proceso, no se reinicia solo: vuelve al abrir Ari.
-        return START_NOT_STICKY
+        // Si Android cierra el proceso, intenta volver (si Android no lo deja, vuelve al abrir Ari).
+        return START_STICKY
     }
 
     @SuppressLint("MissingPermission") // Solo se enciende con el permiso de micrófono concedido.
@@ -88,45 +88,65 @@ class WakeWordService : Service() {
         var quietUntil = 0L
         try {
             while (running) {
-                if (!AriWakeWord.micFree()) {
-                    // Ari ya te escucha (en pantalla o en modo live): suelta el micrófono.
-                    record?.let { runCatching { it.stop() }; it.release() }
-                    record = null
-                    segmenter.reset()
-                    Thread.sleep(500)
-                    continue
-                }
-                var active = record
-                if (active == null) {
-                    active = openRecord(rate)
-                    if (active == null) {
-                        Thread.sleep(2_000)
+                try {
+                    if (!AriWakeWord.micFree()) {
+                        // Ari ya te escucha (en pantalla o en modo live): suelta el micrófono.
+                        record?.let { runCatching { it.stop() }; it.release() }
+                        record = null
+                        segmenter.reset()
+                        Thread.sleep(500)
                         continue
                     }
-                    record = active
-                }
-                val read = active.read(buffer, 0, buffer.size)
-                if (read <= 0) {
-                    Thread.sleep(50)
-                    continue
-                }
-                val word = segmenter.feed(buffer, read) ?: continue
-                if (SystemClock.elapsedRealtime() < quietUntil) continue
-                if (model.matches(word)) {
-                    quietUntil = SystemClock.elapsedRealtime() + 3_000
-                    // Suelta el micrófono para que Ari te escuche.
-                    runCatching { active.stop() }
-                    active.release()
+                    var active = record
+                    if (active == null) {
+                        active = openRecord(rate)
+                        if (active == null) {
+                            Thread.sleep(2_000)
+                            continue
+                        }
+                        record = active
+                    }
+                    val read = active.read(buffer, 0, buffer.size)
+                    if (read < 0) {
+                        // El micrófono se cayó (otra app, un error de Android): se vuelve a abrir.
+                        runCatching { active.stop() }
+                        active.release()
+                        record = null
+                        segmenter.reset()
+                        Thread.sleep(500)
+                        continue
+                    }
+                    if (read == 0) {
+                        Thread.sleep(50)
+                        continue
+                    }
+                    val word = segmenter.feed(buffer, read) ?: continue
+                    if (SystemClock.elapsedRealtime() < quietUntil) continue
+                    if (model.matches(word)) {
+                        quietUntil = SystemClock.elapsedRealtime() + 3_000
+                        // Suelta el micrófono para que Ari te escuche.
+                        runCatching { active.stop() }
+                        active.release()
+                        record = null
+                        segmenter.reset()
+                        AriWakeWord.heardUntil = SystemClock.elapsedRealtime() + 4_000
+                        onHeard()
+                    }
+                } catch (e: InterruptedException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Un error no deja sorda a Ari: suelta el micrófono y sigue escuchando.
+                    record?.let { runCatching { it.stop() }; runCatching { it.release() } }
                     record = null
                     segmenter.reset()
-                    AriWakeWord.heardUntil = SystemClock.elapsedRealtime() + 4_000
-                    onHeard()
+                    Thread.sleep(1_000)
                 }
             }
         } catch (_: InterruptedException) {
-        } catch (_: Exception) {
         } finally {
             record?.let { runCatching { it.stop() }; it.release() }
+            // Si este hilo se terminó, el servicio debe poder arrancar otro.
+            if (thread === Thread.currentThread()) running = false
         }
     }
 
@@ -250,7 +270,11 @@ object AriWakeWord {
     @Volatile
     var heardUntil = 0L
 
-    fun micFree() = !appVisible && !LiveSessionService.running && SystemClock.elapsedRealtime() > heardUntil
+    /** true con el modo live en pausa: ahí nadie usa el micrófono y "Ari" lo vuelve a despertar. */
+    @Volatile
+    var livePaused = false
+
+    fun micFree() = !appVisible && (!LiveSessionService.running || livePaused) && SystemClock.elapsedRealtime() > heardUntil
 
     fun isEnabled(context: Context) = prefs(context).getBoolean(KEY_ON, false)
 
