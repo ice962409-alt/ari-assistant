@@ -19,7 +19,7 @@ Tarea actual (Fase 2, decisiones del usuario del 16/10/2026): **ARI 0.68.0, Game
 - [x] `GameBoostDevice.kt` (memoria, ARI, estado térmico y margen con caché de 10 s, batería, chip, Eden) y Ajustes → "Game Boost: el teléfono para jugar" (solo lectura, botón Actualizar). `<queries>` de Eden en el manifiesto de completa.
 - [x] Base v5: `game_profiles`, `game_sessions`, `game_measurements` (NOT NULL; mediciones enlazadas por `started_at`), en el respaldo cifrado. Pruebas de migración 4 → 5 y del respaldo.
 - [x] Revisión adversarial (12 agentes) y correcciones (ver `docs/ARI_ESTADO.md`, sección de la 0.68.0).
-- [ ] Compilación (build en verde y `ari-v0.68.0` en Releases).
+- [x] Compilación: run 38987999732 (55cbe76; el anterior, 38987147142, se canceló en la pausa del usuario). build en verde y versión privada `ari-v0.68.0` (`ari.apk`, verificado por fuera: 0.68.0, Game Boost, base v5, `<queries>` de Eden, solo arm64-v8a). Rojo intencional por la cuota.
 - [ ] Avisar al usuario y prueba física en el POCO: actualizar desde ARI ("busca actualizaciones"), comprobar que siguen mensajes, recuerdos y personas (migración v5), abrir Ajustes → Game Boost y decir "voy a jugar".
 
 Tarea anterior (terminada): ARI 0.67.0, decidida por el usuario en el tablero (ficha "actualizador-releases", 16/10/2026 18:57 UTC: "Que ARI baje de Releases (agrego el permiso)"): **ARI 0.67.0, "busca actualizaciones" baja de Releases**.

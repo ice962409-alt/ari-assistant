@@ -873,4 +873,6 @@ Fase 2, etapas GB-1 y GB-2 del diseño (`docs/ARI_GAME_BOOST_DISENO.md`). Solo e
 ## Nuevo rumbo: la base de ARI (17/10/2026)
 
 El usuario pausó el proyecto y pidió trabajar en la base: máximo rendimiento del modelo local, plática fluida, buen reconocimiento de voz y que ARI dirija a otros modelos para programar en automático (detalle en `docs/ARI_HANDOFF.md`, sección 4). Decisiones: primero medir y rendimiento; programan los dos según la tarea (laptop para lo sencillo, Claude vía GitHub para lo difícil); la 0.68.0 (Game Boost) se publica tal cual. La compilación anterior de la 0.68.0 (run 38987147142) se canceló durante la pausa, sin publicar nada.
+- 0.68.0 publicada (17/10/2026): run 38987999732 (55cbe76), build en verde y `ari-v0.68.0` en Releases (APK verificado por fuera). Prueba en el tablero ("probar-068"): que la 0.67.0 la ofrezca sola con "busca actualizaciones", que sigan los datos tras la migración v5, Game Boost, y anotar si la carga dice GPU o CPU.
+- Hallazgo de la investigación de rendimiento (17/10): el manifiesto no declara `uses-native-library` para `libOpenCL.so` y `libvndksupport.so`, que la guía de LiteRT-LM pide para la GPU; es probable que Gemma esté cayendo a la CPU. Tampoco se usan MTP (`enableSpeculativeDecoding`) ni `prefillPrefaceOnInit`. Va en la siguiente versión, con el banco de pruebas.
 
