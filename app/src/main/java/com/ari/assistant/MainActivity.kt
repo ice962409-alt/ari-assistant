@@ -2385,7 +2385,7 @@ class MainActivity : Activity() {
         if (!voiceMode) {
             greetOnStart = greet
             toggleVoiceMode()
-        } else if (!greet && !busy && !voice.isSpeaking) {
+        } else if (!greet && !busy && !voice.isSpeaking && !voice.isListening) {
             // Ya estaba en modo live (en pausa): "Ari" la vuelve a poner a escuchar.
             silentAttempts = 0
             downloadWatcher.removeCallbacks(endStandby)
@@ -2477,7 +2477,11 @@ class MainActivity : Activity() {
         }
         if (intent?.action == ACTION_LIVE) {
             intent.action = null
-            if (LiveShortcutActivity.consumeTicket()) liveOverlay.post { openLive(greet = false) }
+            if (LiveShortcutActivity.consumeTicket()) {
+                // Si dijiste "Ari", escucha tu orden enseguida; desde el widget o el acceso directo, saluda.
+                val byVoice = LiveShortcutActivity.consumeByVoice()
+                liveOverlay.post { openLive(greet = !byVoice) }
+            }
         }
     }
 
@@ -4715,10 +4719,13 @@ class MainActivity : Activity() {
         }
 
         override fun onSpeakerAudio(samples: FloatArray?) {
+            // Después de cerrar Ari, el audio que termina de grabarse ya no tiene a quién ir.
+            if (isDestroyed || voiceWorker.isShutdown) return
             if (!voiceMode || !voice.speakerMode) return
             val prints = voicePrints
-            // Quién venía hablando: si eras tú, una frase dudosa (de lejos) no te vuelve "voz nueva".
-            val ownerBefore = if (!speakerSeen) null else speaker?.owner == true
+            // Quién venía hablando: si eras tú (o aún no se sabe), una frase dudosa (de lejos)
+            // no te vuelve "voz nueva". Solo cuenta si únicamente tu voz está registrada (VoicePrints).
+            val ownerBefore = if (!speakerSeen) null else speaker?.owner
             voiceWorker.execute {
                 val embedding = samples?.let { voiceIdentity.embedding(it) }
                 val who = embedding?.let { VoicePrints.identify(it, prints, ownerBefore = ownerBefore) }
@@ -4734,6 +4741,13 @@ class MainActivity : Activity() {
                     }
                 }
             }
+        }
+
+        override fun onRestarting() {
+            // Escucha nueva: hay que volver a saber quién habla antes de atender la frase.
+            speakerReady = !voice.speakerMode
+            heldSpeech = null
+            downloadWatcher.removeCallbacks(releaseHeldSpeech)
         }
 
         override fun onOwnAudioUnsupported() {
@@ -4771,7 +4785,11 @@ class MainActivity : Activity() {
                 VoiceTrace.add("sin oír ($silentAttempts)")
                 listen()
             } else if (noSpeech && !inForeground) {
-                standby("En pausa: no te escuché. Toca Hablar o di \"Ari\" para seguir.")
+                standby(
+                    if (AriWakeWord.isEnabled(this@MainActivity) && AriWakeWord.hasModel(this@MainActivity))
+                        "En pausa: no te escuché. Toca Hablar o di \"Ari\" para seguir."
+                    else "En pausa: no te escuché. Toca Hablar para seguir."
+                )
             } else if (noSpeech) {
                 stopVoiceMode("Modo voz pausado: no te escuché. Toca \"$VOICE_START_LABEL\" para seguir.")
             } else if (!inForeground) {

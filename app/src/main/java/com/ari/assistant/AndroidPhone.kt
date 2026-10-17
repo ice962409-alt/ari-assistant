@@ -211,7 +211,7 @@ class AndroidPhone(context: Context) : PhoneLauncher {
             Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, action.text)
         )
         // Las de contactos se resuelven en el agente antes de llegar aquí.
-        is PhoneAction.Missing, is PhoneAction.DialContact, is PhoneAction.WhatsAppContact,
+        is PhoneAction.Missing, is PhoneAction.DialContact, is PhoneAction.WhatsAppContact, is PhoneAction.WhatsAppAsk,
         is PhoneAction.SmsContact -> emptyList()
     }
 

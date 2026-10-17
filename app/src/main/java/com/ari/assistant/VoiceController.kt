@@ -50,6 +50,12 @@ class VoiceController(
 
         /** El reconocedor de este teléfono no acepta el audio que graba Ari: sin reconocer voces. */
         fun onOwnAudioUnsupported() {}
+
+        /**
+         * Ari vuelve a escuchar sola (el reconocedor falló por dentro): quien habla se vuelve a
+         * revisar, como en una escucha nueva.
+         */
+        fun onRestarting() {}
     }
 
     /** true para que Ari grabe ella misma la frase y así pueda saber quién habla. */
@@ -87,7 +93,16 @@ class VoiceController(
     // Vigilante: si el reconocedor se queda callado (ni resultado ni error), Ari no se traba.
     private val watchdog = Runnable { onStuck() }
     // Reintento con un reconocedor nuevo (se cancela si mientras tanto dejas de hablar con Ari).
-    private val restart = Runnable { listen() }
+    private val restart = Runnable {
+        listener.onRestarting()
+        listen()
+    }
+    // Número de la escucha actual: el audio que termina de grabarse de una escucha vieja se ignora.
+    private var session = 0
+
+    /** true mientras el reconocedor está escuchando una frase. */
+    val isListening: Boolean
+        get() = listening
 
     val isRecognitionAvailable: Boolean
         get() = SpeechRecognizer.isRecognitionAvailable(activity)
@@ -174,6 +189,7 @@ class VoiceController(
             }
         listening = true
         lastPartial = ""
+        val current = ++session
         armWatchdog()
         VoiceTrace.add("escucha")
 
@@ -205,7 +221,7 @@ class VoiceController(
             val started = VoiceCapture(
                 pipe = writeSide,
                 onLevel = { level -> activity.runOnUiThread { listener.onVoiceLevel(level) } },
-                onFinished = { result -> activity.runOnUiThread { onCaptureFinished(result) } }
+                onFinished = { result -> activity.runOnUiThread { if (current == session) onCaptureFinished(result) } }
             )
             capture = started
             activeRecognizer.startListening(intent)
@@ -224,7 +240,10 @@ class VoiceController(
             recognizer?.cancel()
             listener.onOwnAudioUnsupported()
             // Solo si Ari sigue escuchando (si ya la detuviste, no vuelve a abrir el micrófono).
-            if (listening) listen()
+            if (listening) {
+                listener.onRestarting()
+                listen()
+            }
             return
         }
         listener.onSpeakerAudio(result.samples)
@@ -241,7 +260,10 @@ class VoiceController(
         VoiceTrace.add("trabado")
         val heard = lastPartial
         endListening()
+        // Un reconocedor trabado se cambia por uno nuevo para la siguiente escucha.
         recognizer?.cancel()
+        recognizer?.destroy()
+        recognizer = null
         if (usable(heard)) listener.onSpeechResult(heard)
         else listener.onSpeechError("No te escuché.", noSpeech = true)
     }
@@ -387,7 +409,10 @@ class VoiceController(
             listener.onListeningStarted()
         }
 
-        override fun onBeginningOfSpeech() {}
+        // Empezaste a hablar: el vigilante cuenta desde aquí (una frase larga no se corta).
+        override fun onBeginningOfSpeech() {
+            if (listening) armWatchdog()
+        }
         // El volumen llega más o menos entre -2 (silencio) y 10 (voz fuerte).
         override fun onRmsChanged(rmsdB: Float) {
             listener.onVoiceLevel(((rmsdB + 2f) / 12f).coerceIn(0f, 1f))

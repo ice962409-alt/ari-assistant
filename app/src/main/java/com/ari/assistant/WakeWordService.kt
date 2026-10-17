@@ -184,6 +184,7 @@ class WakeWordService : Service() {
             return
         }
         val open = Intent(this, LiveShortcutActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra(LiveShortcutActivity.EXTRA_BY_VOICE, true)
         // Desde atrás, Android solo deja abrir Ari si tiene el permiso de la burbuja
         // ("Mostrar sobre otras apps"). Sin él, queda un aviso para tocarlo.
         val opened = Settings.canDrawOverlays(this) && runCatching { startActivity(open) }.isSuccess

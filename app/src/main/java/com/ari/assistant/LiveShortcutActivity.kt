@@ -20,6 +20,7 @@ class LiveShortcutActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ticketAt = SystemClock.elapsedRealtime()
+        byVoice = intent?.getBooleanExtra(EXTRA_BY_VOICE, false) == true
         startActivity(
             Intent(this, MainActivity::class.java)
                 .setAction(MainActivity.ACTION_LIVE)
@@ -32,8 +33,21 @@ class LiveShortcutActivity : Activity() {
         /** El boleto vence en unos segundos para que no lo use una orden que llegue después. */
         private const val TICKET_MS = 10_000L
 
+        /** Lo pone el detector de "Ari": la abriste con la voz, así que escucha sin saludar. */
+        const val EXTRA_BY_VOICE = "por_voz"
+
         @Volatile
         private var ticketAt = 0L
+
+        @Volatile
+        private var byVoice = false
+
+        /** true si el último boleto vino de decir "Ari" (se consume al leerlo). */
+        fun consumeByVoice(): Boolean {
+            val voice = byVoice
+            byVoice = false
+            return voice
+        }
 
         /** true una sola vez por cada toque al widget o al acceso directo. */
         fun consumeTicket(): Boolean {
