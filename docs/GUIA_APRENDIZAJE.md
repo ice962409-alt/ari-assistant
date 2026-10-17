@@ -594,6 +594,17 @@ Antes de instalar algo, pregúntate:
 3. **¿Hay imitaciones?** El paquete oficial se llama "graphifyy", con doble "y"; los parecidos pueden ser maliciosos.
 4. **¿Lo necesito ahora?** Graphify sirve para proyectos enormes; Ari tiene unos 10 archivos, así que hoy no aporta.
 
+### Por qué no existe un botón que dé todos los permisos de golpe
+
+Android separa los permisos en dos tipos:
+
+- **Permisos normales peligrosos** (micrófono, contactos, calendario, fotos, ubicación): la app los pide y Android muestra una ventanita por cada uno. Se pueden pedir todos juntos; tú solo tocas "Permitir" varias veces.
+- **Accesos especiales** (Accesibilidad, leer notificaciones, mostrarse sobre otras apps, batería, acceso al uso): Android no deja que ninguna app se los dé sola, ni siquiera con tu permiso dentro de la app. Tienes que activarlos tú en una pantalla de ajustes. Es una protección: si una app maliciosa pudiera darse Accesibilidad sola, podría manejar todo tu teléfono.
+
+Por eso "Darle todo a ARI" es un recorrido guiado: pide de una vez los normales y luego te lleva a cada pantalla especial; al volver revisa si quedó y sigue sola. Con una laptop (ADB) o con Shizuku se podrían activar casi todos de una sola vez, porque esas herramientas tienen permisos de sistema; eso queda para el plan "ARI = mi teléfono".
+
+**Configuración restringida**: en Android 13 o más nuevo, a las apps instaladas fuera de la tienda (como ARI) Android les bloquea Accesibilidad y leer notificaciones hasta que, en la pantalla de la app, abres el menú ⋮ y tocas "Permitir configuración restringida".
+
 ### Instalar herramientas de otros sin riesgo (graphify, ponytail, agent-skills, OmniRoute)
 
 El 17/10/2026 pediste instalar cuatro herramientas de GitHub. Antes de instalar se revisó cada una sin ejecutar nada, como se lee un contrato antes de firmarlo:
@@ -737,3 +748,6 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Huella (hash) sha256**: un número que identifica un archivo; si el archivo cambia un solo byte, la huella cambia.
 - **Mapa del código (grafo)**: la lista de piezas del programa y quién usa a quién, para encontrar cosas sin leerlo todo.
 - **Pasarela de modelos (gateway)**: un servidor que reparte tus pedidos entre muchos modelos de IA detrás de una sola dirección, como OmniRoute.
+- **Permiso peligroso (runtime)**: un permiso que la app pide con una ventanita de Android, como el micrófono.
+- **Acceso especial**: un permiso que solo se activa en una pantalla de ajustes del teléfono, como Accesibilidad.
+- **Configuración restringida**: el bloqueo de Android 13+ a Accesibilidad y notificaciones en apps instaladas fuera de la tienda.

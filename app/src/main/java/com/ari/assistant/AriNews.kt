@@ -90,6 +90,9 @@ object AriNews {
             Item("Te escucho mejor", "Si me llamas diciendo \"Ari\", escucho tu orden enseguida, sin saludo. Si haces una pausa a media frase ya no te corto, y si el micrófono se traba me recupero sola. En Ajustes → Diario de la voz ves qué pasó."),
             Item("Te reconozco de lejos", "Si solo tu voz está registrada, ya no te tomo por \"voz nueva\" cuando me hablas un poco lejos."),
         ),
+        85 to listOf(
+            Item("Darle todo a ARI", "Un solo botón para darme todos los permisos: arriba en la pantalla (mientras falte alguno), en Ajustes → Darle todo a ARI, o di \"dale todo a Ari\". Te llevo por cada uno y al volver de cada pantalla sigo sola."),
+        ),
     )
 
     /** Las novedades entre la versión que ya conocías ([seen]) y la actual. */

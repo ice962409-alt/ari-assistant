@@ -916,3 +916,12 @@ El usuario pidió instalar graphify, OmniRoute, ponytail y agent-skills. Cada re
 - agent-skills (aeac41d): 10 skills de texto y 3 referencias (5 se activan solas, 5 solo a mano), sin plugin ni hooks.
 - OmniRoute: no se instaló en Claude Code (es un servidor; aquí se borraría y ofrece cambiar la configuración de Claude). Pasos seguros para la laptop en el documento.
 - Esto vale para las sesiones que empiecen desde la rama de trabajo; para todas, tiene que llegar a `main`.
+
+## Darle todo a ARI: todos los permisos con un solo botón (versión 0.70.0)
+
+Pedido del usuario (17/10/2026): "una interfaz más sencilla, que con un solo botón se le pueda dar todo el acceso a ARI".
+- Android no deja que una app se dé sola los accesos especiales; lo más cercano a "un botón" es un recorrido guiado: `AccessPlan` (lógica pura con pruebas, `AccessPlanTest`) lista todo lo que ARI puede usar según el teléfono (versión de Android, ARI CEO o no, Xiaomi). `MainActivity` pide de una vez todos los permisos normales que faltan (micrófono, notificaciones, contactos, calendario, guardar citas, fotos, actividad física, ubicación) y después abre, una por una, las pantallas especiales que faltan (Accesibilidad, leer notificaciones, mostrarse sobre otras apps, alarmas exactas, batería sin restricciones, acceso al uso, todos los archivos, cambiar ajustes, No molestar, instalar actualizaciones, inicio automático de Xiaomi). Al volver de cada pantalla revisa si quedó y sigue sola; lo que no quedó lo deja para el final. Para Accesibilidad y notificaciones explica la "configuración restringida" (Android 13+, apps fuera de la tienda) con un botón a la pantalla de la app.
+- Dónde: un botón arriba de la pantalla ("Darle todo a ARI · faltan N permisos", desaparece cuando ya está todo), el primer renglón de Ajustes y la frase "dale todo a Ari". Al final muestra la lista con ✓ y ○.
+- Nuevo permiso en completa: `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (pedir con un toque "batería sin restricciones", para que siga escuchando "Ari").
+- No incluye lo que Android pide en cada uso ("mira mi pantalla") ni lo que no son permisos (registrar la voz, la palabra "Ari", la llave de GitHub).
+- versionCode 85, versionName 0.70.0.

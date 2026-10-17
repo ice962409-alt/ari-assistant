@@ -153,6 +153,7 @@ class MainActivity : Activity() {
     private var memoriesPending = true
 
     private lateinit var status: TextView
+    private lateinit var accessBanner: TextView
     private lateinit var chat: ChatView
     private lateinit var input: EditText
     private lateinit var sendButton: Button
@@ -800,6 +801,213 @@ class MainActivity : Activity() {
             .show()
     }
 
+    // --- "Darle todo a ARI": todos los permisos con un solo botón (ver AccessPlan) ---
+
+    private val xiaomi: Boolean
+        get() = android.os.Build.MANUFACTURER.lowercase() in setOf("xiaomi", "redmi", "poco")
+
+    private fun accessItems() =
+        AccessPlan.applicable(android.os.Build.VERSION.SDK_INT, resources.getBoolean(R.bool.ari_ceo), xiaomi)
+
+    /** ¿Ya tiene ARI este acceso? Lo de Xiaomi no se puede saber: cuenta si ya abriste su pantalla. */
+    private fun accessDone(item: AccessPlan.Item): Boolean {
+        if (item.kind == AccessPlan.Kind.PERMISSION) return item.permissions.all(::granted)
+        return when (item) {
+            AccessPlan.Item.ACCESSIBILITY -> AutoSend.enabled(this)
+            AccessPlan.Item.NOTIFICATION_ACCESS -> AriRecados.enabled(this)
+            AccessPlan.Item.OVERLAY -> android.provider.Settings.canDrawOverlays(this)
+            AccessPlan.Item.EXACT_ALARMS -> reminderAlarms.exact()
+            AccessPlan.Item.BATTERY -> getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == true
+            AccessPlan.Item.USAGE -> AriUsage.hasUsageAccess(this)
+            AccessPlan.Item.ALL_FILES -> AriMedia.canSeeFiles(this)
+            AccessPlan.Item.WRITE_SETTINGS -> android.provider.Settings.System.canWrite(this)
+            AccessPlan.Item.DO_NOT_DISTURB ->
+                getSystemService(android.app.NotificationManager::class.java)?.isNotificationPolicyAccessGranted == true
+            AccessPlan.Item.INSTALL_UPDATES -> packageManager.canRequestPackageInstalls()
+            AccessPlan.Item.AUTOSTART -> profilePrefs.getBoolean(KEY_AUTOSTART_VISITED, false)
+            else -> false
+        }
+    }
+
+    private fun accessIntent(item: AccessPlan.Item): Intent? {
+        val pkg = Uri.parse("package:$packageName")
+        return when (item) {
+            AccessPlan.Item.ACCESSIBILITY -> Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            AccessPlan.Item.NOTIFICATION_ACCESS -> AriRecados.settingsIntent(this)
+            AccessPlan.Item.OVERLAY -> AriBubble.permissionIntent(this)
+            AccessPlan.Item.EXACT_ALARMS -> Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pkg)
+            AccessPlan.Item.BATTERY -> Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkg)
+            AccessPlan.Item.USAGE -> AriUsage.usageAccessIntent()
+            AccessPlan.Item.ALL_FILES -> AriMedia.filesPermissionIntent(this)
+            AccessPlan.Item.WRITE_SETTINGS -> Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, pkg)
+            AccessPlan.Item.DO_NOT_DISTURB -> Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+            AccessPlan.Item.INSTALL_UPDATES -> Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, pkg)
+            AccessPlan.Item.AUTOSTART -> Intent().setComponent(
+                android.content.ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
+            )
+            else -> null
+        }
+    }
+
+    /** Qué tocar en cada pantalla, en una o dos frases. */
+    private fun accessHowTo(item: AccessPlan.Item): String = when (item) {
+        AccessPlan.Item.ACCESSIBILITY ->
+            "Busca \"${getString(R.string.ari_send_label)}\" (a veces en \"Apps instaladas\" o \"Servicios descargados\") y actívalo."
+        AccessPlan.Item.NOTIFICATION_ACCESS -> "Activa \"${getString(R.string.ari_listener_label)}\" y acepta."
+        AccessPlan.Item.OVERLAY -> "Busca \"Ari\" y activa \"Mostrar sobre otras apps\"."
+        AccessPlan.Item.EXACT_ALARMS -> "Activa \"Permitir alarmas y recordatorios\"."
+        AccessPlan.Item.BATTERY -> "Toca \"Permitir\"."
+        AccessPlan.Item.USAGE -> "Busca \"Ari\" y activa \"Permitir acceso al uso\"."
+        AccessPlan.Item.ALL_FILES -> "Activa \"Permitir acceso para administrar todos los archivos\"."
+        AccessPlan.Item.WRITE_SETTINGS -> "Activa \"Permitir modificar los ajustes del sistema\"."
+        AccessPlan.Item.DO_NOT_DISTURB -> "Busca \"Ari\" y activa el acceso a \"No molestar\"."
+        AccessPlan.Item.INSTALL_UPDATES -> "Activa \"Permitir desde esta fuente\"."
+        AccessPlan.Item.AUTOSTART -> "Busca \"Ari\" y activa el inicio automático."
+        else -> ""
+    }
+
+    /** Accesos que Android marca como "configuración restringida" en apps instaladas fuera de la tienda. */
+    private fun restricted(item: AccessPlan.Item) =
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+            (item == AccessPlan.Item.ACCESSIBILITY || item == AccessPlan.Item.NOTIFICATION_ACCESS)
+
+    // El recorrido: lo que se saltó en esta vuelta, la pantalla abierta y las pantallas de la vuelta.
+    private var accessRunning = false
+    private val accessSkipped = mutableSetOf<AccessPlan.Item>()
+    private var accessOpened: AccessPlan.Item? = null
+    // true si se fue a "Configuración restringida": al volver se repite el mismo paso.
+    private var accessDetour = false
+    private var accessScreens: List<AccessPlan.Item> = emptyList()
+
+    /** El botón de arriba: visible mientras falte algo, con cuántos faltan. */
+    private fun updateAccessBanner() {
+        if (!::accessBanner.isInitialized) return
+        val items = accessItems()
+        val missing = items.filterNot(::accessDone).map { it.title }.distinct().size
+        accessBanner.visibility = if (missing == 0) android.view.View.GONE else android.view.View.VISIBLE
+        accessBanner.text = "Darle todo a ARI · " + if (missing == 1) "falta 1 permiso" else "faltan $missing permisos"
+    }
+
+    /** Ajustes → "Darle todo a ARI", el botón de arriba o "dale todo a Ari". */
+    private fun giveAllAccess() {
+        val items = accessItems()
+        val missing = items.filterNot(::accessDone)
+        if (missing.isEmpty()) {
+            showAccessList()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Darle todo a ARI")
+            .setMessage(
+                "Te llevo por todo lo que me falta (${missing.map { it.title }.distinct().size}). Android te pregunta cada cosa: " +
+                    "tú solo tocas \"Permitir\" (en el micrófono, \"Mientras la app está en uso\"; en las fotos, \"Permitir todo\").\n\n" +
+                    "En las pantallas especiales activas a ARI y regresas con el botón de atrás: yo sigo sola con la siguiente.\n\n" +
+                    "Cualquier permiso lo puedes quitar después en los ajustes del teléfono."
+            )
+            .setPositiveButton("Empezar") { _, _ -> startAccess() }
+            .setNeutralButton("Ver la lista") { _, _ -> showAccessList() }
+            .setNegativeButton("Ahora no", null)
+            .show()
+    }
+
+    private fun startAccess() {
+        accessRunning = true
+        accessSkipped.clear()
+        accessOpened = null
+        accessDetour = false
+        val missing = accessItems().filterNot(::accessDone)
+        accessScreens = missing.filter { it.kind == AccessPlan.Kind.SCREEN }
+        val permissions = AccessPlan.permissionsToAsk(missing)
+        if (permissions.isNotEmpty()) requestPermissions(permissions.toTypedArray(), REQUEST_ALL_ACCESS) else continueAccess()
+    }
+
+    /** La siguiente pantalla especial que falta, con qué tocar; al final, la lista. */
+    private fun continueAccess() {
+        if (!accessRunning || isDestroyed) return
+        val next = AccessPlan.nextScreen(accessItems().filterNot(::accessDone), accessSkipped)
+        if (next == null) {
+            finishAccess()
+            return
+        }
+        val builder = AlertDialog.Builder(this)
+            .setTitle(AccessPlan.stepLabel(next, accessScreens))
+            .setMessage(
+                "Para ${next.why}.\n\n${accessHowTo(next)}\n\nDespués regresa con el botón de atrás." +
+                    if (restricted(next)) "\n\nSi Android dice \"Configuración restringida\": regresa, toca \"Config. restringida\", " +
+                        "en la pantalla de Ari abre el menú ⋮ (arriba a la derecha), toca \"Permitir configuración restringida\" y vuelve aquí."
+                    else ""
+            )
+            .setPositiveButton("Abrir") { _, _ -> openAccessScreen(next) }
+            .setNegativeButton("Saltar") { _, _ ->
+                accessSkipped += next
+                continueAccess()
+            }
+            .setOnCancelListener { finishAccess() }
+        if (restricted(next)) {
+            builder.setNeutralButton("Config. restringida") { _, _ ->
+                accessOpened = next
+                accessDetour = true
+                runCatching {
+                    startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+                }.onFailure {
+                    accessOpened = null
+                    accessDetour = false
+                    continueAccess()
+                }
+            }
+        }
+        builder.show()
+    }
+
+    private fun openAccessScreen(item: AccessPlan.Item) {
+        accessOpened = item
+        val opened = accessIntent(item)?.let { intent -> runCatching { startActivity(intent) }.isSuccess } == true ||
+            runCatching {
+                startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+            }.isSuccess
+        if (!opened) {
+            accessOpened = null
+            accessSkipped += item
+            chat.addNote("No encontré la pantalla de \"${item.title}\". Búscala en Ajustes del teléfono → Apps → Ari.")
+            continueAccess()
+            return
+        }
+        // Lo de Xiaomi no se puede comprobar: basta con haber abierto su pantalla.
+        if (item == AccessPlan.Item.AUTOSTART) profilePrefs.edit().putBoolean(KEY_AUTOSTART_VISITED, true).apply()
+    }
+
+    private fun finishAccess() {
+        if (!accessRunning) return
+        accessRunning = false
+        accessOpened = null
+        val items = accessItems()
+        val done = items.filter(::accessDone).toSet()
+        chat.addNote(
+            "Listo: ${AccessPlan.progress(items, done)}. " +
+                if (done.size == items.size) "Ya tengo todo lo que se puede dar de antemano (\"mira mi pantalla\" Android lo pregunta cada vez)."
+                else "Lo que falta lo puedes intentar otra vez con el botón de arriba o en Ajustes → Darle todo a ARI."
+        )
+        updateAccessBanner()
+        showAccessList()
+    }
+
+    /** La lista con ✓ y ○. Si un permiso normal ya no sale en ventanita, se da en los permisos de la app. */
+    private fun showAccessList() {
+        val items = accessItems()
+        val done = items.filter(::accessDone).toSet()
+        val complete = done.size == items.size
+        AlertDialog.Builder(this)
+            .setTitle("Darle todo a ARI · ${AccessPlan.progress(items, done)}")
+            .setItems(AccessPlan.lines(items, done).toTypedArray(), null)
+            .setPositiveButton(if (complete) "Cerrar" else "Dar lo que falta") { _, _ -> if (!complete) startAccess() }
+            .setNeutralButton("Permisos de la app") { _, _ ->
+                runCatching {
+                    startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+                }
+            }
+            .show()
+    }
+
     // --- Configurar Ari: todos los pasos en una sola lista (ver SetupGuide) ---
 
     private fun granted(permission: String) = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
@@ -1440,6 +1648,7 @@ class MainActivity : Activity() {
         val ceo = resources.getBoolean(R.bool.ari_ceo)
         fun item(label: String, action: () -> Unit) = label to action
         val items = mutableListOf(
+            item("Darle todo a ARI (${AccessPlan.progress(accessItems(), accessItems().filter(::accessDone).toSet())})") { giveAllAccess() },
             item("Configurar Ari (${setupDone().size} de ${SetupGuide.Step.values().size} listos)") { showSetupGuide() },
             item("Tu nombre: $name") { askUserName(firstTime = false) },
             item("Tono de Ari: ${profile.tone.title}") { chooseTone() },
@@ -2187,6 +2396,19 @@ class MainActivity : Activity() {
         root.addView(header)
         root.addView(android.view.View(this).apply { setBackgroundColor(AriTheme.border) },
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1))
+        // Mientras falte algún permiso: un solo botón para dárselos todos (ver AccessPlan).
+        accessBanner = TextView(this).apply {
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setTextColor(AriTheme.text)
+            setPadding(dp(14f), dp(10f), dp(14f), dp(10f))
+            background = AriTheme.rounded(this@MainActivity, AriTheme.surface, 14f, AriTheme.border)
+            visibility = android.view.View.GONE
+            setOnClickListener { giveAllAccess() }
+        }
+        root.addView(accessBanner, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            setMargins(dp(12f), dp(8f), dp(12f), dp(2f))
+        })
 
         chat = ChatView(this)
         // La carita de arriba acompaña lo que Ari hace en el chat: piensa y mueve la boca al escribir.
@@ -2756,6 +2978,18 @@ class MainActivity : Activity() {
                 chat.addNote("Todavía no tengo el permiso \"Mostrar sobre otras apps\". Cuando quieras, vuelve a Ajustes → Burbuja flotante.")
             }
         }
+        // De vuelta de una pantalla de "Darle todo a ARI": se revisa y sigue con la siguiente.
+        accessOpened?.let { item ->
+            accessOpened = null
+            if (accessDetour) {
+                accessDetour = false
+            } else if (!accessDone(item)) {
+                accessSkipped += item
+                chat.addNote("\"${item.title}\" no quedó activado; lo dejo para el final.")
+            }
+            accessBanner.postDelayed({ continueAccess() }, 400)
+        }
+        updateAccessBanner()
         // Recados de otras Ari que llegaron con Ari cerrada.
         AriMessenger.takeKept(this).forEach { showAriMessage(it) }
         if (modelDownload.isRunning()) watchDownload()
@@ -3150,6 +3384,12 @@ class MainActivity : Activity() {
             saveMessage(ROLE_ARI, list)
             chat.addAri(list)
             if (voiceMode) voice.speak(AriNews.commandsSpoken())
+            return
+        }
+
+        if (!guestMode && AccessPlan.asks(text)) {
+            input.text.clear()
+            giveAllAccess()
             return
         }
 
@@ -4414,6 +4654,12 @@ class MainActivity : Activity() {
             ceoTeam.onLocationResult()
             return
         }
+        if (requestCode == REQUEST_ALL_ACCESS) {
+            // Ya contestaste las ventanitas de Android: ahora las pantallas especiales, una por una.
+            updateAccessBanner()
+            continueAccess()
+            return
+        }
         if (requestCode == REQUEST_SETUP) {
             // De vuelta a la lista, con el paso ya palomeado si lo diste.
             showSetupGuide()
@@ -5207,6 +5453,8 @@ class MainActivity : Activity() {
         private const val REQUEST_AGENDA_PHOTOS = 117
         private const val REQUEST_STEPS = 118
         private const val REQUEST_SETUP = 119
+        private const val REQUEST_ALL_ACCESS = 120
+        private const val KEY_AUTOSTART_VISITED = "inicio_automatico_abierto"
         private val ENROLL_PHRASES = listOf(
             "Hola Ari, soy yo. Hoy quiero platicar contigo un rato.",
             "El perro de mi vecino corre rápido por el parque grande.",
