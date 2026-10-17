@@ -906,3 +906,12 @@ Informes del usuario (17/10/2026, por chat con capturas): "Ari" a veces no despi
   - Recados: mencionar WhatsApp sin usarlo de canal ("que me pase su WhatsApp") sigue siendo recado; "guasa" ya no se toma por WhatsApp; "qué tal" se queda en el mensaje; al "¿Qué le escribo?", "no llego hoy" es el mensaje (solo "no" o "cancela" a secas cancelan).
   - Queda para decidir con el dueño: los recados entre Ari se envían sin "sí" (excepción que él pidió antes), aunque la regla nueva dice "mensajes siempre se confirman". Va al tablero.
   - Comprobado en el contenedor: los 3 sabores y las pruebas compilan con kotlinc 2.4.21 sin errores ni avisos y pasan las 300 pruebas sin Robolectric.
+
+## Herramientas de Claude instaladas (17/10/2026)
+
+El usuario pidió instalar graphify, OmniRoute, ponytail y agent-skills. Cada repositorio se revisó antes (un revisor y un escéptico de seguridad, sin ejecutar nada). Resultado, detalle en `docs/HERRAMIENTAS_CLAUDE.md`:
+- graphify 0.9.92 (PyPI `graphifyy`, con hashes): el hook de inicio `.claude/hooks/session-start.sh` lo instala en un entorno aparte y arma el mapa del código en `app/src/graphify-out/` (ignorado en git). Probado desde cero: 12 s, sale bien, 2 535 nodos. Sin la skill que se actualiza sola, sin hooks en cada lectura y sin mandar código a la nube.
+- ponytail v5.3.2: solo 3 skills de texto (`/ponytail` a mano, `/ponytail-review`, `/ponytail-audit` en español), sin hooks ni "band".
+- agent-skills (aeac41d): 10 skills de texto y 3 referencias (5 se activan solas, 5 solo a mano), sin plugin ni hooks.
+- OmniRoute: no se instaló en Claude Code (es un servidor; aquí se borraría y ofrece cambiar la configuración de Claude). Pasos seguros para la laptop en el documento.
+- Esto vale para las sesiones que empiecen desde la rama de trabajo; para todas, tiene que llegar a `main`.

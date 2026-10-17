@@ -6,6 +6,7 @@
 
 ## Para ahorrar tokens (pedido del usuario, 15/10/2026)
 
+- **Mapa del código (graphify, 17/10/2026):** antes de leer archivos enteros (sobre todo MainActivity), pregunta al mapa: `graphify explain "<función>"`, `graphify path "A" "B"` o `graphify query "..."`. El mapa se arma solo al iniciar la sesión en `app/src/graphify-out`; después de cambiar código, `graphify update app/src`. Detalles y lo que se instaló en `docs/HERRAMIENTAS_CLAUDE.md`.
 - **No vigilar las compilaciones:** no revises el estado del build una y otra vez mientras compila. Lanza el workflow, sigue con otra cosa o espera lo suficiente (una compilación tarda ~8 min) y revisa una sola vez cerca del final. Antes de subir, revisa bien las pruebas para que no salga en rojo (cada build fallido gasta tokens en leer logs y corregir).
 - **Agrupar tareas:** cuando el usuario pida varias cosas, hazlas seguidas sin preguntar entre cada una si ya hay decisión. Deja lo que dependa de él en el tablero y avanza con lo demás.
 

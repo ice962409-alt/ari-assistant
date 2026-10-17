@@ -1,0 +1,6 @@
+DietrichGebert/ponytail @ 16352ac229eb08a9598dcae48fe9f2b342567d86 (v5.3.2), licencia MIT (ver LICENSE en cada carpeta).
+Revisado el 17/10/2026 antes de instalar. Solo se copiaron 3 skills (texto); sin hooks, sin "band", sin plugin y sin
+actualización automática. Cambios: ponytail solo se activa con /ponytail (disable-model-invocation) y respeta las tareas
+del CLAUDE.md; review y audit responden en español sencillo.
+sha256 originales: ponytail 9badd22a…a509, ponytail-review 33fe4ebe…022e, ponytail-audit 2b3223a0…ad28, LICENSE fb1bc690…f3ab.
+Para actualizar: revisar a mano `git diff 16352ac <nuevo> -- skills/` y volver a copiar.

@@ -594,6 +594,18 @@ Antes de instalar algo, pregúntate:
 3. **¿Hay imitaciones?** El paquete oficial se llama "graphifyy", con doble "y"; los parecidos pueden ser maliciosos.
 4. **¿Lo necesito ahora?** Graphify sirve para proyectos enormes; Ari tiene unos 10 archivos, así que hoy no aporta.
 
+### Instalar herramientas de otros sin riesgo (graphify, ponytail, agent-skills, OmniRoute)
+
+El 17/10/2026 pediste instalar cuatro herramientas de GitHub. Antes de instalar se revisó cada una sin ejecutar nada, como se lee un contrato antes de firmarlo:
+
+- **Qué hace de verdad** y si sirve para ARI. OmniRoute, por ejemplo, es un servidor que junta cientos de modelos de IA: sirve en tu laptop, no dentro de Claude Code, que se borra al terminar cada sesión.
+- **Qué corre solo.** Un "hook" es una acción automática; algunos plugins meten hooks que se disparan en cada comando o se actualizan solos desde internet. De ponytail solo se copiaron sus instrucciones, sin sus hooks ni su "band".
+- **Fijar la versión.** Se instala la versión revisada (un commit o un número exacto), no "la última": así nadie puede colarte un cambio después.
+- **Huellas (hashes).** De graphify se guardó la huella sha256 de cada paquete. Si alguien cambiara un paquete en internet, la huella ya no coincide y no se instala. Es como revisar el sello de un frasco antes de abrirlo.
+- **Imitaciones.** El paquete oficial de graphify es `graphifyy` (con doble "y"); uno con nombre casi igual podría ser malicioso.
+
+Cómo queda instalado: en la carpeta `.claude/` del repositorio, para que las sesiones nuevas lo tengan. graphify se instala solo al empezar cada sesión (un "hook de inicio") y arma un mapa del código: Claude pregunta "¿quién llama a esta función?" en vez de leer miles de renglones, y gasta menos tokens.
+
 ### Claude Code frente al chat normal de Claude
 
 En la app de Claude hay dos cosas distintas:
@@ -720,3 +732,8 @@ Claude trabaja primero en todo lo que no necesita tu permiso. Lo que sí te nece
 - **Segundo plano**: cuando una app trabaja sin estar en la pantalla.
 - **Manifiesto**: el archivo que describe una app ante Android: sus permisos, pantallas y lo que necesita.
 - **OpenCL**: las bibliotecas que permiten hacer cuentas en la GPU del teléfono.
+- **Hook de inicio**: una acción que Claude Code hace sola al empezar cada sesión, como instalar una herramienta.
+- **Fijar la versión**: instalar una versión exacta y revisada, no "la más nueva", para que nada cambie sin que lo revises.
+- **Huella (hash) sha256**: un número que identifica un archivo; si el archivo cambia un solo byte, la huella cambia.
+- **Mapa del código (grafo)**: la lista de piezas del programa y quién usa a quién, para encontrar cosas sin leerlo todo.
+- **Pasarela de modelos (gateway)**: un servidor que reparte tus pedidos entre muchos modelos de IA detrás de una sola dirección, como OmniRoute.
