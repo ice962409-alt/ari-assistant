@@ -20,8 +20,11 @@ Tarea actual (nuevo rumbo del 17/10/2026, "la base de ARI"): **ARI 0.69.0, voz c
 - [x] Reconocedor con vigilante, reintento y lo parcial; "Ari" sin saludo y en el live en pausa; detector que no se queda sordo; voz del dueño de lejos; diario de la voz (`VoiceTrace`).
 - [x] GPU declarada (`uses-native-library`) y actualizador sin filtro por rama.
 - [x] Pruebas puras corridas en el contenedor con kotlinc (64 en verde, sin avisos).
-- [ ] Commit, push, `android.yml` en verde y `ari-v0.69.0` en Releases.
-- [ ] Avisar al usuario: instalar la 0.69.0 a mano desde Releases (esta vez el actualizador de la 0.68.0 no la ve por el cambio de rama) y probar la voz y WhatsApp (ficha en el tablero).
+- [x] Compilación: run 39009892154 (2caa38c) en rojo por un `when` sin `WhatsAppAsk`; corregido. Revisión de voz y revisión de seguridad de la confirmación aplicadas (9206b34, a738e57; el run 39026920466 se canceló para no publicar con los huecos). Run 39027424037 (a738e57): build en verde (pruebas con Robolectric, compilación, avisos, APK) y `ari-v0.69.0` en Releases con `ari.apk` (82,5 MB). Rojo intencional por la cuota.
+- [x] Avisado el usuario (chat, ficha "probar-069" y notificación): instalar a mano desde Releases (la 0.68.0 no la ve por el cambio de rama).
+- [ ] Prueba física del usuario (ficha "probar-069") y decisión "recados-sin-si".
+- Herramientas de Claude instaladas (graphify, ponytail, agent-skills; OmniRoute para la laptop): `docs/HERRAMIENTAS_CLAUDE.md`.
+- Siguiente tarea pedida por el usuario (17/10): interfaz sencilla con un solo botón "Darle todo a ARI" (inventario de permisos en curso).
 - Siguiente: 0.70.0 (MTP, `prefillPrefaceOnInit` y banco de pruebas de Gemma) y después el plan "ARI = mi teléfono" (sección 4). Pendiente de la voz: aviso con pantalla bloqueada (C4), batería y arranque automático (C6), ruido (C8) y modelo de "Ari" (C15).
 
 Tarea anterior (terminada, falta la prueba del usuario): **ARI 0.68.0, Game Boost GB-1 y GB-2** (ver `docs/ARI_GAME_BOOST_DISENO.md`).

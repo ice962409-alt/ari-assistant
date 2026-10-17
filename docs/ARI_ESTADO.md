@@ -906,6 +906,7 @@ Informes del usuario (17/10/2026, por chat con capturas): "Ari" a veces no despi
   - Recados: mencionar WhatsApp sin usarlo de canal ("que me pase su WhatsApp") sigue siendo recado; "guasa" ya no se toma por WhatsApp; "qué tal" se queda en el mensaje; al "¿Qué le escribo?", "no llego hoy" es el mensaje (solo "no" o "cancela" a secas cancelan).
   - Queda para decidir con el dueño: los recados entre Ari se envían sin "sí" (excepción que él pidió antes), aunque la regla nueva dice "mensajes siempre se confirman". Va al tablero.
   - Comprobado en el contenedor: los 3 sabores y las pruebas compilan con kotlinc 2.4.21 sin errores ni avisos y pasan las 300 pruebas sin Robolectric.
+- Publicada: run 39027424037 (a738e57), build en verde y `ari-v0.69.0` en Releases (`ari.apk`, 82,5 MB). El run queda en rojo a propósito por la cuota de artefactos. Falta la prueba del usuario (ficha "probar-069").
 
 ## Herramientas de Claude instaladas (17/10/2026)
 
