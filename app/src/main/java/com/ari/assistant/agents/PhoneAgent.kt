@@ -99,8 +99,10 @@ class PhoneAgent(
 
         if (action is PhoneAction.Missing) return AgentResult(action.message, success = false)
 
+        // Lo confirmado en "¿Lo hago?" decía el nombre tal como lo escribió Gemma: si el contacto
+        // encontrado se llama distinto ("Ana" → "Mariana López"), se vuelve a preguntar con el nombre real.
         if (action is PhoneAction.DialContact) return withContact(action.name) { contact ->
-            call(contact.number, "${contact.name} (${contact.number})", confirmed)
+            call(contact.number, "${contact.name} (${contact.number})", confirmed && PhoneCommands.sameName(action.name, contact.name))
         }
         if (action is PhoneAction.Dial && phone.callsDirectly) return call(action.number, "el ${action.number}", confirmed)
 
@@ -126,7 +128,7 @@ class PhoneAgent(
         }
 
         if (action is PhoneAction.WhatsAppContact) return withContact(action.name) { contact ->
-            whatsApp(contact.number, contact.name, action.text, confirmed)
+            whatsApp(contact.number, contact.name, action.text, confirmed && PhoneCommands.sameName(action.name, contact.name))
         }
 
         if (action is PhoneAction.OpenApp) {
@@ -173,7 +175,7 @@ class PhoneAgent(
     private fun answer(text: String): AgentResult {
         composing?.let { target ->
             composing = null
-            if (Answers.no(text)) return AgentResult("Va, no le escribo.")
+            if (Answers.cancel(text)) return AgentResult("Va, no le escribo.")
             val body = Answers.messageBody(text)
             if (body.isEmpty()) {
                 composing = target.copy(at = clock())

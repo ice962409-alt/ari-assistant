@@ -167,13 +167,47 @@ class PhoneAgentTest {
 
     @Test
     fun yaConfirmadoNoVuelveAPreguntar() {
-        val phone = FakePhone(contacts = juan, direct = true)
+        val phone = FakePhone(contacts = listOf(PhoneContact("Juan", "5533333333")), direct = true)
         val agent = PhoneAgent(phone)
         val text = "manda un whatsapp a juan que diga ya voy"
         val result = agent.execute(AgentTask(text, PhoneAgent.CONFIRMED, text))
         assertTrue(result.success)
         assertEquals("ya voy", phone.armed)
         assertFalse(agent.waiting())
+    }
+
+    @Test
+    fun siElContactoSeLlamaDistintoVuelveAPreguntar() {
+        // Gemma escribió "Ana" y el "sí" fue a "WhatsApp a Ana"; el contacto que aparece es otro.
+        val phone = FakePhone(contacts = listOf(PhoneContact("Mariana López", "5544444444")), direct = true)
+        val agent = PhoneAgent(phone)
+        val text = "manda un WhatsApp a Ana que diga hola"
+        val result = agent.execute(AgentTask(text, PhoneAgent.CONFIRMED, text))
+        assertEquals("¿Le mando a Mariana López por WhatsApp: \"hola\"? Dime sí o no.", result.reply)
+        assertTrue(phone.launched.isEmpty())
+        assertEquals(null, phone.armed)
+        val call = agent.execute(AgentTask("llama a Ana", PhoneAgent.CONFIRMED, "llama a Ana"))
+        assertEquals("¿Llamo a Mariana López (5544444444)? Dime sí o no.", call.reply)
+        assertTrue(phone.launched.isEmpty())
+    }
+
+    @Test
+    fun unaOrdenNuevaNoEsUnSi() {
+        val phone = FakePhone(contacts = juan + PhoneContact("Pedro", "5555555555"), direct = true)
+        val agent = PhoneAgent(phone)
+        agent.say("mándale un mensaje a juan que diga ya voy")
+        assertFalse(agent.claims("llama a Pedro"))
+        assertFalse(agent.waiting())
+        assertEquals(null, phone.armed)
+    }
+
+    @Test
+    fun alQueLeEscriboUnNoLargoEsElMensaje() {
+        val phone = FakePhone(contacts = juan)
+        val agent = PhoneAgent(phone)
+        agent.say("mándale un mensaje a juan")
+        agent.answer("no llego hoy, perdón")
+        assertEquals(PhoneAction.WhatsApp("5533333333", "no llego hoy, perdón"), phone.launched.single().first)
     }
 
     @Test

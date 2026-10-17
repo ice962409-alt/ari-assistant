@@ -61,10 +61,17 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
         val pending = AutoSend.current() ?: return
         val app = event?.packageName?.toString()
         if (app !in (if (pending.confirmed) WHATSAPP else MESSAGING)) return
+        if (pending.confirmed) {
+            // El chat que Ari abrió tiene que aparecer (una pantalla nueva de WhatsApp después de armar):
+            // así no se envía en otro chat que ya estaba abierto con un borrador igual.
+            if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) chatOpenedFor = pending.at
+            if (chatOpenedFor != pending.at) return
+        }
         val root = rootInActiveWindow ?: return
         val box = findCompose(root, pending) ?: return
         if (!AutoSend.matches(box.text?.toString().orEmpty(), pending.text, pending.confirmed)) return
-        val send = findSend(root) ?: return
+        if (pending.confirmed && !chatMatches(root, pending)) return
+        val send = findSend(root, strict = pending.confirmed) ?: return
         if (send.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
             AutoSend.disarm()
             AriChat.ariSays(
@@ -270,7 +277,31 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
         if (clickableAncestor(button)?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) AutoCall.disarm()
     }
 
-    // --- Recados ---
+    // --- Recados y WhatsApp confirmado ---
+
+    /** El momento en que se armó el WhatsApp cuyo chat ya se vio abrir. */
+    private var chatOpenedFor = 0L
+
+    /**
+     * ¿El chat abierto es el de [pending]? Se compara el nombre de arriba del chat (o el número).
+     * Si WhatsApp no muestra un encabezado reconocible, basta con que sea la pantalla que Ari abrió.
+     */
+    private fun chatMatches(root: AccessibilityNodeInfo, pending: AutoSend.Pending): Boolean {
+        val header = HEADER_IDS.firstNotNullOfOrNull { id -> root.findAccessibilityNodeInfosByViewId(id)?.firstOrNull() }
+            ?.let { label(it) } ?: return true
+        val wantedDigits = pending.name.filter { it.isDigit() }
+        if (wantedDigits.length >= 7) {
+            val shown = header.filter { it.isDigit() }
+            return shown.isEmpty() || shown.takeLast(7) == wantedDigits.takeLast(7)
+        }
+        val shown = simple(header)
+        val wanted = simple(pending.name)
+        return shown.isNotEmpty() && wanted.isNotEmpty() && (shown == wanted || shown.contains(wanted) || wanted.contains(shown))
+    }
+
+    private fun simple(text: String) =
+        java.text.Normalizer.normalize(text.lowercase(), java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "").replace(Regex("[^a-z0-9 ]"), "").replace(Regex("\\s+"), " ").trim()
 
     /** La caja donde se escribe el mensaje (editable y con el texto armado). */
     private fun findCompose(root: AccessibilityNodeInfo, pending: AutoSend.Pending): AccessibilityNodeInfo? {
@@ -283,14 +314,18 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
         return find(root) { it.isEditable && it.text?.toString()?.contains("[Ari") == true }
     }
 
-    /** El botón de enviar: por su nombre interno o por lo que dice ("Enviar", "Send", "SMS"). */
-    private fun findSend(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+    /**
+     * El botón de enviar: por su nombre interno o por lo que dice ("Enviar", "Send", "SMS").
+     * [strict]: solo si dice exactamente "Enviar" o "Send" (un mensaje del chat que empiece con
+     * "Enviar…" no es el botón).
+     */
+    private fun findSend(root: AccessibilityNodeInfo, strict: Boolean = false): AccessibilityNodeInfo? {
         SEND_IDS.forEach { id ->
             root.findAccessibilityNodeInfosByViewId(id)?.firstOrNull { it.isEnabled }?.let { return clickableAncestor(it) }
         }
         val node = find(root) { node ->
-            val label = (node.contentDescription ?: node.text)?.toString()?.lowercase().orEmpty()
-            node.isEnabled && SEND_WORDS.any { label == it || label.startsWith("$it ") }
+            val label = (node.contentDescription ?: node.text)?.toString()?.lowercase()?.trim().orEmpty()
+            node.isEnabled && (if (strict) label == "enviar" || label == "send" else SEND_WORDS.any { label == it || label.startsWith("$it ") })
         } ?: return null
         return clickableAncestor(node)
     }
@@ -306,6 +341,7 @@ class AriSendService : AccessibilityService(), AppControl.Controller {
         )
         val WHATSAPP = setOf("com.whatsapp", "com.whatsapp.w4b")
         val COMPOSE_IDS = listOf("com.whatsapp:id/entry", "com.whatsapp.w4b:id/entry")
+        val HEADER_IDS = listOf("com.whatsapp:id/conversation_contact_name", "com.whatsapp.w4b:id/conversation_contact_name")
         val SEND_IDS = listOf(
             "com.whatsapp:id/send",
             "com.whatsapp.w4b:id/send",

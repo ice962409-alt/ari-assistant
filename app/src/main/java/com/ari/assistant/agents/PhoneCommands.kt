@@ -220,7 +220,7 @@ object PhoneCommands {
         val number = NUMBER.find(restPlain)
         var textStart = number?.range?.last?.plus(1) ?: 0
         val saying = sayingRule.find(restPlain, textStart)
-        saying?.let { textStart = it.range.last + 1 }
+        saying?.let { textStart = textAfter(it, rest, restPlain) }
         val text = rest.substring(textStart).trim().trim(':', ',', ' ')
         if (saying == null && ask != null) {
             // "manda un WhatsApp a mi niña" o "al 55…": falta el texto y Ari lo pregunta.
@@ -248,10 +248,21 @@ object PhoneCommands {
         val rest = o.substring(found.range.last + 1)
         val restPlain = p.substring(found.range.last + 1)
         val saying = SAYING_WHATSAPP.find(restPlain)?.takeIf { restPlain.substring(0, it.range.first).isBlank() }
-        val text = rest.substring(saying?.range?.last?.plus(1) ?: 0).trim().trim(':', ',', ' ')
+        val text = rest.substring(saying?.let { textAfter(it, rest, restPlain) } ?: 0).trim().trim(':', ',', ' ')
         if (text.isEmpty()) return if (number != null) PhoneAction.WhatsAppAsk("", number) else PhoneAction.WhatsAppAsk(who)
         if (DRAFT.containsMatchIn(ReminderParser.plain(text))) return null
         return if (number != null) PhoneAction.WhatsApp(number, text) else PhoneAction.WhatsAppContact(who, text)
+    }
+
+    /**
+     * Dónde empieza el mensaje después de [saying]. Un "que" solo no es el separador si es
+     * "qué tal" (con acento, o "que tal"): ahí el "qué" ya es parte del mensaje.
+     */
+    private fun textAfter(saying: MatchResult, rest: String, restPlain: String): Int {
+        if (saying.value.trim() != "que") return saying.range.last + 1
+        val que = saying.range.first + saying.value.indexOf("que")
+        val accented = rest.getOrNull(que + 2) == 'é' || rest.getOrNull(que + 2) == 'É'
+        return if (accented || restPlain.startsWith("tal", saying.range.last + 1)) que else saying.range.last + 1
     }
 
     private fun whatsAppAsk(number: String, name: String): PhoneAction = PhoneAction.WhatsAppAsk(name, number)
@@ -340,6 +351,13 @@ object PhoneCommands {
         return emptyList()
     }
 
+    /** ¿El contacto encontrado es el que se nombró? Igual, o igual sin el "mi" de "mi niña". */
+    fun sameName(requested: String, found: String): Boolean {
+        val wanted = simplify(requested)
+        val name = simplify(found)
+        return wanted == name || wanted.replace(Regex("^mis?\\s+"), "") == name
+    }
+
     private fun simplify(text: String) =
         ReminderParser.plain(text).replace(Regex("[^a-z0-9 ]"), "").replace(Regex("\\s+"), " ").trim()
 
@@ -362,7 +380,7 @@ object PhoneCommands {
         "^(?:abre|abrir|abreme)\\s+(?:los\\s+|la\\s+)?(?:ajustes|configuracion)(?:\\s+(?:de|del)(?:\\s+la)?\\s+(wifi|wi-fi|bluetooth|sonido|pantalla|bateria|ubicacion|notificaciones))?$"
     )
     /** Cómo escribe el reconocimiento de voz "WhatsApp". */
-    private const val CHANNEL = "(?:whatsapp|whatsap|watsapp|watsap|whats|wasap|wassap|wasa|wats|guasap|guasa)"
+    private const val CHANNEL = "(?:whatsapp|whatsap|watsapp|watsap|whats|wasap|wassap|wats|guasap)"
     private val WHATSAPP = Regex(
         "^(?:manda|mandale|envia|enviale|escribe|escribele|dile|avisale)\\s+(?:un\\s+)?(?:(?:mensaje\\s+)?(?:de|por|en)\\s+)?$CHANNEL\\b(?:\\s+(?:al|a|para)\\b)?"
     )

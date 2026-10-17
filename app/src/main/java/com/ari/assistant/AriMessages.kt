@@ -20,8 +20,9 @@ object AriMessages {
         setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
     )
 
+    /** "por WhatsApp" como canal (no "pásame su WhatsApp", que sí puede ser un recado). */
     private val WHATSAPP = Regex(
-        "\\b(?:whatsapp|whatsap|watsapp|watsap|whats|wasap|wassap|wasa|wats|guasap|guasa)\\b",
+        "\\b(?:por|en|v[ií]a)\\s+(?:whatsapp|whatsap|watsapp|watsap|whats|wasap|wassap|wats|guasap)\\b",
         RegexOption.IGNORE_CASE
     )
 

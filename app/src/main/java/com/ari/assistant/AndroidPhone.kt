@@ -128,7 +128,9 @@ class AndroidPhone(context: Context) : PhoneLauncher {
             }
             done.countDown()
         }
-        done.await(5, TimeUnit.SECONDS)
+        // Si el hilo principal tardó más de 5 s, la pantalla ya va en camino: se da por abierta
+        // (así no se abre además otra app de respaldo, como el SMS en lugar de WhatsApp).
+        if (!done.await(5, TimeUnit.SECONDS)) return true
         return opened
     }
 

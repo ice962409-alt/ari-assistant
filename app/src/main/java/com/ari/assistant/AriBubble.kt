@@ -382,6 +382,8 @@ class AriBubbleService : Service() {
     /** Abre Ari: [action] ACTION_WRITE pone el teclado listo (con [text] si ya escribiste algo). */
     private fun openAri(action: String, text: String?) {
         closePanel()
+        // Lo que escribiste en la burbuja se envía al abrir Ari; lo que mande otra app, no.
+        if (action == MainActivity.ACTION_WRITE && text != null) MainActivity.issueWriteTicket()
         startActivity(
             Intent(this, MainActivity::class.java)
                 .setAction(action)

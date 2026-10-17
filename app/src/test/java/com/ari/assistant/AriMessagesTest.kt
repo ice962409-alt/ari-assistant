@@ -22,6 +22,8 @@ class AriMessagesTest {
         // Con WhatsApp en la frase no es un recado entre Ari: va por WhatsApp.
         assertNull(AriMessages.request("dile a mi niña por WhatsApp que ya voy"))
         assertNull(AriMessages.request("dile a mi niña que ya voy por wasap"))
+        // Mencionar WhatsApp sin usarlo de canal sigue siendo un recado.
+        assertEquals(AriMessages.Request("Juan", "me pase su WhatsApp"), AriMessages.request("dile a Juan que me pase su WhatsApp"))
     }
 
     @Test

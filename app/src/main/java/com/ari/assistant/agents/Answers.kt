@@ -9,18 +9,32 @@ object Answers {
     private val YES_START = setOf(
         "si", "sip", "dale", "va", "ok", "okay", "okey", "claro", "hazlo", "adelante", "confirmo", "sale",
         "simon", "andale", "correcto", "exacto", "perfecto", "listo", "aja", "mandalo", "mandaselo", "envialo",
-        "enviaselo", "llama", "llamale", "marca", "marcale", "porfa"
+        "enviaselo", "llamale", "marcale", "porfa"
     )
     private val NO_START = setOf(
         "no", "nop", "nel", "cancela", "cancelalo", "cancelar", "espera", "detente", "para", "olvidalo", "alto", "tampoco"
     )
 
-    /** Un "sí" sin peros: "sí, mándalo", "dale", "sí por favor". "Sí, pero cambia…" no cuenta. */
+    /**
+     * Un "sí" sin peros: "sí, mándalo", "dale", "sí por favor". "Sí, pero cambia…" no cuenta, y
+     * una orden nueva tampoco ("llama a Pedro", "ok, abre WhatsApp"): esa se atiende aparte.
+     */
     fun yes(text: String): Boolean {
         val words = words(text)
         if (words.isEmpty() || words.size > MAX_WORDS) return false
         if ("no" in words || "pero" in words) return false
-        return words.first() in YES_START
+        if (words.first() !in YES_START) return false
+        return !isCommand(text)
+    }
+
+    /** "no" o "cancela" a secas (una o dos palabras): "no llego hoy, perdón" es un mensaje, no un "no". */
+    fun cancel(text: String): Boolean = words(text).size <= 2 && no(text)
+
+    /** ¿Es una orden para el teléfono, tal cual o después de un "ok"/"sí" al principio? */
+    private fun isCommand(text: String): Boolean {
+        if (PhoneCommands.parse(text) != null) return true
+        val rest = text.trim().trimStart('¿', '¡').replace(Regex("^\\S+[\\s,.:;!]+"), "")
+        return rest.isNotBlank() && rest != text.trim() && PhoneCommands.parse(rest) != null
     }
 
     /** Un "no": "no", "mejor no", "cancela", "espera". */

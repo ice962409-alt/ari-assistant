@@ -15,12 +15,26 @@ class AnswersTest {
         listOf("no", "sí, pero cambia el texto", "mejor no", "qué hora es", "").forEach {
             assertFalse(it, Answers.yes(it))
         }
+        // Una orden nueva no es un "sí" (aunque empiece con "ok" o "llama").
+        listOf("llama a Pedro", "ok, abre WhatsApp", "dale, llama a mamá", "márcale a Juan").forEach {
+            assertFalse(it, Answers.yes(it))
+        }
     }
 
     @Test
     fun noComoLoDices() {
         listOf("No", "no, espera", "mejor no", "cancela", "olvídalo").forEach { assertTrue(it, Answers.no(it)) }
         listOf("sí", "noche de películas con mis amigos el sábado a las ocho de la noche").forEach { assertFalse(it, Answers.no(it)) }
+    }
+
+    @Test
+    fun cancelarEsUnNoCorto() {
+        assertTrue(Answers.cancel("no"))
+        assertTrue(Answers.cancel("mejor no"))
+        assertTrue(Answers.cancel("Cancela"))
+        // Esto es el mensaje, no un "no".
+        assertFalse(Answers.cancel("no llego hoy, perdón"))
+        assertFalse(Answers.cancel("espera, ya voy para allá"))
     }
 
     @Test

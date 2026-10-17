@@ -1231,10 +1231,13 @@ class MainActivity : Activity() {
 
     /** Pasos de Gemma esperando tu "sí" dicho en voz (en el chat se usa la ventanita). */
     private var pendingTools: Pair<List<AriTools.Step.Run>, List<AriTools.Step.Run>>? = null
+    private var pendingToolsAt = 0L
 
     private fun handleToolsAnswer(text: String): Boolean {
         val (all, safe) = pendingTools ?: return false
         pendingTools = null
+        // Como las preguntas del agente del teléfono: después de un rato se olvida.
+        if (android.os.SystemClock.elapsedRealtime() - pendingToolsAt > PhoneAgent.WAIT_MS) return false
         when {
             Answers.yes(text) -> {
                 input.text.clear()
@@ -2463,10 +2466,16 @@ class MainActivity : Activity() {
             intent.action = null
             val text = intent.getStringExtra(EXTRA_TEXT)
             intent.removeExtra(EXTRA_TEXT)
+            // Solo la burbuja de Ari deja boleto: otra app puede poner texto, pero no enviarlo
+            // (así nadie puede escribirle "manda un WhatsApp…" y luego "sí").
+            val fromBubble = consumeWriteTicket()
             input.post {
-                if (!text.isNullOrBlank()) {
+                if (!text.isNullOrBlank() && fromBubble) {
                     input.setText(text)
                     sendMessage()
+                } else if (!text.isNullOrBlank()) {
+                    input.setText(text)
+                    input.requestFocus()
                 } else {
                     input.requestFocus()
                     getSystemService(android.view.inputmethod.InputMethodManager::class.java)
@@ -3758,6 +3767,7 @@ class MainActivity : Activity() {
         val sends = AutoSend.enabled(this)
         if (voiceMode) {
             pendingTools = runnable to safe
+            pendingToolsAt = android.os.SystemClock.elapsedRealtime()
             val question = "¿Lo hago? " + delicate.joinToString(". ") { AriTools.describe(it.action) } + ". Dime sí o no."
             chat.addNote(question)
             return question
@@ -4475,6 +4485,7 @@ class MainActivity : Activity() {
 
     private fun stopVoiceMode(message: String) {
         voiceMode = false
+        pendingTools = null
         AriWakeWord.livePaused = false
         VoiceTrace.add("voz apagada")
         bargeIn.stop()
@@ -4525,6 +4536,7 @@ class MainActivity : Activity() {
         voice.stopAll()
         silentAttempts = 0
         VoiceTrace.add("en pausa")
+        pendingTools = null
         // En pausa nadie usa el micrófono: el detector de "Ari" puede volver a escuchar.
         AriWakeWord.livePaused = true
         status.text = message
@@ -4723,9 +4735,10 @@ class MainActivity : Activity() {
             if (isDestroyed || voiceWorker.isShutdown) return
             if (!voiceMode || !voice.speakerMode) return
             val prints = voicePrints
-            // Quién venía hablando: si eras tú (o aún no se sabe), una frase dudosa (de lejos)
-            // no te vuelve "voz nueva". Solo cuenta si únicamente tu voz está registrada (VoicePrints).
-            val ownerBefore = if (!speakerSeen) null else speaker?.owner
+            // Quién venía hablando: si eras tú (o es la primera frase), una frase dudosa (de lejos)
+            // no te vuelve "voz nueva". Después de una "voz nueva" se exige otra vez la voz clara,
+            // para que nadie más pueda confirmar un mensaje. Solo si únicamente tu voz está registrada.
+            val ownerBefore = if (!speakerSeen) null else speaker?.owner == true
             voiceWorker.execute {
                 val embedding = samples?.let { voiceIdentity.embedding(it) }
                 val who = embedding?.let { VoicePrints.identify(it, prints, ownerBefore = ownerBefore) }
@@ -5213,6 +5226,22 @@ class MainActivity : Activity() {
         const val ACTION_LIVE = "com.ari.assistant.LIVE"
         const val ACTION_WRITE = "com.ari.assistant.ESCRIBIR"
         const val EXTRA_TEXT = "texto"
+
+        /** Boleto de un solo uso que deja la burbuja al abrir Ari con lo que escribiste (vence en segundos). */
+        @Volatile
+        private var writeTicketAt = 0L
+
+        fun issueWriteTicket() {
+            writeTicketAt = android.os.SystemClock.elapsedRealtime()
+        }
+
+        private fun consumeWriteTicket(): Boolean {
+            val at = writeTicketAt
+            writeTicketAt = 0L
+            return at != 0L && android.os.SystemClock.elapsedRealtime() - at < WRITE_TICKET_MS
+        }
+
+        private const val WRITE_TICKET_MS = 10_000L
 
         /** Para la voz: respuestas cortas y naturales, como en una plática. */
         private const val VOICE_STYLE =

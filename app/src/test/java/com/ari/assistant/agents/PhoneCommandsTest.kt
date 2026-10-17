@@ -168,6 +168,15 @@ class PhoneCommandsTest {
     }
 
     @Test
+    fun queTalEsElMensaje() {
+        assertEquals(PhoneAction.WhatsAppContact("mamá", "qué tal"), parse("manda un WhatsApp a mamá qué tal"))
+        assertEquals(PhoneAction.WhatsAppContact("mamá", "que tal"), parse("manda un whatsapp a mamá que tal"))
+        assertEquals(PhoneAction.WhatsAppContact("Juan", "qué tal"), parse("dile a Juan por WhatsApp qué tal"))
+        // "guasa" es una palabra (broma), no WhatsApp.
+        assertNull(parse("dile a Juan que estoy de guasa"))
+    }
+
+    @Test
     fun sinTextoPreguntaQueLeEscribo() {
         assertEquals(PhoneAction.WhatsAppAsk("mi niña"), parse("mándale un mensaje a mi niña por WhatsApp"))
         assertEquals(PhoneAction.WhatsAppAsk("mi niña"), parse("Mándale un mensaje a mi niña"))
